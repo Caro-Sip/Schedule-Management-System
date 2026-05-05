@@ -1,4 +1,4 @@
-package com.team4.sms;
+package sms;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;

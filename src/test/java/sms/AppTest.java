@@ -1,7 +1,6 @@
-package com.team4.sms;
+package sms;
 
 import static org.junit.Assert.assertTrue;
-
 import org.junit.Test;
 
 /**

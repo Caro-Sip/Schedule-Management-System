@@ -1,4 +1,4 @@
-package com.team4.sms;
+package sms;
 
 /**
  * Hello world!

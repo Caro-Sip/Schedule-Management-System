@@ -45,7 +45,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>com.team4.sms.App</mainClass>
+              <mainClass>sms.App</mainClass>
             </manifest>
           </archive>
         </configuration>

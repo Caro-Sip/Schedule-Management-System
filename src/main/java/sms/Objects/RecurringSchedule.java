@@ -1,5 +1,7 @@
 package sms.Objects;
 
+import java.sql.Date;
+import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -26,6 +28,9 @@ public class RecurringSchedule {
         this.endTime = endTime;
         this.effectiveFrom = effectiveFrom;
         this.effectiveUntil = effectiveUntil;
+    }
+
+    public RecurringSchedule(int id, int teacherId, int classroomId, int courseId, int dayOfWeek, Time startTime, Time endTime, Date effectiveFrom, Date effectiveUntil) {
     }
 
     public int getId() { return id; }

@@ -17,29 +17,32 @@ public class ClassEntityDAO {
         return DatabaseConfig.getConnection();
     }
 
-    // CREATE - Insert a new user
-    public boolean createUser(ClassEntity class_entity) {
-        String sql = "INSERT INTO class_entity (id,name,year,createdBy) VALUES (?, ?, ?, ?)";
+    // CREATE - Insert a new class
+    public boolean createClass(ClassEntity classEntity) throws SQLException {
+        String sql = "INSERT INTO classes (name, year, created_by) VALUES (?, ?, ?)";
 
         try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            pstmt.setInt(1, class_entity.getId());
-            pstmt.setString(2, class_entity.getName());
-            pstmt.setInt(3, class_entity.getYear());
-            pstmt.setInt(4, class_entity.getCreatedBy());
+            pstmt.setString(1, classEntity.getName());
+            pstmt.setInt(2, classEntity.getYear());
+            pstmt.setInt(3, classEntity.getCreatedBy());
 
             int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        classEntity.setId(generatedKeys.getInt(1));
+                    }
+                }
+            }
             return rowsAffected > 0;
-        } catch (SQLException e) {
-            System.err.println("Error creating user: " + e.getMessage());
-            return false;
         }
     }
 
-    // READ - Get user by ID
-    public ClassEntity getId(int id) {
-        String sql = "SELECT id, name,year, createdBy  FROM class_entity WHERE id = ?";
+    // READ - Get class by ID
+    public ClassEntity getById(int id) throws SQLException {
+        String sql = "SELECT id, name, year, created_by FROM classes WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -52,19 +55,16 @@ public class ClassEntityDAO {
                         rs.getInt("id"),
                         rs.getString("name"),
                         rs.getInt("year"),
-                        rs.getInt("createdBy")
-
+                        rs.getInt("created_by")
                 );
             }
-        } catch (SQLException e) {
-            System.err.println("Error retrieving user: " + e.getMessage());
         }
         return null;
     }
 
-    // READ - Get user by email
-    public ClassEntity getName(String name) {
-        String sql = "SELECT id, name, year, createdBy FROM class_entity WHERE email = ?"; //why is this error
+    // READ - Get class by name
+    public ClassEntity getByName(String name) throws SQLException {
+        String sql = "SELECT id, name, year, created_by FROM classes WHERE name = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -77,44 +77,63 @@ public class ClassEntityDAO {
                         rs.getInt("id"),
                         rs.getString("name"),
                         rs.getInt("year"),
-                        rs.getInt("createdBy")
+                        rs.getInt("created_by")
                 );
             }
-        } catch (SQLException e) {
-            System.err.println("Error retrieving user by email: " + e.getMessage());
         }
         return null;
     }
 
-    // READ - Get all users
-    public List<ClassEntity> getYear(int year) {
-        String sql = "SELECT id, name,year, createdBy FROM class_entity";
-        List<ClassEntity> classEntity = new ArrayList<>();
+    // READ - Get all classes
+    public List<ClassEntity> getAllClasses() throws SQLException {
+        String sql = "SELECT id, name, year, created_by FROM classes";
+        List<ClassEntity> classEntities = new ArrayList<>();
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-                ClassEntity class_entity = new ClassEntity(
+                ClassEntity classEntity = new ClassEntity(
                         rs.getInt("id"),
                         rs.getString("name"),
                         rs.getInt("year"),
-                        rs.getInt("createdBy")
-
+                        rs.getInt("created_by")
                 );
-                classEntity.add(class_entity);
+                classEntities.add(classEntity);
             }
-        } catch (SQLException e) {
-            System.err.println("Error retrieving all users: " + e.getMessage());
         }
-        return classEntity;
+        return classEntities;
     }
 
-    // READ - Get all users by role
-    public List<ClassEntity> getCreatedBy(int createdBy) {
-        String sql = "SELECT id, name,year,createdBy FROM class_entity WHERE role = ?";
-        List<ClassEntity> classEntity = new ArrayList<>();
+    // READ - Get classes by year
+    public List<ClassEntity> getByYear(int year) throws SQLException {
+        String sql = "SELECT id, name, year, created_by FROM classes WHERE year = ?";
+        List<ClassEntity> classEntities = new ArrayList<>();
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, year);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                ClassEntity classEntity = new ClassEntity(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getInt("year"),
+                        rs.getInt("created_by")
+                );
+                classEntities.add(classEntity);
+            }
+        }
+        return classEntities;
+    }
+
+    // READ - Get classes by creator
+    public List<ClassEntity> getByCreatedBy(int createdBy) throws SQLException {
+        String sql = "SELECT id, name, year, created_by FROM classes WHERE created_by = ?";
+        List<ClassEntity> classEntities = new ArrayList<>();
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -123,45 +142,38 @@ public class ClassEntityDAO {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                ClassEntity class_entity = new ClassEntity(
+                ClassEntity classEntity = new ClassEntity(
                         rs.getInt("id"),
                         rs.getString("name"),
                         rs.getInt("year"),
-                        rs.getInt("createdBy")
-
+                        rs.getInt("created_by")
                 );
-                classEntity.add(class_entity);
+                classEntities.add(classEntity);
             }
-        } catch (SQLException e) {
-            System.err.println("Error retrieving users by role: " + e.getMessage());
         }
-        return classEntity;
+        return classEntities;
     }
 
-    // UPDATE - Update user information
-    public boolean updateUser(ClassEntity class_entity) {
-        String sql = "UPDATE users SET id = ?, name = ?, year = ?, createdBy = ? WHERE id = ?";
+    // UPDATE - Update class information
+    public boolean updateClass(ClassEntity classEntity) throws SQLException {
+        String sql = "UPDATE classes SET name = ?, year = ?, created_by = ? WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            pstmt.setInt(1, class_entity.getId());
-            pstmt.setString(2, class_entity.getName());
-            pstmt.setInt(3, class_entity.getYear());
-            pstmt.setInt(4, class_entity.getCreatedBy());
-            pstmt.setInt(5, class_entity.getId());
+            pstmt.setString(1, classEntity.getName());
+            pstmt.setInt(2, classEntity.getYear());
+            pstmt.setInt(3, classEntity.getCreatedBy());
+            pstmt.setInt(4, classEntity.getId());
 
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
-        } catch (SQLException e) {
-            System.err.println("Error updating user: " + e.getMessage());
-            return false;
         }
     }
 
-    // DELETE - Delete user by ID
-    public boolean deleteUser(int id) {
-        String sql = "DELETE FROM users WHERE id = ?";
+    // DELETE - Delete class by ID
+    public boolean deleteClass(int id) throws SQLException {
+        String sql = "DELETE FROM classes WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -169,30 +181,24 @@ public class ClassEntityDAO {
             pstmt.setInt(1, id);
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
-        } catch (SQLException e) {
-            System.err.println("Error deleting user: " + e.getMessage());
-            return false;
         }
     }
 
-    // DELETE - Delete all users
-    public boolean deleteAllUsers() {
-        String sql = "DELETE FROM users";
+    // DELETE - Delete all classes
+    public boolean deleteAllClasses() throws SQLException {
+        String sql = "DELETE FROM classes";
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
 
             stmt.executeUpdate(sql);
             return true;
-        } catch (SQLException e) {
-            System.err.println("Error deleting all users: " + e.getMessage());
-            return false;
         }
     }
 
-    // Check if user exists
-    public boolean userExists(int id) {
-        String sql = "SELECT 1 FROM users WHERE id = ?";
+    // Check if class exists
+    public boolean classExists(int id) throws SQLException {
+        String sql = "SELECT 1 FROM classes WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -200,15 +206,12 @@ public class ClassEntityDAO {
             pstmt.setInt(1, id);
             ResultSet rs = pstmt.executeQuery();
             return rs.next();
-        } catch (SQLException e) {
-            System.err.println("Error checking user existence: " + e.getMessage());
-            return false;
         }
     }
 
-    // Get user count
-    public int getUserCount() {
-        String sql = "SELECT COUNT(*) FROM users";
+    // Get class count
+    public int getClassCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM classes";
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
@@ -217,8 +220,6 @@ public class ClassEntityDAO {
             if (rs.next()) {
                 return rs.getInt(1);
             }
-        } catch (SQLException e) {
-            System.err.println("Error getting user count: " + e.getMessage());
         }
         return 0;
     }

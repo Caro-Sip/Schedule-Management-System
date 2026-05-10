@@ -1,4 +1,5 @@
 package sms.DAO;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -9,35 +10,38 @@ import java.util.List;
 
 import sms.Config.DatabaseConfig;
 import sms.Objects.Teacher;
+
 public class TeacherDAO {
     // Helper method to get database connection
     private Connection getConnection() throws SQLException {
         return DatabaseConfig.getConnection();
     }
 
-    // CREATE - Insert a new user
-    public boolean createTeacher(Teacher teachers) {
-        String sql = "INSERT INTO teachers (id,userId,department) VALUES (?, ?, ?)";
+    // CREATE - Insert a new teacher
+    public boolean createTeacher(Teacher teacher) throws SQLException {
+        String sql = "INSERT INTO teachers (user_id, department) VALUES (?, ?)";
 
         try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            pstmt.setInt(1, teachers.getId());
-            pstmt.setInt(2, teachers.getUserId());
-            pstmt.setString(3, teachers.getDepartment());
-
+            pstmt.setInt(1, teacher.getUserId());
+            pstmt.setString(2, teacher.getDepartment());
 
             int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        teacher.setId(generatedKeys.getInt(1));
+                    }
+                }
+            }
             return rowsAffected > 0;
-        } catch (SQLException e) {
-            System.err.println("Error creating user: " + e.getMessage());
-            return false;
         }
     }
 
-    // READ - Get user by ID
-    public Teacher getId(int id) {
-        String sql = "SELECT id,userId,department FROM teachers WHERE id = ?";
+    // READ - Get teacher by ID
+    public Teacher getById(int id) throws SQLException {
+        String sql = "SELECT id, user_id, department FROM teachers WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -48,20 +52,17 @@ public class TeacherDAO {
             if (rs.next()) {
                 return new Teacher(
                         rs.getInt("id"),
-                        rs.getInt("userId"),
+                        rs.getInt("user_id"),
                         rs.getString("department")
-
                 );
             }
-        } catch (SQLException e) {
-            System.err.println("Error retrieving user by ID : " + e.getMessage());
         }
         return null;
     }
 
-    // READ - Get user by id
-    public Teacher getUserId(int userId) {
-        String sql = "SELECT id,userId,department FROM users WHERE userId = ? = ?";
+    // READ - Get teacher by user ID
+    public Teacher getByUserId(int userId) throws SQLException {
+        String sql = "SELECT id, user_id, department FROM teachers WHERE user_id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -72,65 +73,88 @@ public class TeacherDAO {
             if (rs.next()) {
                 return new Teacher(
                         rs.getInt("id"),
-                        rs.getInt("userId"),
+                        rs.getInt("user_id"),
                         rs.getString("department")
-
                 );
             }
-        } catch (SQLException e) {
-            System.err.println("Error retrieving user by UserId: " + e.getMessage());
         }
         return null;
     }
 
-    // READ - Get all users
-    public List<Teacher> getDepartment(String department) {
-        String sql = "SELECT id,userId,department FROM department WHERE department = ?";
-        List<Teacher> teacher = new ArrayList<>();
+    // READ - Get teachers by department
+    public List<Teacher> getByDepartment(String department) throws SQLException {
+        String sql = "SELECT id, user_id, department FROM teachers WHERE department = ?";
+        List<Teacher> teachers = new ArrayList<>();
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, department);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                teachers.add(new Teacher(
+                        rs.getInt("id"),
+                        rs.getInt("user_id"),
+                        rs.getString("department")
+                ));
+            }
+        }
+        return teachers;
+    }
+
+    // READ - Get all teachers
+    public List<Teacher> getAllTeachers() throws SQLException {
+        String sql = "SELECT id, user_id, department FROM teachers";
+        List<Teacher> teachers = new ArrayList<>();
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-               Teacher teachers = new Teacher(
+                teachers.add(new Teacher(
                         rs.getInt("id"),
-                        rs.getInt("userId"),
+                        rs.getInt("user_id"),
                         rs.getString("department")
-
-                );
-               teacher.add(teachers);
+                ));
             }
-        } catch (SQLException e) {
-            System.err.println("Error retrieving all users: " + e.getMessage());
         }
-        return teacher;
+        return teachers;
     }
 
-
-
-    // UPDATE - Update user information
-    public boolean updateUser(Teacher teacher) {
-        String sql = "UPDATE teachers SET id = ?, userId = ?, department = ? WHERE id = ?";
+    // UPDATE - Update teacher information
+    public boolean updateTeacher(Teacher teacher) throws SQLException {
+        String sql = "UPDATE teachers SET user_id = ?, department = ? WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            pstmt.setInt(1, teacher.getId());
-            pstmt.setInt(2, teacher.getUserId());
-            pstmt.setString(3, teacher.getDepartment());
-
+            pstmt.setInt(1, teacher.getUserId());
+            pstmt.setString(2, teacher.getDepartment());
+            pstmt.setInt(3, teacher.getId());
 
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
-        } catch (SQLException e) {
-            System.err.println("Error updating user: " + e.getMessage());
-            return false;
+        }
+    }
+
+    public boolean updateTeacherDepartment(int teacherId, String department) throws SQLException {
+        String sql = "UPDATE teachers SET department = ? WHERE id = ?";
+
+        try(Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)){
+
+            pstmt.setString(1, department);
+            pstmt.setInt(2,teacherId);
+
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0;
         }
     }
 
     // DELETE - Delete teacher by ID
-    public boolean deleteUser(int id) {
+    public boolean deleteTeacher(int id) throws SQLException {
         String sql = "DELETE FROM teachers WHERE id = ?";
 
         try (Connection conn = getConnection();
@@ -139,14 +163,11 @@ public class TeacherDAO {
             pstmt.setInt(1, id);
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
-        } catch (SQLException e) {
-            System.err.println("Error deleting user: " + e.getMessage());
-            return false;
         }
     }
 
     // DELETE - Delete all teachers
-    public boolean deleteAllUsers() {
+    public boolean deleteAllTeachers() throws SQLException {
         String sql = "DELETE FROM teachers";
 
         try (Connection conn = getConnection();
@@ -154,14 +175,11 @@ public class TeacherDAO {
 
             stmt.executeUpdate(sql);
             return true;
-        } catch (SQLException e) {
-            System.err.println("Error deleting all teachers: " + e.getMessage());
-            return false;
         }
     }
 
-    // Check if user exists
-    public boolean userExists(int id) {
+    // Check if teacher exists
+    public boolean teacherExists(int id) throws SQLException {
         String sql = "SELECT 1 FROM teachers WHERE id = ?";
 
         try (Connection conn = getConnection();
@@ -170,14 +188,11 @@ public class TeacherDAO {
             pstmt.setInt(1, id);
             ResultSet rs = pstmt.executeQuery();
             return rs.next();
-        } catch (SQLException e) {
-            System.err.println("Error checking teacher existence: " + e.getMessage());
-            return false;
         }
     }
 
     // Get teacher count
-    public int getUserCount() {
+    public int getTeacherCount() throws SQLException {
         String sql = "SELECT COUNT(*) FROM teachers";
 
         try (Connection conn = getConnection();
@@ -187,11 +202,7 @@ public class TeacherDAO {
             if (rs.next()) {
                 return rs.getInt(1);
             }
-        } catch (SQLException e) {
-            System.err.println("Error getting teacher count: " + e.getMessage());
         }
         return 0;
     }
 }
-
-

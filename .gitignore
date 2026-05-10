@@ -29,3 +29,6 @@ target/
 # IDE Config files
 .idea/
 .vscode/
+
+# Maven shade files
+dependency-reduced-pom.xml

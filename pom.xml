@@ -35,20 +35,62 @@
       <artifactId>javalin</artifactId>
       <version>7.2.0</version>
     </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.21.2</version>
+    </dependency>
+    <!-- SLF4J Implementation -->
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.5.6</version>
+    </dependency>
   </dependencies>
 
   <build>
     <plugins>
       <plugin>
-        <artifactId>maven-jar-plugin</artifactId>
-        <version>3.0.2</version>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.1.0</version>
         <configuration>
-          <archive>
-            <manifest>
-              <mainClass>sms.App</mainClass>
-            </manifest>
-          </archive>
+          <mainClass>sms.Cli</mainClass>
+          <arguments>
+          </arguments>
+          <systemProperties>
+            <systemProperty>
+              <key>org.sqlite.lib.path</key>
+              <value>${project.build.directory}</value>
+            </systemProperty>
+          </systemProperties>
+          <jvmArgs>
+            <jvmArg>--enable-native-access=ALL-UNNAMED</jvmArg>
+          </jvmArgs>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.6.2</version>
+        <configuration>
+          <transformers>
+            <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+              <mainClass>${main.class}</mainClass>
+            </transformer>
+          </transformers>
+          <excludes>
+            <exclude>junit:junit</exclude>
+          </excludes>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
     <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
@@ -92,7 +134,48 @@
           <artifactId>maven-project-info-reports-plugin</artifactId>
           <version>3.0.0</version>
         </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>3.6.2</version>
+          <configuration>
+            <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+              <mainClass>sms.Main</mainClass>
+            </transformer>
+            <excludes>
+                <exclude>classworlds:classworlds</exclude>
+                  <exclude>junit:junit</exclude>
+                </excludes>
+          </configuration>
+          <executions>
+            <execution>
+              <phase>package</phase>
+              <goals>
+                <goal>shade</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
       </plugins>
     </pluginManagement>
   </build>
+
+  <profiles>
+    <profile>
+      <id>cli</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <main.class>sms.Cli</main.class>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>api</id>
+      <properties>
+        <main.class>sms.ApiServer</main.class>
+      </properties>
+    </profile>
+  </profiles>
 </project>

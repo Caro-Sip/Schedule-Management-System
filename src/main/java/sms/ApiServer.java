@@ -4,30 +4,44 @@ import io.javalin.Javalin;
 import io.javalin.http.Context;
 import static io.javalin.apibuilder.ApiBuilder.*;
 
-import java.util.*;
-import sms.Objects.ClassEntity;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import sms.Config.DatabaseConfig;
+import sms.DAO.TeacherDAO;
+import sms.Objects.Teacher;
+import sms.Service.TeacherService;
+import sms.exception.InvalidTeacherException;
+import sms.exception.TeacherNotFoundException;
 
 public class ApiServer {
 
-    static List<ClassEntity> classes = new ArrayList<>(Arrays.asList(
-        new ClassEntity(1, "Math 101", 2026, 111),
-        new ClassEntity(2, "Physics 101", 2026, 111)
-    ));
-    
-    static int nextId = 3;
+    private static TeacherService teacherService;
     
     public static void main(String[] args) {
+        ensureDatabase();
+        teacherService = new TeacherService(new TeacherDAO());
+
         @SuppressWarnings("unused")
         Javalin app = Javalin.create(config -> {
             config.staticFiles.add(staticFiles -> {
                 staticFiles.hostedPath = "/";
                 staticFiles.directory = "/public";
             });
-            
+
             config.routes.apiBuilder(() -> {
-                get("/api/classes", ApiServer::getAllClasses);
-                post("/api/classes", ApiServer::createClass);
-                delete("/api/classes/{id}", ApiServer::deleteClass);
+                path("/api/teachers", () -> {
+                    get(ApiServer::getAllTeachers);
+                    post(ApiServer::createTeacher);
+                    get("/department/{department}", ApiServer::getTeachersByDepartment);
+                    get("/{id}", ApiServer::getTeacherById);
+                    put("/{id}", ApiServer::updateTeacher);
+                    delete("/{id}", ApiServer::deleteTeacher);
+                });
             });
         })
         .start(7070);
@@ -35,39 +49,91 @@ public class ApiServer {
         System.out.println("Access at http://localhost:7070");
     }
     
-    private static void getAllClasses(Context ctx) {
-        ctx.json(classes);
-    }
-    
-    private static void createClass(Context ctx) {
-        try {
-            ClassEntity payload = ctx.bodyAsClass(ClassEntity.class);
-
-            ClassEntity newClass = new ClassEntity(
-                nextId++,
-                payload.getName(),
-                payload.getYear(),
-                payload.getCreatedBy()
-            );
-            classes.add(newClass);
-            
-            ctx.status(201);
-            ctx.json(newClass);
-        } catch (Exception e) {
-            ctx.status(400);
-            ctx.json(Collections.singletonMap("error", e.getMessage()));
+    private static void ensureDatabase() {
+        Path dbPath = Paths.get(DatabaseConfig.getDatabaseName());
+        if (!Files.exists(dbPath)) {
+            DatabaseInit.initializeDatabase();
         }
     }
-    
-    private static void deleteClass(Context ctx) {
+
+    private static void getAllTeachers(Context ctx) {
+        List<Teacher> teachers = teacherService.getAllTeachers();
+        ctx.json(teachers);
+    }
+
+    private static void getTeacherById(Context ctx) {
         try {
             int id = Integer.parseInt(ctx.pathParam("id"));
-            classes.removeIf(c -> c.getId() == id);
-            ctx.status(200);
-            ctx.json(Collections.singletonMap("message", "Deleted"));
+            Teacher teacher = teacherService.getTeacher(id);
+            ctx.json(teacher);
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid teacher id"));
+        } catch (TeacherNotFoundException e) {
+            ctx.status(404).json(errorResponse(e, "Teacher not found"));
         } catch (Exception e) {
-            ctx.status(400);
-            ctx.json(Collections.singletonMap("error", e.getMessage()));
+            ctx.status(500).json(errorResponse(e, "Failed to load teacher"));
         }
+    }
+
+    private static void getTeachersByDepartment(Context ctx) {
+        try {
+            String department = ctx.pathParam("department");
+            List<Teacher> teachers = teacherService.getTeachersByDepartment(department);
+            ctx.json(teachers);
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid department"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to load teachers"));
+        }
+    }
+
+    private static void createTeacher(Context ctx) {
+        try {
+            Teacher payload = ctx.bodyAsClass(Teacher.class);
+            teacherService.createTeacher(payload.getUserId(), payload.getDepartment());
+            ctx.status(201).json(Collections.singletonMap("message", "Teacher created"));
+        } catch (InvalidTeacherException | IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid teacher data"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to create teacher"));
+        }
+    }
+
+    private static void updateTeacher(Context ctx) {
+        try {
+            int id = Integer.parseInt(ctx.pathParam("id"));
+            Teacher payload = ctx.bodyAsClass(Teacher.class);
+            payload.setId(id);
+            teacherService.updateTeacher(payload);
+            ctx.json(Collections.singletonMap("message", "Teacher updated"));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid teacher data"));
+        } catch (TeacherNotFoundException e) {
+            ctx.status(404).json(errorResponse(e, "Teacher not found"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to update teacher"));
+        }
+    }
+
+    private static void deleteTeacher(Context ctx) {
+        try {
+            int id = Integer.parseInt(ctx.pathParam("id"));
+            teacherService.deleteTeacher(id);
+            ctx.json(Collections.singletonMap("message", "Teacher deleted"));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid teacher id"));
+        } catch (TeacherNotFoundException e) {
+            ctx.status(404).json(errorResponse(e, "Teacher not found"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to delete teacher"));
+        }
+    }
+
+    private static Map<String, String> errorResponse(Exception e, String fallback) {
+        String message = e.getMessage();
+        if (message == null || message.trim().isEmpty()) {
+            message = fallback;
+        }
+        return Collections.singletonMap("error", message);
     }
 }

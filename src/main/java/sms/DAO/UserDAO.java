@@ -11,6 +11,23 @@ import java.util.List;
 import sms.Config.DatabaseConfig;
 import sms.Objects.User;
 
+/**
+ * UserDAO - Data Access Object for User entity
+ * 
+ * This class handles all database operations for the User table.
+ * Functions:
+ * - getConnection(): Helper method to get database connection
+ * - createUser(User user): CREATE - Inserts a new user into the database
+ * - getUserById(int id): READ - Retrieves a user by their ID
+ * - getUserByEmail(String email): READ - Retrieves a user by their email address
+ * - getAllUsers(): READ - Retrieves all users from the database
+ * - getUsersByRole(String role): READ - Retrieves all users with a specific role
+ * - updateUser(User user): UPDATE - Updates an existing user's information
+ * - deleteUser(int id): DELETE - Deletes a user by their ID
+ * - deleteAllUsers(): DELETE - Deletes all users from the database
+ * - userExists(int id): Checks if a user exists by their ID
+ * - getUserCount(): Returns the total count of users in the database
+ */
 public class UserDAO {
 
     // Helper method to get database connection

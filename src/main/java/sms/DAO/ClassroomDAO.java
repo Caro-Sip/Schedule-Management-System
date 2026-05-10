@@ -19,28 +19,31 @@ public class ClassroomDAO {
     }
 
     // CREATE - Insert a new classroom
-    public boolean createClassroom(Classroom classroom) {
-        String sql = "INSERT INTO classroom (id, name, building, capacity) VALUES (?, ?, ?, ?)";
+    public boolean createClassroom(Classroom classroom) throws SQLException {
+        String sql = "INSERT INTO classrooms (name, building, capacity) VALUES (?, ?, ?)";
 
         try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            pstmt.setInt(1, classroom.getId());
-            pstmt.setString(2, classroom.getName());
-            pstmt.setString(3, classroom.getBuilding());
-            pstmt.setInt(4, classroom.getCapacity());
+            pstmt.setString(1, classroom.getName());
+            pstmt.setString(2, classroom.getBuilding());
+            pstmt.setInt(3, classroom.getCapacity());
 
             int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        classroom.setId(generatedKeys.getInt(1));
+                    }
+                }
+            }
             return rowsAffected > 0;
-        } catch (SQLException e) {
-            System.err.println("Error creating classroom: " + e.getMessage());
-            return false;
         }
     }
 
     // READ - Get classroom by ID
-    public Classroom getClassroomById(int id) {
-        String sql = "SELECT id, name, building, capacity FROM classroom WHERE id = ?";
+    public Classroom getClassroomById(int id) throws SQLException {
+        String sql = "SELECT id, name, building, capacity FROM classrooms WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -56,15 +59,13 @@ public class ClassroomDAO {
                         rs.getInt("capacity")
                 );
             }
-        } catch (SQLException e) {
-            System.err.println("Error retrieving classroom: " + e.getMessage());
         }
         return null;
     }
 
     // READ - Get classroom by name
-    public Classroom getClassroomByName(String name) {
-        String sql = "SELECT id, name, building, capacity FROM classroom WHERE name = ?";
+    public Classroom getClassroomByName(String name) throws SQLException {
+        String sql = "SELECT id, name, building, capacity FROM classrooms WHERE name = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -80,15 +81,13 @@ public class ClassroomDAO {
                         rs.getInt("capacity")
                 );
             }
-        } catch (SQLException e) {
-            System.err.println("Error retrieving classroom by name: " + e.getMessage());
         }
         return null;
     }
 
     // READ - Get all classrooms
-    public List<Classroom> getAllClassrooms() {
-        String sql = "SELECT id, name, building, capacity FROM classroom";
+    public List<Classroom> getAllClassrooms() throws SQLException {
+        String sql = "SELECT id, name, building, capacity FROM classrooms";
         List<Classroom> classrooms = new ArrayList<>();
 
         try (Connection conn = getConnection();
@@ -104,15 +103,13 @@ public class ClassroomDAO {
                 );
                 classrooms.add(classroom);
             }
-        } catch (SQLException e) {
-            System.err.println("Error retrieving all classrooms: " + e.getMessage());
         }
         return classrooms;
     }
 
     // READ - Get classrooms by building
-    public List<Classroom> getClassroomsByBuilding(String building) {
-        String sql = "SELECT id, name, building, capacity FROM classroom WHERE building = ?";
+    public List<Classroom> getClassroomsByBuilding(String building) throws SQLException {
+        String sql = "SELECT id, name, building, capacity FROM classrooms WHERE building = ?";
         List<Classroom> classrooms = new ArrayList<>();
 
         try (Connection conn = getConnection();
@@ -130,15 +127,13 @@ public class ClassroomDAO {
                 );
                 classrooms.add(classroom);
             }
-        } catch (SQLException e) {
-            System.err.println("Error retrieving classrooms by building: " + e.getMessage());
         }
         return classrooms;
     }
 
     // UPDATE - Update classroom information
-    public boolean updateClassroom(Classroom classroom) {
-        String sql = "UPDATE classroom SET name = ?, building = ?, capacity = ? WHERE id = ?";
+    public boolean updateClassroom(Classroom classroom) throws SQLException {
+        String sql = "UPDATE classrooms SET name = ?, building = ?, capacity = ? WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -150,15 +145,12 @@ public class ClassroomDAO {
 
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
-        } catch (SQLException e) {
-            System.err.println("Error updating classroom: " + e.getMessage());
-            return false;
         }
     }
 
     // DELETE - Delete classroom by ID
-    public boolean deleteClassroom(int id) {
-        String sql = "DELETE FROM classroom WHERE id = ?";
+    public boolean deleteClassroom(int id) throws SQLException {
+        String sql = "DELETE FROM classrooms WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -166,30 +158,24 @@ public class ClassroomDAO {
             pstmt.setInt(1, id);
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
-        } catch (SQLException e) {
-            System.err.println("Error deleting classroom: " + e.getMessage());
-            return false;
         }
     }
 
     // DELETE - Delete all classrooms
-    public boolean deleteAllClassrooms() {
-        String sql = "DELETE FROM classroom";
+    public boolean deleteAllClassrooms() throws SQLException {
+        String sql = "DELETE FROM classrooms";
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
 
             stmt.executeUpdate(sql);
             return true;
-        } catch (SQLException e) {
-            System.err.println("Error deleting all classrooms: " + e.getMessage());
-            return false;
         }
     }
 
     // Check if classroom exists
-    public boolean classroomExists(int id) {
-        String sql = "SELECT 1 FROM classroom WHERE id = ?";
+    public boolean classroomExists(int id) throws SQLException {
+        String sql = "SELECT 1 FROM classrooms WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -197,15 +183,12 @@ public class ClassroomDAO {
             pstmt.setInt(1, id);
             ResultSet rs = pstmt.executeQuery();
             return rs.next();
-        } catch (SQLException e) {
-            System.err.println("Error checking classroom existence: " + e.getMessage());
-            return false;
         }
     }
 
     // Get classroom count
-    public int getClassroomCount() {
-        String sql = "SELECT COUNT(*) FROM classroom";
+    public int getClassroomCount() throws SQLException {
+        String sql = "SELECT COUNT(*) FROM classrooms";
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
@@ -214,8 +197,6 @@ public class ClassroomDAO {
             if (rs.next()) {
                 return rs.getInt(1);
             }
-        } catch (SQLException e) {
-            System.err.println("Error getting classroom count: " + e.getMessage());
         }
         return 0;
     }

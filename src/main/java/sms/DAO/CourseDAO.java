@@ -17,29 +17,32 @@ public class CourseDAO {
         return DatabaseConfig.getConnection();
     }
 
-    // CREATE - Insert a new user
-    public boolean createUser(Course course) {
-        String sql = "INSERT INTO course (id, name, code, totalHours) VALUES (?, ?, ?, ?)";
+    // CREATE - Insert a new course
+    public boolean createCourse(Course course) throws SQLException {
+        String sql = "INSERT INTO courses (name, code, total_hours) VALUES (?, ?, ?)";
 
         try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            pstmt.setInt(1, course.getId());
-            pstmt.setString(2, course.getName());
-            pstmt.setString(3, course.getCode());
-            pstmt.setInt(4, course.getTotalHours());
+            pstmt.setString(1, course.getName());
+            pstmt.setString(2, course.getCode());
+            pstmt.setInt(3, course.getTotalHours());
 
             int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        course.setId(generatedKeys.getInt(1));
+                    }
+                }
+            }
             return rowsAffected > 0;
-        } catch (SQLException e) {
-            System.err.println("Error creating user: " + e.getMessage());
-            return false;
         }
     }
 
-    // READ - Get user by ID
-    public Course getId(int id) {
-        String sql = "SELECT id, name, code, totalHours FROM course WHERE id = ?";
+    // READ - Get course by ID
+    public Course getById(int id) throws SQLException {
+        String sql = "SELECT id, name, code, total_hours FROM courses WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -52,24 +55,21 @@ public class CourseDAO {
                         rs.getInt("id"),
                         rs.getString("name"),
                         rs.getString("code"),
-                        rs.getInt("totalHours")
-
+                        rs.getInt("total_hours")
                 );
             }
-        } catch (SQLException e) {
-            System.err.println("Error retrieving user: " + e.getMessage());
         }
         return null;
     }
 
-    // READ - Get user by email
-    public Course getName(String name) {
-        String sql = "SELECT id, name, code, totalHours FROM users WHERE name = ?";
+    // READ - Get course by code
+    public Course getByCode(String code) throws SQLException {
+        String sql = "SELECT id, name, code, total_hours FROM courses WHERE code = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            pstmt.setString(1, name);
+            pstmt.setString(1, code);
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
@@ -77,43 +77,38 @@ public class CourseDAO {
                         rs.getInt("id"),
                         rs.getString("name"),
                         rs.getString("code"),
-                        rs.getInt("totalHours")
-
+                        rs.getInt("total_hours")
                 );
             }
-        } catch (SQLException e) {
-            System.err.println("Error retrieving user by email: " + e.getMessage());
         }
         return null;
     }
 
-    // READ - Get all users
-    public List<Course> getCode() {
-        String sql = "SELECT id, name, code, totalHours  FROM code";
-        List<Course> course = new ArrayList<>();
+    // READ - Get all courses
+    public List<Course> getAllCourses() throws SQLException {
+        String sql = "SELECT id, name, code, total_hours FROM courses";
+        List<Course> courses = new ArrayList<>();
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-                Course user = new Course(
+                Course course = new Course(
                         rs.getInt("id"),
                         rs.getString("name"),
                         rs.getString("code"),
-                        rs.getInt("totalHours")
+                        rs.getInt("total_hours")
                 );
-                course.add(user);
+                courses.add(course);
             }
-        } catch (SQLException e) {
-            System.err.println("Error retrieving all users: " + e.getMessage());
         }
-        return course;
+        return courses;
     }
 
-    // READ - Get all users by role
-    public List<Course> getTotalHours(int totalHours ) {
-        String sql = "SELECT id, name, code, totalHours FROM course WHERE totalHours = ?";
+    // READ - Get courses by total hours
+    public List<Course> getByTotalHours(int totalHours) throws SQLException {
+        String sql = "SELECT id, name, code, total_hours FROM courses WHERE total_hours = ?";
         List<Course> courses = new ArrayList<>();
 
         try (Connection conn = getConnection();
@@ -127,20 +122,17 @@ public class CourseDAO {
                         rs.getInt("id"),
                         rs.getString("name"),
                         rs.getString("code"),
-                        rs.getInt("totalHours")
-
+                        rs.getInt("total_hours")
                 );
                 courses.add(course);
             }
-        } catch (SQLException e) {
-            System.err.println("Error retrieving users by role: " + e.getMessage());
         }
         return courses;
     }
 
-    // UPDATE - Update user information
-    public boolean updateUser(Course course) {
-        String sql = "UPDATE course SET id = ?, name = ?, code = ?, totalHours = ? WHERE id = ?";
+    // UPDATE - Update course information
+    public boolean updateCourse(Course course) throws SQLException {
+        String sql = "UPDATE courses SET name = ?, code = ?, total_hours = ? WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -148,19 +140,16 @@ public class CourseDAO {
             pstmt.setString(1, course.getName());
             pstmt.setString(2, course.getCode());
             pstmt.setInt(3, course.getTotalHours());
-            pstmt.setInt(4, course.getId());;
+            pstmt.setInt(4, course.getId());
 
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
-        } catch (SQLException e) {
-            System.err.println("Error updating user: " + e.getMessage());
-            return false;
         }
     }
 
-    // DELETE - Delete user by ID
-    public boolean deleteUser(int id) {
-        String sql = "DELETE FROM course WHERE id = ?";
+    // DELETE - Delete course by ID
+    public boolean deleteCourse(int id) throws SQLException {
+        String sql = "DELETE FROM courses WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -168,29 +157,23 @@ public class CourseDAO {
             pstmt.setInt(1, id);
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
-        } catch (SQLException e) {
-            System.err.println("Error deleting user: " + e.getMessage());
-            return false;
         }
     }
 
-    // DELETE - Delete all users
-    public boolean deleteAllUsers() {
-        String sql = "DELETE FROM course";
+    // DELETE - Delete all courses
+    public boolean deleteAllCourses() throws SQLException {
+        String sql = "DELETE FROM courses";
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
 
             stmt.executeUpdate(sql);
             return true;
-        } catch (SQLException e) {
-            System.err.println("Error deleting all users: " + e.getMessage());
-            return false;
         }
     }
 
-    // Check if user exists
-    public boolean userExists(int id) {
+    // Check if course exists
+    public boolean courseExists(int id) throws SQLException {
         String sql = "SELECT 1 FROM courses WHERE id = ?";
 
         try (Connection conn = getConnection();
@@ -199,14 +182,11 @@ public class CourseDAO {
             pstmt.setInt(1, id);
             ResultSet rs = pstmt.executeQuery();
             return rs.next();
-        } catch (SQLException e) {
-            System.err.println("Error checking course existence: " + e.getMessage());
-            return false;
         }
     }
 
-    // Get user count
-    public int getUserCount() {
+    // Get course count
+    public int getCourseCount() throws SQLException {
         String sql = "SELECT COUNT(*) FROM courses";
 
         try (Connection conn = getConnection();
@@ -216,8 +196,6 @@ public class CourseDAO {
             if (rs.next()) {
                 return rs.getInt(1);
             }
-        } catch (SQLException e) {
-            System.err.println("Error getting course count: " + e.getMessage());
         }
         return 0;
     }

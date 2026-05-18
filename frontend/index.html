@@ -11,8 +11,11 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="audit-log.css">
+    
   </head>
   <body>
+    
     <div class="bg-orbit"></div>
     <div class="bg-grid"></div>
 
@@ -90,6 +93,9 @@
           </button>
           <button class="tab" data-view="room">Room Schedule</button>
           <button class="tab hidden" data-view="user" id="user-tab">User</button>
+          
+          <a href="auditlog.html" class="tab" style="font-weight: bold;">Audit Log View</a>
+           
         </nav>
 
         <div class="schedule-controls" id="schedule-controls">
@@ -562,7 +568,7 @@
       </div>
       <div class="audit-list" id="audit-list"></div>
     </aside>
-
+    <script src="audit-log.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

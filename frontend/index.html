@@ -11,7 +11,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
-    <link rel="stylesheet" href="audit-log.css">
+    <link rel="stylesheet" href="audit-embedded.css" />
     
   </head>
   <body>
@@ -94,7 +94,7 @@
           <button class="tab" data-view="room">Room Schedule</button>
           <button class="tab hidden" data-view="user" id="user-tab">User</button>
           
-          <a href="auditlog.html" class="tab" style="font-weight: bold;">Audit Log View</a>
+          <button class="tab" data-view="audit" id="audit-tab">Audit Log</button>
            
         </nav>
 
@@ -107,6 +107,9 @@
             </div>
             <button class="btn btn-ghost" id="next-week">Next</button>
           </div>
+          <button class="btn btn-ghost" id="back-to-list" type="button" hidden>
+            Back to list
+          </button>
           <div class="search-filter">
             <div class="search-field">
               <input
@@ -354,6 +357,57 @@
         <div class="user-card hidden" id="user-view">
           <div class="user-list" id="user-list"></div>
         </div>
+
+        <div class="audit-view hidden" id="audit-view">
+          <div class="user-controls" id="audit-controls">
+            <div class="user-controls-header">
+              <div>
+                <h2>Audit Log</h2>
+                <p class="muted">Sorted by last modified</p>
+              </div>
+              <div class="user-count" id="entryCount">— entries</div>
+            </div>
+            <div class="user-controls-actions">
+              <div class="user-search-group">
+                <div class="search-field">
+                  <input
+                    type="search"
+                    id="searchInput"
+                    placeholder="Search by name or ID"
+                    aria-label="Search audit log"
+                  />
+                </div>
+                <button class="btn btn-ghost" id="clearSearch" type="button">
+                  Clear
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="user-card">
+            <div class="audit-embedded">
+              <div class="log-list" id="logList"></div>
+
+              <div class="empty-state" id="emptyState" style="display: none;">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 64 64"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="32" cy="32" r="28" />
+                  <line x1="20" y1="20" x2="44" y2="44" />
+                  <line x1="44" y1="20" x2="20" y2="44" />
+                </svg>
+                <div class="empty-title">No audit log entries available</div>
+                <div class="empty-copy">
+                  There are currently no audit log entries to display.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
     </main>
 
@@ -568,7 +622,14 @@
       </div>
       <div class="audit-list" id="audit-list"></div>
     </aside>
+    <script src="js/state.js"></script>
+    <script src="js/dom.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/audit.js"></script>
     <script src="audit-log.js"></script>
-    <script src="app.js"></script>
+    <script src="js/entities.js"></script>
+    <script src="js/schedule.js"></script>
+    <script src="js/views.js"></script>
+    <script src="js/main.js"></script>
   </body>
 </html>

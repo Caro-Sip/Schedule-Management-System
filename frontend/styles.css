@@ -708,6 +708,11 @@ a.tab {
   font-size: 14px;
 }
 
+.audit-view {
+  display: grid;
+  gap: 12px;
+}
+
 .user-id {
   font-size: 12px;
   color: var(--ink-muted);

@@ -5,24 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9806b389-87c7-4847-9848-9e25a109c43e" name="Changes" comment="DAO Classes">
-      <change afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/jarRepositories.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/Login.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/sms/DAO/ClassEntityDAO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/sms/DAO/ClassStudentDAO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/sms/DAO/ClassroomDAO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/sms/DAO/CourseDAO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/sms/DAO/RecurringScheduleDAO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/sms/DAO/ScheduleClassDAO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/sms/DAO/ScheduleDAO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/sms/DAO/ScheduleHistoryDAO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/sms/DAO/TeacherDAO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/sms/Service/PasswordUtils.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/sms/Objects/RecurringSchedule.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/sms/Objects/RecurringSchedule.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -95,6 +78,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "SathyaPoch"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/Caro-Sip/Schedule-Management-System.git",
+    "accountId": "333301bc-b8e6-4add-b5f1-5d8c7a1092fb"
+  }
+}]]></component>
   <component name="MavenImportPreferences">
     <option name="generalSettings">
       <MavenGeneralSettings>
@@ -153,7 +148,8 @@
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "experiement/DAO",
+    "git-widget-placeholder": "feature/audit-log",
+    "ignore.virus.scanning.warn.message": "true",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "/usr/bin/mvn",

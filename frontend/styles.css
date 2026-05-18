@@ -215,6 +215,9 @@ select:focus {
   color: var(--accent);
   border-bottom-color: var(--accent);
 }
+a.tab {
+  text-decoration: none;
+}
 
 .schedule-controls {
   display: flex;

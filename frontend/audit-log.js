@@ -329,8 +329,14 @@ function render(data, query = "") {
       ? "Try a different name or ID, or clear the search to show all records."
       : "There are currently no audit log entries to display.";
 
-    empty.querySelector(".empty-title").textContent = title;
-    empty.querySelector(".empty-copy").textContent = message;
+    const titleEl = empty.querySelector(".empty-title");
+    const copyEl = empty.querySelector(".empty-copy");
+    if (titleEl) {
+      titleEl.textContent = title;
+    }
+    if (copyEl) {
+      copyEl.textContent = message;
+    }
     empty.style.display = "block";
     countBadge.textContent = "0 entries";
     return;
@@ -365,13 +371,18 @@ function filterData(query) {
 
 /* ── Init ── */
 (function init() {
+  const list = document.getElementById("logList");
+  const input = document.getElementById("searchInput");
+  const clearBtn = document.getElementById("clearSearch");
+
+  if (!list || !input || !clearBtn) {
+    return;
+  }
+
   // Sort by lastModified descending (already sorted in sample data, but be safe)
   AUDIT_DATA.sort((a, b) => b.lastModifiedRaw - a.lastModifiedRaw);
 
   render(AUDIT_DATA, "");
-
-  const input     = document.getElementById("searchInput");
-  const clearBtn  = document.getElementById("clearSearch");
 
   input.addEventListener("input", () => {
     const q = input.value;

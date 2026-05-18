@@ -1089,7 +1089,7 @@ function renderUserList() {
     label.className = "user-label";
     label.textContent = "Last modified";
 
-    const value = document.createElement("span");
+    const value = document.createElement("span");  v   
     value.className = "user-date";
     value.textContent = formatTimestamp(user.lastModified);
 

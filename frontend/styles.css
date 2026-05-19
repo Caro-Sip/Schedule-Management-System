@@ -486,7 +486,6 @@ a.tab {
   transform: translateX(0);
 }
 
-.audit-panel.open + .audit-toggle .audit-arrow,
 .audit-toggle[aria-expanded="true"] .audit-arrow {
   transform: rotate(180deg);
 }
@@ -578,15 +577,6 @@ a.tab {
   gap: 2px;
 }
 
-.audit-subline {
-  font-size: 12px;
-  color: var(--ink);
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .audit-subtime {
   font-size: 11px;
   color: var(--ink-muted);
@@ -614,15 +604,6 @@ a.tab {
 .week-sub {
   color: var(--ink-muted);
   font-size: 13px;
-}
-
-.view-chip {
-  background: #ffffff;
-  color: #3c4043;
-  border-radius: 999px;
-  padding: 6px 12px;
-  font-size: 12px;
-  border: 1px solid var(--line);
 }
 
 .schedule-card {

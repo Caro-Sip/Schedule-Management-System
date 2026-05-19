@@ -75,6 +75,10 @@ function updateViewVisibility() {
     auditView.classList.toggle("hidden", !isAuditView);
     auditView.toggleAttribute("hidden", !isAuditView);
   }
+
+  if (typeof renderAuditLog === "function") {
+    renderAuditLog();
+  }
 }
 
 function renderCurrentView() {

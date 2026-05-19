@@ -1,12 +1,3 @@
-function formatAuditTime(date) {
-  return date.toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
 function formatAuditPerformedTime(date) {
   const day = date.toLocaleString("en-GB", { day: "2-digit" });
   const month = date.toLocaleString("en-GB", { month: "short" });
@@ -21,7 +12,43 @@ function formatAuditPerformedTime(date) {
   return `${day}/${month} at ${time}`;
 }
 
-function addAuditEntry(action, subject, object, bookingTime) {
+function getSidebarAuditEntries() {
+  if (state.view === "class") {
+    if (!state.selectedClassId) {
+      return [];
+    }
+    return auditLog.filter(
+      (entry) => entry.scopeType === "class" && entry.scopeId === state.selectedClassId
+    );
+  }
+  if (state.view === "room") {
+    if (!state.selectedRoomId) {
+      return [];
+    }
+    return auditLog.filter(
+      (entry) => entry.scopeType === "room" && entry.scopeId === state.selectedRoomId
+    );
+  }
+  return [];
+}
+
+function getSidebarEmptyMessage() {
+  if (state.view === "class") {
+    if (!state.selectedClassId) {
+      return "Select a class to see its audit.";
+    }
+    return "No activity for this class yet.";
+  }
+  if (state.view === "room") {
+    if (!state.selectedRoomId) {
+      return "Select a room to see its audit.";
+    }
+    return "No activity for this room yet.";
+  }
+  return "Audit entries appear when working with a class or room schedule.";
+}
+
+function addAuditEntry(action, subject, object, bookingTime, scope = {}) {
   const entry = {
     id: `audit-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
     action,
@@ -29,9 +56,14 @@ function addAuditEntry(action, subject, object, bookingTime) {
     object,
     bookingTime,
     timestamp: new Date(),
+    scopeType: scope.scopeType || "general",
+    scopeId: scope.scopeId || null,
   };
   auditLog.unshift(entry);
   renderAuditLog();
+  if (typeof renderAdminAuditLog === "function") {
+    renderAdminAuditLog();
+  }
 }
 
 function renderAuditLog() {
@@ -39,18 +71,19 @@ function renderAuditLog() {
     return;
   }
 
-  auditCount.textContent = `${auditLog.length}`;
+  const entries = getSidebarAuditEntries();
+  auditCount.textContent = `${entries.length}`;
   auditList.innerHTML = "";
 
-  if (auditLog.length === 0) {
+  if (entries.length === 0) {
     const empty = document.createElement("div");
     empty.className = "empty-state";
-    empty.textContent = "No activity yet.";
+    empty.textContent = getSidebarEmptyMessage();
     auditList.appendChild(empty);
     return;
   }
 
-  auditLog.forEach((entry) => {
+  entries.forEach((entry) => {
     const item = document.createElement("div");
     item.className = "audit-item";
 

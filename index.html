@@ -421,7 +421,7 @@
         const savedHost = localStorage.getItem("sms-api-host");
         if (savedHost) {
             apiHostInput.value = savedHost;
-            apiBase = `http://${savedHost}${apiPath}`;
+            apiBase = `https://${savedHost}${apiPath}`;
         }
 
         function normalizeHost(value) {
@@ -438,7 +438,7 @@
                 return;
             }
 
-            apiBase = `http://${host}${apiPath}`;
+            apiBase = `https://${host}${apiPath}`;
             localStorage.setItem("sms-api-host", host);
             setStatus(`Using API at ${host}`, "success");
         }

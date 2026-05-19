@@ -11,14 +11,6 @@ const state = {
   selectedRoomId: null,
 };
 
-const viewLabels = {
-  class: "Class Schedule",
-  teacher: "Teacher Schedule",
-  room: "Room Schedule",
-  user: "User Directory",
-  audit: "Audit Log",
-};
-
 const eventsByView = {
   class: [],
   teacher: [],

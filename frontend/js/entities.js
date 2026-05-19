@@ -501,7 +501,10 @@ function upsertClass({ id, name, department }) {
     target.name = name;
     target.department = department;
     target.lastModified = timestamp;
-    addAuditEntry("Edited class", actor, name, "");
+    addAuditEntry("Edited class", actor, name, "", {
+      scopeType: "class",
+      scopeId: id,
+    });
   } else {
     classDirectory.push({
       id,
@@ -509,7 +512,10 @@ function upsertClass({ id, name, department }) {
       department,
       lastModified: timestamp,
     });
-    addAuditEntry("Added class", actor, name, "");
+    addAuditEntry("Added class", actor, name, "", {
+      scopeType: "class",
+      scopeId: id,
+    });
   }
 }
 
@@ -526,7 +532,10 @@ function upsertRoom({ id, name, building, floor }) {
     target.building = building;
     target.floor = floor;
     target.lastModified = timestamp;
-    addAuditEntry("Edited room", actor, name, "");
+    addAuditEntry("Edited room", actor, name, "", {
+      scopeType: "room",
+      scopeId: id,
+    });
   } else {
     roomDirectory.push({
       id,
@@ -535,7 +544,10 @@ function upsertRoom({ id, name, building, floor }) {
       floor,
       lastModified: timestamp,
     });
-    addAuditEntry("Added room", actor, name, "");
+    addAuditEntry("Added room", actor, name, "", {
+      scopeType: "room",
+      scopeId: id,
+    });
   }
 }
 

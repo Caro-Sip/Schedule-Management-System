@@ -307,7 +307,10 @@ function bindEvents() {
       const actor = state.userName || "User";
       const removed = classDirectory[index];
       classDirectory.splice(index, 1);
-      addAuditEntry("Deleted class", actor, removed.name, "");
+      addAuditEntry("Deleted class", actor, removed.name, "", {
+        scopeType: "class",
+        scopeId: removed.id,
+      });
       closeClassModal();
       if (state.selectedClassId === removed.id) {
         state.selectedClassId = null;
@@ -415,7 +418,10 @@ function bindEvents() {
       const actor = state.userName || "User";
       const removed = roomDirectory[index];
       roomDirectory.splice(index, 1);
-      addAuditEntry("Deleted room", actor, removed.name, "");
+      addAuditEntry("Deleted room", actor, removed.name, "", {
+        scopeType: "room",
+        scopeId: removed.id,
+      });
       closeRoomModal();
       if (state.selectedRoomId === removed.id) {
         state.selectedRoomId = null;
@@ -554,6 +560,12 @@ function bindEvents() {
       const objectLabel = subjectLabel;
       const bookingTime = formatBookingTimeRange(startValue, endValue);
       const actor = state.userName || "User";
+      const auditScope =
+        targetView === "class"
+          ? { scopeType: "class", scopeId: classId }
+          : targetView === "room"
+            ? { scopeType: "room", scopeId: roomId }
+            : { scopeType: "general", scopeId: null };
 
       if (pendingBooking.eventId) {
         const existing = eventsByView[targetView].find(
@@ -576,7 +588,7 @@ function bindEvents() {
         if (targetView === "room") {
           existing.roomId = roomId;
         }
-        addAuditEntry("Edited", actor, objectLabel, bookingTime);
+        addAuditEntry("Edited", actor, objectLabel, bookingTime, auditScope);
       } else {
         eventsByView[targetView].push({
           id: createEventId(),
@@ -590,7 +602,7 @@ function bindEvents() {
           classId: targetView === "class" ? classId : null,
           roomId: targetView === "room" ? roomId : null,
         });
-        addAuditEntry("Booked", actor, objectLabel, bookingTime);
+        addAuditEntry("Booked", actor, objectLabel, bookingTime, auditScope);
       }
 
       closeBookingModal();
@@ -623,7 +635,13 @@ function bindEvents() {
       const bookingTime = formatBookingTimeRange(removed.start, removed.end);
       const actor = state.userName || "User";
       items.splice(index, 1);
-      addAuditEntry("Deleted", actor, objectLabel, bookingTime);
+      const auditScope =
+        targetView === "class"
+          ? { scopeType: "class", scopeId: removed.classId }
+          : targetView === "room"
+            ? { scopeType: "room", scopeId: removed.roomId }
+            : { scopeType: "general", scopeId: null };
+      addAuditEntry("Deleted", actor, objectLabel, bookingTime, auditScope);
       closeBookingModal();
       renderEvents();
     });

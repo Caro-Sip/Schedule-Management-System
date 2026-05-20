@@ -43,9 +43,9 @@ public class ApiServer {
                 });
             });
         })
-        .start(7070);
+        .start(8080);
 
-        System.out.println("Access at http://localhost:7070");
+        System.out.println("Access at http://localhost:8080");
     }
     
     private static void ensureDatabase() {

@@ -16,13 +16,13 @@ public class ScheduleDAO {
 
     // CREATE - Insert a new schedule
     public boolean createSchedule(Schedule schedule) {
-        String sql = "INSERT INTO schedule (classroomId, teacherId, courseId, date, startTime, endTime, status, visibility, type, priority, createdBy, createdAt, greyedAt, linkedScheduleId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO schedule (classroom_id, teacher_id, course_id, date, start_time, end_time, status, visibility, type, priority, created_by, created_at, greyed_at, linked_schedule_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             pstmt.setInt(1, schedule.getClassroomId());
-            pstmt.setInt(2, schedule.getTeacherId());
+            pstmt.setObject(2, schedule.getTeacherId(), Types.INTEGER);
             pstmt.setInt(3, schedule.getCourseId());
             pstmt.setDate(4, Date.valueOf(schedule.getDate()));
             pstmt.setTime(5, Time.valueOf(schedule.getStartTime()));
@@ -53,7 +53,7 @@ public class ScheduleDAO {
 
     // READ - Get schedule by ID
     public Schedule getScheduleById(int id) {
-        String sql = "SELECT id, classroomId, teacherId, courseId, date, startTime, endTime, status, visibility, type, priority, createdBy, createdAt, greyedAt, linkedScheduleId FROM schedule WHERE id = ?";
+        String sql = "SELECT id, classroom_id, teacher_id, course_id, date, start_time, end_time, status, visibility, type, priority, created_by, created_at, greyed_at, linked_schedule_id FROM schedule WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -64,21 +64,21 @@ public class ScheduleDAO {
             if (rs.next()) {
                 Schedule schedule = new Schedule();
                 schedule.setId(rs.getInt("id"));
-                schedule.setClassroomId(rs.getInt("classroomId"));
-                schedule.setTeacherId(rs.getInt("teacherId"));
-                schedule.setCourseId(rs.getInt("courseId"));
+                schedule.setClassroomId(rs.getInt("classroom_id"));
+                schedule.setTeacherId((Integer) rs.getObject("teacher_id"));
+                schedule.setCourseId(rs.getInt("course_id"));
                 schedule.setDate(rs.getDate("date").toLocalDate());
-                schedule.setStartTime(rs.getTime("startTime").toLocalTime());
-                schedule.setEndTime(rs.getTime("endTime").toLocalTime());
+                schedule.setStartTime(rs.getTime("start_time").toLocalTime());
+                schedule.setEndTime(rs.getTime("end_time").toLocalTime());
                 schedule.setStatus(rs.getString("status"));
                 schedule.setVisibility(rs.getString("visibility"));
                 schedule.setType(rs.getString("type"));
                 schedule.setPriority(rs.getInt("priority"));
-                schedule.setCreatedBy(rs.getInt("createdBy"));
-                schedule.setCreatedAt(rs.getTimestamp("createdAt").toLocalDateTime());
-                Timestamp greyedAt = rs.getTimestamp("greyedAt");
+                schedule.setCreatedBy(rs.getInt("created_by"));
+                schedule.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
+                Timestamp greyedAt = rs.getTimestamp("greyed_at");
                 schedule.setGreyedAt(greyedAt != null ? greyedAt.toLocalDateTime() : null);
-                schedule.setLinkedScheduleId(rs.getInt("linkedScheduleId"));
+                schedule.setLinkedScheduleId(rs.getInt("linked_schedule_id"));
                 if (rs.wasNull()) schedule.setLinkedScheduleId(null);
                 return schedule;
             }
@@ -90,7 +90,7 @@ public class ScheduleDAO {
 
     // READ - Get all schedules
     public List<Schedule> getAllSchedules() {
-        String sql = "SELECT id, classroomId, teacherId, courseId, date, startTime, endTime, status, visibility, type, priority, createdBy, createdAt, greyedAt, linkedScheduleId FROM schedule";
+        String sql = "SELECT id, classroom_id, teacher_id, course_id, date, start_time, end_time, status, visibility, type, priority, created_by, created_at, greyed_at, linked_schedule_id FROM schedule";
         List<Schedule> schedules = new ArrayList<>();
 
         try (Connection conn = getConnection();
@@ -100,21 +100,21 @@ public class ScheduleDAO {
             while (rs.next()) {
                 Schedule schedule = new Schedule();
                 schedule.setId(rs.getInt("id"));
-                schedule.setClassroomId(rs.getInt("classroomId"));
-                schedule.setTeacherId(rs.getInt("teacherId"));
-                schedule.setCourseId(rs.getInt("courseId"));
+                schedule.setClassroomId(rs.getInt("classroom_id"));
+                schedule.setTeacherId((Integer) rs.getObject("teacher_id"));
+                schedule.setCourseId(rs.getInt("course_id"));
                 schedule.setDate(rs.getDate("date").toLocalDate());
-                schedule.setStartTime(rs.getTime("startTime").toLocalTime());
-                schedule.setEndTime(rs.getTime("endTime").toLocalTime());
+                schedule.setStartTime(rs.getTime("start_time").toLocalTime());
+                schedule.setEndTime(rs.getTime("end_time").toLocalTime());
                 schedule.setStatus(rs.getString("status"));
                 schedule.setVisibility(rs.getString("visibility"));
                 schedule.setType(rs.getString("type"));
                 schedule.setPriority(rs.getInt("priority"));
-                schedule.setCreatedBy(rs.getInt("createdBy"));
-                schedule.setCreatedAt(rs.getTimestamp("createdAt").toLocalDateTime());
-                Timestamp greyedAt = rs.getTimestamp("greyedAt");
+                schedule.setCreatedBy(rs.getInt("created_by"));
+                schedule.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
+                Timestamp greyedAt = rs.getTimestamp("greyed_at");
                 schedule.setGreyedAt(greyedAt != null ? greyedAt.toLocalDateTime() : null);
-                schedule.setLinkedScheduleId(rs.getInt("linkedScheduleId"));
+                schedule.setLinkedScheduleId(rs.getInt("linked_schedule_id"));
                 if (rs.wasNull()) schedule.setLinkedScheduleId(null);
                 schedules.add(schedule);
             }
@@ -126,13 +126,13 @@ public class ScheduleDAO {
 
     // UPDATE - Update schedule information
     public boolean updateSchedule(Schedule schedule) {
-        String sql = "UPDATE schedule SET classroomId = ?, teacherId = ?, courseId = ?, date = ?, startTime = ?, endTime = ?, status = ?, visibility = ?, type = ?, priority = ?, createdBy = ?, createdAt = ?, greyedAt = ?, linkedScheduleId = ? WHERE id = ?";
+        String sql = "UPDATE schedule SET classroom_id = ?, teacher_id = ?, course_id = ?, date = ?, start_time = ?, end_time = ?, status = ?, visibility = ?, type = ?, priority = ?, created_by = ?, created_at = ?, greyed_at = ?, linked_schedule_id = ? WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setInt(1, schedule.getClassroomId());
-            pstmt.setInt(2, schedule.getTeacherId());
+            pstmt.setObject(2, schedule.getTeacherId(), Types.INTEGER);
             pstmt.setInt(3, schedule.getCourseId());
             pstmt.setDate(4, Date.valueOf(schedule.getDate()));
             pstmt.setTime(5, Time.valueOf(schedule.getStartTime()));

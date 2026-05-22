@@ -7,7 +7,7 @@ import java.time.LocalTime;
 public class Schedule {
     private int id;
     private int classroomId;
-    private int teacherId;
+    private Integer teacherId;
     private int courseId;
     private LocalDate date;
     private LocalTime startTime;
@@ -23,7 +23,7 @@ public class Schedule {
 
     public Schedule() {}
 
-    public Schedule(int classroomId, int teacherId, int courseId, LocalDate date,
+    public Schedule(int classroomId, Integer teacherId, int courseId, LocalDate date,
                    LocalTime startTime, LocalTime endTime, String status, String visibility,
                    String type, int priority, int createdBy) {
         this.classroomId = classroomId;
@@ -45,8 +45,8 @@ public class Schedule {
     public int getClassroomId() { return classroomId; }
     public void setClassroomId(int classroomId) { this.classroomId = classroomId; }
 
-    public int getTeacherId() { return teacherId; }
-    public void setTeacherId(int teacherId) { this.teacherId = teacherId; }
+    public Integer getTeacherId() { return teacherId; }
+    public void setTeacherId(Integer teacherId) { this.teacherId = teacherId; }
 
     public int getCourseId() { return courseId; }
     public void setCourseId(int courseId) { this.courseId = courseId; }

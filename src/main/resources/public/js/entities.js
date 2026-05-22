@@ -44,7 +44,7 @@ const classModalTitle = document.getElementById("class-modal-title");
 const classForm = document.getElementById("class-form");
 const classNameInput = document.getElementById("class-name");
 const classIdInput = document.getElementById("class-id");
-const classDepartmentInput = document.getElementById("class-department");
+const classYearInput = document.getElementById("class-year");
 const classDeleteBtn = document.getElementById("class-delete");
 const classCancelBtn = document.getElementById("class-cancel");
 const classCloseBtn = document.getElementById("class-close");
@@ -100,3 +100,87 @@ const weekSub = document.getElementById("week-sub");
 const prevWeekBtn = document.getElementById("prev-week");
 const nextWeekBtn = document.getElementById("next-week");
 const todayBtn = document.getElementById("today-btn");
+
+const API_BASE = "/api";
+
+async function requestJson(path, options = {}) {
+	const response = await fetch(path, {
+		headers: {
+			"Content-Type": "application/json",
+			...(options.headers || {}),
+		},
+		...options,
+	});
+
+	if (response.status === 204) {
+		return null;
+	}
+
+	const contentType = response.headers.get("content-type") || "";
+	const isJson = contentType.includes("application/json");
+	const payload = isJson ? await response.json() : await response.text();
+
+	if (!response.ok) {
+		const message =
+			typeof payload === "object" && payload && payload.error
+				? payload.error
+				: response.statusText || "Request failed";
+		throw new Error(message);
+	}
+
+	return payload;
+}
+
+function normalizeClassPayload(payload) {
+	const timestamp = new Date().toISOString();
+	return {
+		id: Number(payload.id),
+		name: payload.name || "",
+		year: Number(payload.year),
+		createdBy: Number(payload.createdBy),
+		lastModified: timestamp,
+	};
+}
+
+async function loadClasses() {
+	try {
+		const classes = await requestJson(`${API_BASE}/classes`);
+		classDirectory.length = 0;
+		classes.forEach((item) => {
+			classDirectory.push(normalizeClassPayload(item));
+		});
+
+		if (
+			state.selectedClassId &&
+			!classDirectory.some((item) => item.id === state.selectedClassId)
+		) {
+			state.selectedClassId = null;
+			updateViewVisibility();
+		}
+
+		renderClassList();
+		renderEvents();
+	} catch (error) {
+		console.error("Failed to load classes", error);
+	}
+}
+
+async function createClassApi(payload) {
+	return requestJson(`${API_BASE}/classes`, {
+		method: "POST",
+		body: JSON.stringify(payload),
+	});
+}
+
+async function updateClassApi(id, payload) {
+	return requestJson(`${API_BASE}/classes/${id}`, {
+		method: "PUT",
+		body: JSON.stringify(payload),
+	});
+}
+
+async function deleteClassApi(id) {
+	return requestJson(`${API_BASE}/classes/${id}`, {
+		method: "DELETE",
+	});
+}

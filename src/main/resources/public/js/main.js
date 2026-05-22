@@ -257,42 +257,63 @@ function bindEvents() {
   }
 
   if (classForm) {
-    classForm.addEventListener("submit", (event) => {
+    classForm.addEventListener("submit", async (event) => {
       event.preventDefault();
-      if (!classNameInput || !classIdInput || !classDepartmentInput) {
+      if (!classNameInput || !classYearInput) {
         return;
       }
 
       const name = classNameInput.value.trim();
-      const id = classIdInput.value.trim();
-      const department = classDepartmentInput.value.trim();
+      const yearValue = classYearInput.value;
+      const year = Number(yearValue);
 
-      if (!name || !id || !department) {
-        alert("Class name, ID, and department are required.");
+      if (!name || !Number.isFinite(year) || year <= 0) {
+        alert("Class name and a valid year are required.");
         return;
       }
 
-      if (isDuplicateClassId(id)) {
-        alert("Class ID already exists.");
-        return;
-      }
+      const existing = editingClassId
+        ? classDirectory.find((item) => item.id === editingClassId)
+        : null;
+      const createdBy = Number.isFinite(existing?.createdBy) && existing.createdBy > 0
+        ? existing.createdBy
+        : 1;
 
       const wasEditing = Boolean(editingClassId);
       const previousId = editingClassId;
-      upsertClass({ id, name, department });
-      closeClassModal();
-      renderClassList();
 
-      if (!wasEditing) {
-        selectClass(id);
-      } else if (previousId && previousId !== id && state.selectedClassId === previousId) {
-        selectClass(id);
+      try {
+        let targetId = previousId ? Number(previousId) : null;
+
+        if (wasEditing && editingClassId) {
+          await updateClassApi(editingClassId, { name, year, createdBy });
+          addAuditEntry("Edited class", state.userName || "User", name, "", {
+            scopeType: "class",
+            scopeId: editingClassId,
+          });
+        } else {
+          const created = await createClassApi({ name, year, createdBy });
+          targetId = created?.id ? Number(created.id) : null;
+          addAuditEntry("Added class", state.userName || "User", name, "", {
+            scopeType: "class",
+            scopeId: targetId,
+          });
+        }
+
+        await loadClasses();
+        closeClassModal();
+
+        if (targetId && (!wasEditing || state.selectedClassId === targetId)) {
+          selectClass(targetId);
+        }
+      } catch (error) {
+        alert(error?.message || "Failed to save class.");
       }
     });
   }
 
   if (classDeleteBtn) {
-    classDeleteBtn.addEventListener("click", () => {
+    classDeleteBtn.addEventListener("click", async () => {
       if (!editingClassId) {
         return;
       }
@@ -300,24 +321,22 @@ function bindEvents() {
       if (!confirmed) {
         return;
       }
-      const index = classDirectory.findIndex((item) => item.id === editingClassId);
-      if (index === -1) {
-        return;
+      const removed = classDirectory.find((item) => item.id === editingClassId) || null;
+
+      try {
+        await deleteClassApi(editingClassId);
+        if (removed) {
+          const actor = state.userName || "User";
+          addAuditEntry("Deleted class", actor, removed.name, "", {
+            scopeType: "class",
+            scopeId: removed.id,
+          });
+        }
+        closeClassModal();
+        await loadClasses();
+      } catch (error) {
+        alert(error?.message || "Failed to delete class.");
       }
-      const actor = state.userName || "User";
-      const removed = classDirectory[index];
-      classDirectory.splice(index, 1);
-      addAuditEntry("Deleted class", actor, removed.name, "", {
-        scopeType: "class",
-        scopeId: removed.id,
-      });
-      closeClassModal();
-      if (state.selectedClassId === removed.id) {
-        state.selectedClassId = null;
-        updateViewVisibility();
-      }
-      renderClassList();
-      renderEvents();
     });
   }
 
@@ -694,3 +713,4 @@ bindEvents();
 updateFilterGroup();
 updateWeek();
 renderAuditLog();
+loadClasses();

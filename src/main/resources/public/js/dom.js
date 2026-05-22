@@ -92,10 +92,10 @@ function openClassModal(mode, classItem) {
     classNameInput.value = classItem?.name || "";
   }
   if (classIdInput) {
-    classIdInput.value = classItem?.id || "";
+    classIdInput.value = classItem?.id ?? "";
   }
-  if (classDepartmentInput) {
-    classDepartmentInput.value = classItem?.department || "";
+  if (classYearInput) {
+    classYearInput.value = classItem?.year ?? "";
   }
 
   if (classDeleteBtn) {
@@ -159,7 +159,11 @@ function closeRoomModal() {
 }
 
 function selectClass(classId) {
-  state.selectedClassId = classId;
+  const numericId = Number(classId);
+  if (Number.isNaN(numericId)) {
+    return;
+  }
+  state.selectedClassId = numericId;
   updateViewVisibility();
   renderClassList();
   renderEvents();
@@ -282,7 +286,9 @@ function renderUserList() {
 function getSortedClasses() {
   return classDirectory
     .slice()
-    .sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified));
+    .sort(
+      (a, b) => new Date(b.lastModified || 0) - new Date(a.lastModified || 0)
+    );
 }
 
 function renderClassList() {
@@ -327,11 +333,13 @@ function renderClassList() {
     const tags = document.createElement("div");
     tags.className = "user-tags";
 
-    const departmentTag = document.createElement("span");
-    departmentTag.className = "tag department";
-    departmentTag.textContent = classItem.department;
+    const yearTag = document.createElement("span");
+    yearTag.className = "tag department";
+    yearTag.textContent = Number.isFinite(classItem.year)
+      ? `Year ${classItem.year}`
+      : "Year —";
 
-    tags.appendChild(departmentTag);
+    tags.appendChild(yearTag);
 
     const modified = document.createElement("div");
     modified.className = "user-modified";
@@ -469,9 +477,12 @@ function renderRoomList() {
 }
 
 function isDuplicateClassId(nextId) {
-  const normalized = nextId.toLowerCase();
+  const numericId = Number(nextId);
+  if (!Number.isFinite(numericId)) {
+    return false;
+  }
   return classDirectory.some(
-    (item) => item.id.toLowerCase() === normalized && item.id !== editingClassId
+    (item) => item.id === numericId && item.id !== Number(editingClassId)
   );
 }
 
@@ -489,7 +500,7 @@ function isDuplicateUserId(nextId) {
   );
 }
 
-function upsertClass({ id, name, department }) {
+function upsertClass({ id, name, year, createdBy }) {
   const timestamp = new Date().toISOString();
   const actor = state.userName || "User";
   if (editingClassId) {
@@ -497,24 +508,28 @@ function upsertClass({ id, name, department }) {
     if (!target) {
       return;
     }
-    target.id = id;
+    target.id = Number(id);
     target.name = name;
-    target.department = department;
+    target.year = Number(year);
+    if (createdBy) {
+      target.createdBy = Number(createdBy);
+    }
     target.lastModified = timestamp;
     addAuditEntry("Edited class", actor, name, "", {
       scopeType: "class",
-      scopeId: id,
+      scopeId: Number(id),
     });
   } else {
     classDirectory.push({
-      id,
+      id: Number(id),
       name,
-      department,
+      year: Number(year),
+      createdBy: Number(createdBy),
       lastModified: timestamp,
     });
     addAuditEntry("Added class", actor, name, "", {
       scopeType: "class",
-      scopeId: id,
+      scopeId: Number(id),
     });
   }
 }

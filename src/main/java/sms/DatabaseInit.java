@@ -11,7 +11,7 @@ public class DatabaseInit {
     public static void initializeDatabase() {
         try{
             // Read SQL file
-            String sql = new String(Files.readAllBytes(Paths.get("db/V0_nothing.sql")));
+            String sql = new String(Files.readAllBytes(Paths.get("db/V1_remove_room_capacity.sql")));
             
             // Connect to SQLite
             SQLiteDataSource ds = new SQLiteDataSource();

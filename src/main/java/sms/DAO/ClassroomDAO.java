@@ -20,14 +20,13 @@ public class ClassroomDAO {
 
     // CREATE - Insert a new classroom
     public boolean createClassroom(Classroom classroom) throws SQLException {
-        String sql = "INSERT INTO classrooms (name, building, capacity) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO classrooms (name, building) VALUES (?, ?)";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             pstmt.setString(1, classroom.getName());
             pstmt.setString(2, classroom.getBuilding());
-            pstmt.setInt(3, classroom.getCapacity());
 
             int rowsAffected = pstmt.executeUpdate();
             if (rowsAffected > 0) {
@@ -43,7 +42,7 @@ public class ClassroomDAO {
 
     // READ - Get classroom by ID
     public Classroom getClassroomById(int id) throws SQLException {
-        String sql = "SELECT id, name, building, capacity FROM classrooms WHERE id = ?";
+        String sql = "SELECT id, name, building FROM classrooms WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -55,8 +54,7 @@ public class ClassroomDAO {
                 return new Classroom(
                         rs.getInt("id"),
                         rs.getString("name"),
-                        rs.getString("building"),
-                        rs.getInt("capacity")
+                        rs.getString("building")
                 );
             }
         }
@@ -65,7 +63,7 @@ public class ClassroomDAO {
 
     // READ - Get classroom by name
     public Classroom getClassroomByName(String name) throws SQLException {
-        String sql = "SELECT id, name, building, capacity FROM classrooms WHERE name = ?";
+        String sql = "SELECT id, name, building FROM classrooms WHERE name = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -77,8 +75,7 @@ public class ClassroomDAO {
                 return new Classroom(
                         rs.getInt("id"),
                         rs.getString("name"),
-                        rs.getString("building"),
-                        rs.getInt("capacity")
+                        rs.getString("building")
                 );
             }
         }
@@ -87,7 +84,7 @@ public class ClassroomDAO {
 
     // READ - Get all classrooms
     public List<Classroom> getAllClassrooms() throws SQLException {
-        String sql = "SELECT id, name, building, capacity FROM classrooms";
+        String sql = "SELECT id, name, building FROM classrooms";
         List<Classroom> classrooms = new ArrayList<>();
 
         try (Connection conn = getConnection();
@@ -98,8 +95,7 @@ public class ClassroomDAO {
                 Classroom classroom = new Classroom(
                         rs.getInt("id"),
                         rs.getString("name"),
-                        rs.getString("building"),
-                        rs.getInt("capacity")
+                        rs.getString("building")
                 );
                 classrooms.add(classroom);
             }
@@ -109,7 +105,7 @@ public class ClassroomDAO {
 
     // READ - Get classrooms by building
     public List<Classroom> getClassroomsByBuilding(String building) throws SQLException {
-        String sql = "SELECT id, name, building, capacity FROM classrooms WHERE building = ?";
+        String sql = "SELECT id, name, building FROM classrooms WHERE building = ?";
         List<Classroom> classrooms = new ArrayList<>();
 
         try (Connection conn = getConnection();
@@ -122,8 +118,7 @@ public class ClassroomDAO {
                 Classroom classroom = new Classroom(
                         rs.getInt("id"),
                         rs.getString("name"),
-                        rs.getString("building"),
-                        rs.getInt("capacity")
+                        rs.getString("building")
                 );
                 classrooms.add(classroom);
             }
@@ -133,15 +128,14 @@ public class ClassroomDAO {
 
     // UPDATE - Update classroom information
     public boolean updateClassroom(Classroom classroom) throws SQLException {
-        String sql = "UPDATE classrooms SET name = ?, building = ?, capacity = ? WHERE id = ?";
+        String sql = "UPDATE classrooms SET name = ?, building = ? WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, classroom.getName());
             pstmt.setString(2, classroom.getBuilding());
-            pstmt.setInt(3, classroom.getCapacity());
-            pstmt.setInt(4, classroom.getId());
+            pstmt.setInt(3, classroom.getId());
 
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;

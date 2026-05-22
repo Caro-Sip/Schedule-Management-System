@@ -498,15 +498,21 @@
           </label>
           <label>
             Class ID
-            <input type="text" id="class-id" required placeholder="C-100" />
+            <input
+              type="number"
+              id="class-id"
+              placeholder="Auto-generated"
+              readonly
+            />
           </label>
           <label>
-            Department
+            Year
             <input
-              type="text"
-              id="class-department"
+              type="number"
+              id="class-year"
               required
-              placeholder="Engineering"
+              min="1"
+              placeholder="2"
             />
           </label>
           <div class="modal-actions split">

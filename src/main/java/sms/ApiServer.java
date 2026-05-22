@@ -12,18 +12,24 @@ import java.util.List;
 import java.util.Map;
 
 import sms.Config.DatabaseConfig;
+import sms.Objects.ClassEntity;
 import sms.Objects.Teacher;
+import sms.Service.ClassService;
 import sms.Service.TeacherService;
+import sms.exception.ClassNotFoundException;
+import sms.exception.InvalidClassException;
 import sms.exception.InvalidTeacherException;
 import sms.exception.TeacherNotFoundException;
 
 public class ApiServer {
 
     private static TeacherService teacherService;
+    private static ClassService classService;
     
     public static void main(String[] args) {
         ensureDatabase();
         teacherService = new TeacherService();
+        classService = new ClassService();
 
         @SuppressWarnings("unused")
         Javalin app = Javalin.create(config -> {
@@ -40,6 +46,13 @@ public class ApiServer {
                     get("/{id}", ApiServer::getTeacherById);
                     put("/{id}", ApiServer::updateTeacher);
                     delete("/{id}", ApiServer::deleteTeacher);
+                });
+                path("/api/classes", () -> {
+                    get(ApiServer::getAllClasses);
+                    post(ApiServer::createClass);
+                    get("/{id}", ApiServer::getClassById);
+                    put("/{id}", ApiServer::updateClass);
+                    delete("/{id}", ApiServer::deleteClass);
                 });
             });
         })
@@ -60,6 +73,11 @@ public class ApiServer {
         ctx.json(teachers);
     }
 
+    private static void getAllClasses(Context ctx) {
+        List<ClassEntity> classes = classService.getAllClasses();
+        ctx.json(classes);
+    }
+
     private static void getTeacherById(Context ctx) {
         try {
             int id = Integer.parseInt(ctx.pathParam("id"));
@@ -71,6 +89,20 @@ public class ApiServer {
             ctx.status(404).json(errorResponse(e, "Teacher not found"));
         } catch (Exception e) {
             ctx.status(500).json(errorResponse(e, "Failed to load teacher"));
+        }
+    }
+
+    private static void getClassById(Context ctx) {
+        try {
+            int id = Integer.parseInt(ctx.pathParam("id"));
+            ClassEntity classEntity = classService.getClass(id);
+            ctx.json(classEntity);
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid class id"));
+        } catch (ClassNotFoundException e) {
+            ctx.status(404).json(errorResponse(e, "Class not found"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to load class"));
         }
     }
 
@@ -98,6 +130,22 @@ public class ApiServer {
         }
     }
 
+    private static void createClass(Context ctx) {
+        try {
+            ClassEntity payload = ctx.bodyAsClass(ClassEntity.class);
+            ClassEntity created = classService.createClass(
+                    payload.getName(),
+                    payload.getYear(),
+                    payload.getCreatedBy()
+            );
+            ctx.status(201).json(created);
+        } catch (InvalidClassException | IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid class data"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to create class"));
+        }
+    }
+
     private static void updateTeacher(Context ctx) {
         try {
             int id = Integer.parseInt(ctx.pathParam("id"));
@@ -114,6 +162,22 @@ public class ApiServer {
         }
     }
 
+    private static void updateClass(Context ctx) {
+        try {
+            int id = Integer.parseInt(ctx.pathParam("id"));
+            ClassEntity payload = ctx.bodyAsClass(ClassEntity.class);
+            payload.setId(id);
+            classService.updateClass(payload);
+            ctx.json(Collections.singletonMap("message", "Class updated"));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid class data"));
+        } catch (ClassNotFoundException e) {
+            ctx.status(404).json(errorResponse(e, "Class not found"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to update class"));
+        }
+    }
+
     private static void deleteTeacher(Context ctx) {
         try {
             int id = Integer.parseInt(ctx.pathParam("id"));
@@ -125,6 +189,20 @@ public class ApiServer {
             ctx.status(404).json(errorResponse(e, "Teacher not found"));
         } catch (Exception e) {
             ctx.status(500).json(errorResponse(e, "Failed to delete teacher"));
+        }
+    }
+
+    private static void deleteClass(Context ctx) {
+        try {
+            int id = Integer.parseInt(ctx.pathParam("id"));
+            classService.deleteClass(id);
+            ctx.json(Collections.singletonMap("message", "Class deleted"));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid class id"));
+        } catch (ClassNotFoundException e) {
+            ctx.status(404).json(errorResponse(e, "Class not found"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to delete class"));
         }
     }
 

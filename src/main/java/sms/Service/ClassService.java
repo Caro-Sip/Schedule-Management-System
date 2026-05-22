@@ -11,19 +11,27 @@ import sms.exception.ClassNotFoundException;
 import sms.exception.InvalidClassException;
 
 public class ClassService {
-    ClassEntityDAO classEntityDAO;
+    private final ClassEntityDAO classEntityDAO;
 
-    ClassService(ClassEntityDAO classEntityDAO){
+    public ClassService() {
+        this(new ClassEntityDAO());
+    }
+
+    public ClassService(ClassEntityDAO classEntityDAO){
         this.classEntityDAO = classEntityDAO;
     }
 
-    public void createClass(String name, int year, int createdBy) throws InvalidClassException {
+    public ClassEntity createClass(String name, int year, int createdBy) throws InvalidClassException {
         if(name == null || name.trim().isEmpty()){
             throw new IllegalArgumentException("Name cannot be empty");
         }
 
         if(year < 0){
             throw new IllegalArgumentException("Year cannot be in the negative");
+        }
+
+        if (createdBy <= 0) {
+            throw new IllegalArgumentException("Creator id must be positive");
         }
 
         try{
@@ -34,6 +42,7 @@ public class ClassService {
             if(!isCreated){
                 throw new InvalidClassException("Class was not created");
             }
+            return classEntity;
         } catch (SQLException e){
             throw new RuntimeException("Failed to create class");
         }

@@ -84,26 +84,7 @@ const userDirectory = [
   },
 ];
 
-const classDirectory = [
-  {
-    id: "C-101",
-    name: "SE-1A",
-    department: "Engineering",
-    lastModified: "2026-05-15T09:10:00",
-  },
-  {
-    id: "C-202",
-    name: "CS-2B",
-    department: "Science",
-    lastModified: "2026-05-13T15:45:00",
-  },
-  {
-    id: "C-305",
-    name: "IT-3C",
-    department: "Information Technology",
-    lastModified: "2026-05-11T11:20:00",
-  },
-];
+const classDirectory = [];
 
 const roomDirectory = [
   {

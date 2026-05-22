@@ -1,562 +1,689 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Service Console</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --ink: #0f172a;
-            --muted: #5b677a;
-            --accent: #0ea5a4;
-            --accent-strong: #0f766e;
-            --warm: #f59e0b;
-            --danger: #b91c1c;
-            --card: #ffffff;
-            --surface: #f5f2ea;
-            --border: #d8d4cc;
-            --shadow: 0 20px 50px rgba(15, 23, 42, 0.12);
-        }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Schedule Management System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="audit-embedded.css" />
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+  </head>
+  <body>
 
-        body {
-            font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
-            color: var(--ink);
-            background: radial-gradient(circle at top left, #fff6e5 0%, #f4efe8 35%, #e9f4f2 100%);
-            min-height: 100vh;
-        }
+    <div class="bg-orbit"></div>
+    <div class="bg-grid"></div>
 
-        .page {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 40px 24px 60px;
-            display: flex;
-            flex-direction: column;
-            gap: 28px;
-        }
-
-        .hero {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-            padding: 24px 28px;
-            background: linear-gradient(120deg, #fff 0%, #fef6e3 100%);
-            border: 1px solid var(--border);
-            border-radius: 18px;
-            box-shadow: var(--shadow);
-            animation: riseIn 0.6s ease;
-        }
-
-        .eyebrow {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.2em;
-            color: var(--muted);
-            margin-bottom: 8px;
-        }
-
-        h1 {
-            font-family: "Space Grotesk", "Segoe UI", sans-serif;
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .subtitle {
-            color: var(--muted);
-            font-size: 15px;
-            max-width: 520px;
-        }
-
-        .hero-actions {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .status {
-            padding: 8px 12px;
-            border-radius: 999px;
-            background: #eef2ff;
-            color: #4338ca;
-            font-size: 13px;
-            border: 1px solid #c7d2fe;
-            min-height: 34px;
-            display: flex;
-            align-items: center;
-        }
-
-        .status.success {
-            background: #dcfce7;
-            border-color: #86efac;
-            color: #166534;
-        }
-
-        .status.error {
-            background: #fee2e2;
-            border-color: #fecaca;
-            color: #991b1b;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 18px;
-        }
-
-        .card {
-            background: var(--card);
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            padding: 18px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
-            animation: riseIn 0.6s ease;
-            animation-delay: var(--delay, 0s);
-            animation-fill-mode: both;
-        }
-
-        .card h2 {
-            font-family: "Space Grotesk", "Segoe UI", sans-serif;
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .card p {
-            color: var(--muted);
-            font-size: 13px;
-        }
-
-        .field {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        label {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            color: var(--muted);
-        }
-
-        input {
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 10px 12px;
-            font-size: 14px;
-            font-family: inherit;
-            background: #fff;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(14, 165, 164, 0.2);
-        }
-
-        .btn {
-            border: none;
-            border-radius: 999px;
-            padding: 10px 16px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
-        }
-
-        .btn-primary {
-            background: var(--accent);
-            color: #fff;
-        }
-
-        .btn-secondary {
-            background: #e2e8f0;
-            color: #0f172a;
-        }
-
-        .btn-warm {
-            background: var(--warm);
-            color: #1f1300;
-        }
-
-        .btn-danger {
-            background: #fee2e2;
-            color: var(--danger);
-            border: 1px solid #fecaca;
-        }
-
-        .results {
-            background: #fff;
-            border-radius: 18px;
-            border: 1px solid var(--border);
-            padding: 22px;
-            box-shadow: var(--shadow);
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        .results-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-        }
-
-        .results h2 {
-            font-family: "Space Grotesk", "Segoe UI", sans-serif;
-            font-size: 20px;
-        }
-
-        .teacher-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 12px;
-        }
-
-        .teacher-card {
-            border-radius: 14px;
-            padding: 14px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-        }
-
-        .teacher-card h3 {
-            font-size: 16px;
-            margin-bottom: 8px;
-        }
-
-        .teacher-meta {
-            font-size: 13px;
-            color: var(--muted);
-            display: grid;
-            gap: 4px;
-        }
-
-        .empty {
-            color: var(--muted);
-            font-size: 14px;
-        }
-
-        @keyframes riseIn {
-            from {
-                opacity: 0;
-                transform: translateY(14px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @media (max-width: 720px) {
-            .hero {
-                padding: 20px;
-            }
-
-            .hero-actions {
-                width: 100%;
-                justify-content: flex-start;
-                flex-wrap: wrap;
-            }
-
-            .results-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="page">
-        <header class="hero">
-            <div>
-                <p class="eyebrow">Schedule Management System</p>
-                <h1>Teacher Service Console</h1>
-                <p class="subtitle">Use the Javalin endpoints to create, retrieve, update, and delete teachers.</p>
-            </div>
-            <div class="hero-actions">
-                <button class="btn btn-secondary" id="refreshAll" type="button">Refresh all</button>
-                <div id="status" class="status">Ready</div>
-            </div>
+    <main class="shell">
+      <section class="login" id="login-view">
+        <header class="brand">
+          <div class="brand-mark">SMS</div>
+          <div>
+            <p class="eyebrow">Schedule Management System</p>
+            <h1>Plan. Protect. Publish.</h1>
+            <p class="lead">
+              A clean weekly view for classes, teachers, and rooms. Start as a
+              guest, or sign in for full controls.
+            </p>
+          </div>
         </header>
 
-        <section class="grid">
-            <form class="card" id="createForm" style="--delay: 0.05s">
-                <h2>Create teacher</h2>
-                <p>Create a teacher using `userId` and department.</p>
-                <div class="field">
-                    <label for="createUserId">User id</label>
-                    <input id="createUserId" type="number" min="1" placeholder="e.g. 2" required>
-                </div>
-                <div class="field">
-                    <label for="createDepartment">Department</label>
-                    <input id="createDepartment" type="text" placeholder="Computer Science" required>
-                </div>
-                <button class="btn btn-primary" type="submit">Create</button>
-            </form>
+        <div class="login-panels">
+          <div class="role-card">
+            <h2>Roles</h2>
+            <ul>
+              <li>Class monitor</li>
+              <li>Professor</li>
+              <li>Admin</li>
+              <li>Guest (students)</li>
+            </ul>
+            <button class="btn btn-ghost" id="guest-login">Log in as Guest</button>
+          </div>
 
-            <form class="card" id="updateForm" style="--delay: 0.1s">
-                <h2>Update department</h2>
-                <p>Update the department for an existing teacher.</p>
-                <div class="field">
-                    <label for="updateTeacherId">Teacher id</label>
-                    <input id="updateTeacherId" type="number" min="1" placeholder="e.g. 1" required>
-                </div>
-                <div class="field">
-                    <label for="updateDepartment">New department</label>
-                    <input id="updateDepartment" type="text" placeholder="Applied Math" required>
-                </div>
-                <button class="btn btn-warm" type="submit">Update</button>
+          <div class="signin-card" id="signin-card">
+            <h2>Log in</h2>
+            <form id="login-form">
+              <label>
+                Username
+                <input type="text" name="username" placeholder="jdoe" required />
+              </label>
+              <label>
+                Password
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Password"
+                  required
+                />
+              </label>
+              <label>
+                Role
+                <select name="role" required>
+                  <option value="class-monitor">Class monitor</option>
+                  <option value="professor">Professor</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </label>
+              <button class="btn btn-primary" type="submit">Log in</button>
             </form>
+          </div>
+        </div>
+      </section>
 
-            <form class="card" id="deleteForm" style="--delay: 0.15s">
-                <h2>Delete teacher</h2>
-                <p>Remove a teacher by id.</p>
-                <div class="field">
-                    <label for="deleteTeacherId">Teacher id</label>
-                    <input id="deleteTeacherId" type="number" min="1" placeholder="e.g. 3" required>
-                </div>
-                <button class="btn btn-danger" type="submit">Delete</button>
-            </form>
+      <section class="schedule hidden" id="schedule-view">
+        <header class="schedule-top">
+          <div class="title-block">
+            <h1>Schedule Management System</h1>
+            <p id="welcome-line">Welcome, Guest</p>
+          </div>
+          <div class="top-actions">
+            <button class="btn btn-ghost" id="back-to-login">Sign out</button>
+          </div>
+        </header>
 
-            <form class="card" id="findByIdForm" style="--delay: 0.2s">
-                <h2>Get by id</h2>
-                <p>Fetch a single teacher record.</p>
-                <div class="field">
-                    <label for="findTeacherId">Teacher id</label>
-                    <input id="findTeacherId" type="number" min="1" placeholder="e.g. 2" required>
-                </div>
-                <button class="btn btn-secondary" type="submit">Fetch</button>
-            </form>
+        <nav class="tabs" id="schedule-tabs">
+          <button class="tab active" data-view="class">Class Schedule</button>
+          <button class="tab" data-view="teacher" id="teacher-tab">
+            Teacher Schedule
+          </button>
+          <button class="tab" data-view="room">Room Schedule</button>
+          <button class="tab hidden" data-view="user" id="user-tab">User</button>
 
-            <form class="card" id="findByDeptForm" style="--delay: 0.25s">
-                <h2>Get by department</h2>
-                <p>List teachers in a department.</p>
-                <div class="field">
-                    <label for="findDepartment">Department</label>
-                    <input id="findDepartment" type="text" placeholder="Information Technology" required>
-                </div>
-                <button class="btn btn-secondary" type="submit">Search</button>
-            </form>
+          <button class="tab" data-view="audit" id="audit-tab">Audit Log</button>
 
-            <div class="card" style="--delay: 0.3s">
-                <h2>List all teachers</h2>
-                <p>Load every teacher in the system.</p>
-                <button class="btn btn-primary" id="loadAll" type="button">Load all</button>
+        </nav>
+
+        <div class="schedule-controls" id="schedule-controls">
+          <div class="week-controls">
+            <button class="btn btn-ghost" id="prev-week">Previous</button>
+            <div class="week-label">
+              <span id="week-range">Week of</span>
+              <span class="week-sub" id="week-sub"></span>
             </div>
-        </section>
-
-        <section class="results">
-            <div class="results-header">
-                <h2>Teachers</h2>
-                <span class="empty" id="resultHint">No results yet.</span>
+            <button class="btn btn-ghost" id="next-week">Next</button>
+          </div>
+          <button class="btn btn-ghost" id="back-to-list" type="button" hidden>
+            Back to list
+          </button>
+          <div class="search-filter">
+            <div class="search-field">
+              <input
+                type="search"
+                id="schedule-search"
+                placeholder="Search class or room"
+                aria-label="Search schedule"
+              />
             </div>
-            <div id="teacherList" class="teacher-list"></div>
-        </section>
+            <div class="filter-wrap">
+              <button
+                class="btn btn-ghost"
+                id="filter-toggle"
+                type="button"
+                aria-expanded="false"
+                aria-controls="filter-panel"
+              >
+                Filters
+              </button>
+              <div class="filter-panel" id="filter-panel" hidden>
+                <div class="filter-group" data-filter-group="class">
+                  <label>
+                    Department
+                    <select id="filter-department">
+                      <option value="">All departments</option>
+                      <option value="GIC">GIC</option>
+                      <option value="GAE">GAE</option>
+                      <option value="ABC">ABC</option>
+                      <option value="ABG">ABG</option>
+                      <option value="ABB">ABB</option>
+                    </select>
+                  </label>
+                  <label>
+                    Major
+                    <select id="filter-major">
+                      <option value="">All majors</option>
+                      <option value="cs">Computer Science</option>
+                      <option value="se">Software Engineering</option>
+                      <option value="it">Information Technology</option>
+                      <option value="ds">Data Science</option>
+                    </select>
+                  </label>
+                  <label>
+                    Year
+                    <select id="filter-year">
+                      <option value="">All years</option>
+                      <option value="1">Year 1</option>
+                      <option value="2">Year 2</option>
+                      <option value="3">Year 3</option>
+                      <option value="4">Year 4</option>
+                    </select>
+                  </label>
+                  <label>
+                    Group
+                    <select id="filter-group">
+                      <option value="">All groups</option>
+                      <option value="A">Group A</option>
+                      <option value="B">Group B</option>
+                      <option value="C">Group C</option>
+                      <option value="D">Group D</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="filter-group" data-filter-group="room" hidden>
+                  <label>
+                    Building
+                    <select id="filter-building">
+                      <option value="">All buildings</option>
+                      <option value="A">Building A</option>
+                      <option value="B">Building B</option>
+                      <option value="C">Building C</option>
+                    </select>
+                  </label>
+                  <label>
+                    Floor
+                    <select id="filter-floor">
+                      <option value="">All floors</option>
+                      <option value="1">Floor 1</option>
+                      <option value="2">Floor 2</option>
+                      <option value="3">Floor 3</option>
+                      <option value="4">Floor 4</option>
+                    </select>
+                  </label>
+                  <label>
+                    Room
+                    <select id="filter-room">
+                      <option value="">All rooms</option>
+                      <option value="101">Room 101</option>
+                      <option value="102">Room 102</option>
+                      <option value="201">Room 201</option>
+                      <option value="202">Room 202</option>
+                      <option value="301">Room 301</option>
+                      <option value="302">Room 302</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="filter-actions">
+                  <button class="btn" id="filter-clear" type="button">
+                    Clear
+                  </button>
+                  <button class="btn btn-primary" id="filter-apply" type="button">
+                    Apply
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-primary" id="today-btn">Today</button>
+        </div>
+
+        <div class="entity-controls hidden" id="class-controls">
+          <div class="entity-controls-header">
+            <div>
+              <h2>Classes</h2>
+              <p class="muted">Select a class to view its schedule.</p>
+            </div>
+            <div class="entity-count" id="class-count">0 classes</div>
+          </div>
+          <div class="entity-controls-actions">
+            <button class="btn btn-primary" id="class-add" type="button">
+              Add class
+            </button>
+          </div>
+        </div>
+
+        <div class="entity-controls hidden" id="room-controls">
+          <div class="entity-controls-header">
+            <div>
+              <h2>Rooms</h2>
+              <p class="muted">Select a room to view its schedule.</p>
+            </div>
+            <div class="entity-count" id="room-count">0 rooms</div>
+          </div>
+          <div class="entity-controls-actions">
+            <button class="btn btn-primary" id="room-add" type="button">
+              Add room
+            </button>
+          </div>
+        </div>
+
+        <div class="user-controls hidden" id="user-controls">
+          <div class="user-controls-header">
+            <div>
+              <h2>User Directory</h2>
+              <p class="muted">Sorted by last modified</p>
+            </div>
+            <div class="user-count" id="user-count">0 users</div>
+          </div>
+          <div class="user-controls-actions">
+            <div class="user-search-group">
+              <div class="search-field">
+                <input
+                  type="search"
+                  id="user-search"
+                  placeholder="Search by name or ID"
+                  aria-label="Search users"
+                />
+              </div>
+              <div class="filter-wrap">
+                <button
+                  class="btn btn-ghost"
+                  id="user-filter-toggle"
+                  type="button"
+                  aria-expanded="false"
+                  aria-controls="user-filter-panel"
+                >
+                  Filters
+                </button>
+                <div class="filter-panel" id="user-filter-panel" hidden>
+                  <div class="filter-group">
+                    <label>
+                      Role
+                      <select id="filter-user-role">
+                        <option value="">All roles</option>
+                        <option value="admin">Admin</option>
+                        <option value="professor">Professor</option>
+                        <option value="class-monitor">Class monitor</option>
+                        <option value="guest">Student</option>
+                      </select>
+                    </label>
+                    <label>
+                      Department
+                      <select id="filter-user-department">
+                        <option value="">All departments</option>
+                        <option value="Registrar">Registrar</option>
+                        <option value="Engineering">Engineering</option>
+                        <option value="Science">Science</option>
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="Arts">Arts</option>
+                        <option value="Student Affairs">Student Affairs</option>
+                      </select>
+                    </label>
+                  </div>
+                  <div class="filter-actions">
+                    <button class="btn" id="user-filter-clear" type="button">
+                      Clear
+                    </button>
+                    <button class="btn btn-primary" id="user-filter-apply" type="button">
+                      Apply
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button class="btn btn-primary" id="user-add" type="button">
+              Add user
+            </button>
+          </div>
+        </div>
+
+        <div class="entity-card hidden" id="class-view">
+          <div class="entity-list" id="class-list"></div>
+        </div>
+
+        <div class="entity-card hidden" id="room-view">
+          <div class="entity-list" id="room-list"></div>
+        </div>
+
+        <div class="schedule-card" id="schedule-card">
+          <div class="schedule-scroll">
+            <div class="schedule-grid">
+              <div class="schedule-header" id="schedule-header">
+                <div class="corner"></div>
+              </div>
+              <div class="schedule-body">
+                <div class="times" id="time-column"></div>
+                <div class="grid-area">
+                  <div class="events" id="events"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <footer class="schedule-footer">
+            <div class="legend">
+              <span class="legend-item class">Class</span>
+              <span class="legend-item room">Room</span>
+              <span class="legend-item teacher">Teacher</span>
+            </div>
+            <div class="note" id="guest-note">
+              Teacher schedule is available to professors only.
+            </div>
+          </footer>
+        </div>
+
+        <div class="user-card hidden" id="user-view">
+          <div class="user-list" id="user-list"></div>
+        </div>
+
+        <div class="audit-view hidden" id="audit-view">
+          <div class="user-controls" id="audit-controls">
+            <div class="user-controls-header">
+              <div>
+                <h2>Audit Log</h2>
+                <p class="muted">Sorted by last modified</p>
+              </div>
+              <div class="user-count" id="entryCount">— entries</div>
+            </div>
+            <div class="user-controls-actions">
+              <div class="user-search-group">
+                <div class="search-field">
+                  <input
+                    type="search"
+                    id="searchInput"
+                    placeholder="Search by name or ID"
+                    aria-label="Search audit log"
+                  />
+                </div>
+                <button class="btn btn-ghost" id="clearSearch" type="button">
+                  Clear
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="user-card">
+            <div class="audit-embedded">
+              <div class="log-list" id="logList"></div>
+
+              <div class="empty-state" id="emptyState" style="display: none;">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 64 64"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="32" cy="32" r="28" />
+                  <line x1="20" y1="20" x2="44" y2="44" />
+                  <line x1="44" y1="20" x2="20" y2="44" />
+                </svg>
+                <div class="empty-title">No audit log entries available</div>
+                <div class="empty-copy">
+                  There are currently no audit log entries to display.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="modal" id="user-modal" hidden>
+      <div
+        class="modal-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="user-modal-title"
+      >
+        <div class="modal-header">
+          <h2 class="modal-title" id="user-modal-title">Add user</h2>
+          <button class="modal-close" id="user-close" type="button" aria-label="Close">
+            x
+          </button>
+        </div>
+        <form class="modal-form" id="user-form">
+          <label>
+            Full name
+            <input type="text" id="user-name" required placeholder="Ariana Patel" />
+          </label>
+          <label>
+            User ID
+            <input type="text" id="user-id" required placeholder="U-1024" />
+          </label>
+          <label>
+            Password
+            <input
+              type="password"
+              id="user-password"
+              required
+              placeholder="Set a password"
+            />
+          </label>
+          <label>
+            Role
+            <select id="user-role" required>
+              <option value="admin">Admin</option>
+              <option value="professor">Professor</option>
+              <option value="class-monitor">Class monitor</option>
+              <option value="guest">Student</option>
+            </select>
+          </label>
+          <label>
+            Department
+            <select id="user-department" required>
+              <option value="Registrar">Registrar</option>
+              <option value="Engineering">Engineering</option>
+              <option value="Science">Science</option>
+              <option value="Mathematics">Mathematics</option>
+              <option value="Arts">Arts</option>
+              <option value="Student Affairs">Student Affairs</option>
+            </select>
+          </label>
+          <div class="modal-actions split">
+            <button class="btn" id="user-delete" type="button">
+              Delete
+            </button>
+            <div class="modal-actions-right">
+              <button class="btn" id="user-cancel" type="button">Cancel</button>
+              <button class="btn btn-primary" type="submit">Save</button>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
 
-    <script>
-        const statusEl = document.getElementById("status");
-        const teacherListEl = document.getElementById("teacherList");
-        const resultHintEl = document.getElementById("resultHint");
+    <div class="modal" id="class-modal" hidden>
+      <div
+        class="modal-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="class-modal-title"
+      >
+        <div class="modal-header">
+          <h2 class="modal-title" id="class-modal-title">Add class</h2>
+          <button class="modal-close" id="class-close" type="button" aria-label="Close">
+            x
+          </button>
+        </div>
+        <form class="modal-form" id="class-form">
+          <label>
+            Class name
+            <input type="text" id="class-name" required placeholder="SE-1A" />
+          </label>
+          <label>
+            Class ID
+            <input type="text" id="class-id" required placeholder="C-100" />
+          </label>
+          <label>
+            Department
+            <input
+              type="text"
+              id="class-department"
+              required
+              placeholder="Engineering"
+            />
+          </label>
+          <div class="modal-actions split">
+            <button class="btn" id="class-delete" type="button" hidden>Delete</button>
+            <div class="modal-actions-right">
+              <button class="btn" id="class-cancel" type="button">Cancel</button>
+              <button class="btn btn-primary" type="submit">Save</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
 
-        const apiBase = "/api/teachers";
+    <div class="modal" id="room-modal" hidden>
+      <div
+        class="modal-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="room-modal-title"
+      >
+        <div class="modal-header">
+          <h2 class="modal-title" id="room-modal-title">Add room</h2>
+          <button class="modal-close" id="room-close" type="button" aria-label="Close">
+            x
+          </button>
+        </div>
+        <form class="modal-form" id="room-form">
+          <label>
+            Room name
+            <input type="text" id="room-name" required placeholder="Room 101" />
+          </label>
+          <label>
+            Room ID
+            <input type="text" id="room-id" required placeholder="R-101" />
+          </label>
+          <label>
+            Building
+            <input type="text" id="room-building" required placeholder="Building A" />
+          </label>
+          <label>
+            Floor
+            <input type="text" id="room-floor" required placeholder="1" />
+          </label>
+          <div class="modal-actions split">
+            <button class="btn" id="room-delete" type="button" hidden>Delete</button>
+            <div class="modal-actions-right">
+              <button class="btn" id="room-cancel" type="button">Cancel</button>
+              <button class="btn btn-primary" type="submit">Save</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
 
-        const escapeHtml = (value) => String(value)
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/\"/g, "&quot;")
-            .replace(/'/g, "&#39;");
+    <div class="modal" id="booking-modal" hidden>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="booking-title">
+        <div class="modal-header">
+          <h2 class="modal-title" id="booking-title">Book Class</h2>
+          <button class="modal-close" id="booking-close" type="button" aria-label="Close">
+            x
+          </button>
+        </div>
+        <form class="modal-form" id="booking-form">
+          <label>
+            Start time
+            <input type="time" id="booking-start" required min="06:00" max="18:00" step="1800" />
+          </label>
+          <label>
+            End time
+            <input type="time" id="booking-end" required min="06:00" max="18:00" step="1800" />
+          </label>
+          <label>
+            Professor name
+            <input type="text" id="booking-professor" required placeholder="Dr. Smith" />
+          </label>
+          <label>
+            Subject
+            <input type="text" id="booking-subject" required placeholder="Data Structures" />
+          </label>
+          <label>
+            Type of class
+            <select id="booking-type" required>
+              <option value="lecture">Lecture</option>
+              <option value="lab">Lab</option>
+              <option value="makeup">Makeup</option>
+              <option value="special">Special</option>
+              <option value="review">Review</option>
+            </select>
+          </label>
+          <div class="modal-actions split">
+            <button class="btn" id="booking-delete" type="button" hidden>Delete</button>
+            <div class="modal-actions-right">
+              <button class="btn" id="booking-cancel" type="button">Cancel</button>
+              <button class="btn btn-primary" id="booking-submit" type="submit">
+                Book
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+          </div>
+        </form>
+      </div>
+    </div>
 
-        function setStatus(message, type = "info") {
-            statusEl.textContent = message;
-            statusEl.className = `status ${type}`.trim();
-        }
+    <div class="modal" id="booking-modal" hidden>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="booking-title">
+        <div class="modal-header">
+          <h2 class="modal-title" id="booking-title">Book Class</h2>
+          <button class="modal-close" id="booking-close" type="button" aria-label="Close">
+            x
+          </button>
+        </div>
+        <form class="modal-form" id="booking-form">
+          <label>
+            Start time
+            <input type="time" id="booking-start" required min="06:00" max="18:00" step="1800" />
+          </label>
+          <label>
+            End time
+            <input type="time" id="booking-end" required min="06:00" max="18:00" step="1800" />
+          </label>
+          <label>
+            Professor name
+            <input type="text" id="booking-professor" required placeholder="Dr. Smith" />
+          </label>
+          <label>
+            Subject
+            <input type="text" id="booking-subject" required placeholder="Data Structures" />
+          </label>
+          <label>
+            Type of class
+            <select id="booking-type" required>
+              <option value="lecture">Lecture</option>
+              <option value="lab">Lab</option>
+              <option value="makeup">Makeup</option>
+              <option value="special">Special</option>
+              <option value="review">Review</option>
+            </select>
+          </label>
+          <div class="modal-actions split">
+            <button class="btn" id="booking-delete" type="button" hidden>Delete</button>
+            <div class="modal-actions-right">
+              <button class="btn" id="booking-cancel" type="button">Cancel</button>
+              <button class="btn btn-primary" id="booking-submit" type="submit">
+                Book
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
 
-        function renderTeachers(teachers) {
-            if (!teachers || teachers.length === 0) {
-                teacherListEl.innerHTML = "";
-                resultHintEl.textContent = "No teachers found.";
-                return;
-            }
-
-            resultHintEl.textContent = `${teachers.length} result(s)`;
-            teacherListEl.innerHTML = teachers.map((teacher) => {
-                const id = escapeHtml(teacher.id ?? "-");
-                const userId = escapeHtml(teacher.userId ?? "-");
-                const department = escapeHtml(teacher.department ?? "-");
-                return `
-                    <article class="teacher-card">
-                        <h3>Teacher #${id}</h3>
-                        <div class="teacher-meta">
-                            <span>User id: ${userId}</span>
-                            <span>Department: ${department}</span>
-                        </div>
-                    </article>
-                `;
-            }).join("");
-        }
-
-        async function requestJson(url, options = {}) {
-            const response = await fetch(url, {
-                headers: {
-                    "Content-Type": "application/json",
-                    ...(options.headers || {})
-                },
-                ...options
-            });
-
-            const contentType = response.headers.get("content-type") || "";
-            const data = contentType.includes("application/json") ? await response.json() : null;
-
-            if (!response.ok) {
-                const message = data && data.error ? data.error : `Request failed (${response.status})`;
-                throw new Error(message);
-            }
-
-            return data;
-        }
-
-        async function loadAllTeachers() {
-            const teachers = await requestJson(apiBase);
-            renderTeachers(teachers);
-            setStatus(`Loaded ${teachers.length} teacher(s)`, "success");
-        }
-
-        async function createTeacher(event) {
-            event.preventDefault();
-            const userId = Number(document.getElementById("createUserId").value);
-            const department = document.getElementById("createDepartment").value.trim();
-
-            if (!Number.isInteger(userId) || userId <= 0 || !department) {
-                setStatus("Provide a valid user id and department", "error");
-                return;
-            }
-
-            await requestJson(apiBase, {
-                method: "POST",
-                body: JSON.stringify({ userId, department })
-            });
-
-            setStatus("Teacher created", "success");
-            document.getElementById("createForm").reset();
-            await loadAllTeachers();
-        }
-
-        async function updateTeacher(event) {
-            event.preventDefault();
-            const teacherId = Number(document.getElementById("updateTeacherId").value);
-            const department = document.getElementById("updateDepartment").value.trim();
-
-            if (!Number.isInteger(teacherId) || teacherId <= 0 || !department) {
-                setStatus("Provide a valid teacher id and department", "error");
-                return;
-            }
-
-            await requestJson(`${apiBase}/${teacherId}`, {
-                method: "PUT",
-                body: JSON.stringify({ department })
-            });
-
-            setStatus("Teacher updated", "success");
-            document.getElementById("updateForm").reset();
-            await loadAllTeachers();
-        }
-
-        async function deleteTeacher(event) {
-            event.preventDefault();
-            const teacherId = Number(document.getElementById("deleteTeacherId").value);
-
-            if (!Number.isInteger(teacherId) || teacherId <= 0) {
-                setStatus("Provide a valid teacher id", "error");
-                return;
-            }
-
-            if (!confirm("Delete this teacher?")) {
-                return;
-            }
-
-            await requestJson(`${apiBase}/${teacherId}`, { method: "DELETE" });
-            setStatus("Teacher deleted", "success");
-            document.getElementById("deleteForm").reset();
-            await loadAllTeachers();
-        }
-
-        async function findTeacherById(event) {
-            event.preventDefault();
-            const teacherId = Number(document.getElementById("findTeacherId").value);
-
-            if (!Number.isInteger(teacherId) || teacherId <= 0) {
-                setStatus("Provide a valid teacher id", "error");
-                return;
-            }
-
-            const teacher = await requestJson(`${apiBase}/${teacherId}`);
-            renderTeachers([teacher]);
-            setStatus("Teacher loaded", "success");
-        }
-
-        async function findTeachersByDepartment(event) {
-            event.preventDefault();
-            const department = document.getElementById("findDepartment").value.trim();
-
-            if (!department) {
-                setStatus("Provide a department", "error");
-                return;
-            }
-
-            const teachers = await requestJson(`${apiBase}/department/${encodeURIComponent(department)}`);
-            renderTeachers(teachers);
-            setStatus(`Loaded ${teachers.length} teacher(s)`, "success");
-        }
-
-        document.getElementById("createForm").addEventListener("submit", (event) => {
-            createTeacher(event).catch((error) => setStatus(error.message, "error"));
-        });
-
-        document.getElementById("updateForm").addEventListener("submit", (event) => {
-            updateTeacher(event).catch((error) => setStatus(error.message, "error"));
-        });
-
-        document.getElementById("deleteForm").addEventListener("submit", (event) => {
-            deleteTeacher(event).catch((error) => setStatus(error.message, "error"));
-        });
-
-        document.getElementById("findByIdForm").addEventListener("submit", (event) => {
-            findTeacherById(event).catch((error) => setStatus(error.message, "error"));
-        });
-
-        document.getElementById("findByDeptForm").addEventListener("submit", (event) => {
-            findTeachersByDepartment(event).catch((error) => setStatus(error.message, "error"));
-        });
-
-        document.getElementById("loadAll").addEventListener("click", () => {
-            loadAllTeachers().catch((error) => setStatus(error.message, "error"));
-        });
-
-        document.getElementById("refreshAll").addEventListener("click", () => {
-            loadAllTeachers().catch((error) => setStatus(error.message, "error"));
-        });
-    </script>
-</body>
+    <button
+      class="audit-toggle"
+      id="audit-toggle"
+      type="button"
+      aria-expanded="false"
+      aria-controls="audit-panel"
+    >
+      <span class="audit-arrow">></span>
+    </button>
+    <aside class="audit-panel" id="audit-panel" aria-hidden="true">
+      <div class="audit-header">
+        <h3>Audit log</h3>
+        <span class="audit-count" id="audit-count">0</span>
+      </div>
+      <div class="audit-list" id="audit-list"></div>
+    </aside>
+    <script src="js/state.js"></script>
+    <script src="js/dom.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/audit.js"></script>
+    <script src="audit-log.js"></script>
+    <script src="js/entities.js"></script>
+    <script src="js/schedule.js"></script>
+    <script src="js/views.js"></script>
+    <script src="js/main.js"></script>
+  </body>
 </html>

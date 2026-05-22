@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.List;
 import java.util.Scanner;
 
-import sms.DAO.TeacherDAO;
 import sms.Objects.Schedule;
 import sms.Objects.Teacher;
 import sms.Objects.User;
@@ -34,7 +33,7 @@ public class Cli {
     public static void main(String[] args) {
         initializeDatabaseIfNeeded();
 
-        Cli cli = new Cli(new UserService(), new ScheduleService(), new TeacherService(new TeacherDAO()), new Scanner(System.in));
+        Cli cli = new Cli(new UserService(), new ScheduleService(), new TeacherService(), new Scanner(System.in));
         cli.run();
     }
 

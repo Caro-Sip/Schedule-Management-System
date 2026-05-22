@@ -1,12 +1,11 @@
 package sms.Service;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.databind.introspect.TypeResolutionContext.Empty;
-
+import sms.DAO.ScheduleDAO;
 import sms.DAO.TeacherDAO;
+import sms.Objects.Schedule;
 import sms.Objects.Teacher;
 import sms.Objects.TimeSlot;
 import sms.exception.InvalidTeacherException;
@@ -14,9 +13,15 @@ import sms.exception.TeacherNotFoundException;
 
 public class TeacherService {
     private TeacherDAO teacherDAO;
+    private final ScheduleDAO scheduleDAO;
 
-    public TeacherService(TeacherDAO teacherDao){
+    public TeacherService() {
+        this(new TeacherDAO(), new ScheduleDAO());
+    }
+
+    public TeacherService(TeacherDAO teacherDao, ScheduleDAO scheduleDAO) {
         this.teacherDAO = teacherDao;
+        this.scheduleDAO = scheduleDAO;
     }
 
     public void createTeacher(int userId, String department) throws InvalidTeacherException {
@@ -30,8 +35,8 @@ public class TeacherService {
 
         Teacher teacher = new Teacher(userId,department);
         try{
-            boolean created = teacherDAO.createTeacher(teacher);
-            if(!created){
+            boolean isCreated = teacherDAO.createTeacher(teacher);
+            if(!isCreated){
                 throw new InvalidTeacherException("Teacher was not created");
             }
 
@@ -116,9 +121,52 @@ public class TeacherService {
         }
     }
 
-    // TODO isTeacherAvailable function
-    // caro: above my pay grade
     public boolean isTeacherAvailable(int teacherId, TimeSlot slot) {
-        throw new UnsupportedOperationException("Teacher availability check not implemented yet");
+        if (teacherId < 0) {
+            throw new IllegalArgumentException("Invalid teacher Id");
+        }
+
+        if (slot == null || slot.getDate() == null || slot.getStartTime() == null || slot.getEndTime() == null) {
+            throw new IllegalArgumentException("Invalid time slot");
+        }
+
+        try {
+            if (!teacherDAO.teacherExists(teacherId)) {
+                throw new IllegalArgumentException("Teacher not found with id:" + teacherId);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to check teacher availability", e);
+        }
+
+        for (Schedule schedule : scheduleDAO.getAllSchedules()) {
+            Integer assignedTeacherId = schedule.getTeacherId();
+            if (assignedTeacherId == null || assignedTeacherId != teacherId) {
+                continue;
+            }
+
+            if (schedule.getDate() == null || !schedule.getDate().equals(slot.getDate())) {
+                continue;
+            }
+
+            if (isCancelled(schedule)) {
+                continue;
+            }
+
+            if (isTimeOverlapping(slot, schedule)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private boolean isTimeOverlapping(TimeSlot slot, Schedule schedule) {
+        return slot.getStartTime().isBefore(schedule.getEndTime())
+                && slot.getEndTime().isAfter(schedule.getStartTime());
+    }
+
+    private boolean isCancelled(Schedule schedule) {
+        String status = schedule.getStatus();
+        return status != null && status.equalsIgnoreCase("CANCELLED");
     }
 }

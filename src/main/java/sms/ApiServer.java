@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 
 import sms.Config.DatabaseConfig;
-import sms.DAO.TeacherDAO;
 import sms.Objects.Teacher;
 import sms.Service.TeacherService;
 import sms.exception.InvalidTeacherException;
@@ -24,7 +23,7 @@ public class ApiServer {
     
     public static void main(String[] args) {
         ensureDatabase();
-        teacherService = new TeacherService(new TeacherDAO());
+        teacherService = new TeacherService();
 
         @SuppressWarnings("unused")
         Javalin app = Javalin.create(config -> {

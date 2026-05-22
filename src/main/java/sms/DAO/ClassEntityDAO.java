@@ -1,14 +1,17 @@
 package sms.DAO;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.List;
 
 import sms.Config.DatabaseConfig;
 import sms.Objects.ClassEntity;
+import sms.Objects.TimeSlot;
 
 public class ClassEntityDAO {
 
@@ -154,6 +157,36 @@ public class ClassEntityDAO {
         return classEntities;
     }
 
+    // READ - Get classes by time slot
+    public List<ClassEntity> getByTimeSlot(TimeSlot slot) throws SQLException {
+        String sql = "SELECT DISTINCT c.id, c.name, c.year, c.created_by "
+                + "FROM classes c "
+                + "JOIN schedule_classes sc ON sc.class_id = c.id "
+                + "JOIN schedule s ON s.id = sc.schedule_id "
+                + "WHERE s.date = ? AND s.start_time = ? AND s.end_time = ?";
+        List<ClassEntity> classEntities = new ArrayList<>();
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setDate(1, Date.valueOf(slot.getDate()));
+            pstmt.setTime(2, Time.valueOf(slot.getStartTime()));
+            pstmt.setTime(3, Time.valueOf(slot.getEndTime()));
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                ClassEntity classEntity = new ClassEntity(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getInt("year"),
+                        rs.getInt("created_by")
+                );
+                classEntities.add(classEntity);
+            }
+        }
+        return classEntities;
+    }
+
     // UPDATE - Update class information
     public boolean updateClass(ClassEntity classEntity) throws SQLException {
         String sql = "UPDATE classes SET name = ?, year = ?, created_by = ? WHERE id = ?";
@@ -193,6 +226,19 @@ public class ClassEntityDAO {
 
             stmt.executeUpdate(sql);
             return true;
+        }
+    }
+
+    // UPDATE - Cancel schedules linked to a class
+    public int cancelSchedulesForClass(int classId) throws SQLException {
+        String sql = "UPDATE schedule SET status = 'CANCELLED' "
+                + "WHERE id IN (SELECT schedule_id FROM schedule_classes WHERE class_id = ?)";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, classId);
+            return pstmt.executeUpdate();
         }
     }
 

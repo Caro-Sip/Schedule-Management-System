@@ -87,6 +87,10 @@ function normalizeRoomText(value) {
   return (value || "").toLowerCase().replace(/[^a-z0-9]+/g, "");
 }
 
+function normalizeClassText(value) {
+  return (value || "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
 function normalizeCourseCode(value) {
   const normalized = normalizeRoomText(value).toUpperCase();
   return normalized ? `SUBJ-${normalized.slice(0, 24)}` : "";
@@ -94,6 +98,10 @@ function normalizeCourseCode(value) {
 
 function getBookingClassrooms() {
   return classroomDirectory && classroomDirectory.length > 0 ? classroomDirectory : roomDirectory;
+}
+
+function getBookingClasses() {
+  return classDirectory || [];
 }
 
 function parseRoomInput(value) {
@@ -147,6 +155,37 @@ function resolveClassroomFromInput(value, availableClassrooms) {
             candidate === query || candidate.includes(query) || query.includes(candidate)
         ) ||
         (buildingMatches && roomMatches)
+      );
+    }) || null
+  );
+}
+
+function getClassDisplayLabel(classItem) {
+  if (!classItem) {
+    return "";
+  }
+
+  return `${classItem.name || `Class ${classItem.id}`} · ID ${classItem.id}`;
+}
+
+function resolveClassFromInput(value, availableClasses) {
+  const normalizedInput = normalizeClassText(value);
+  if (!normalizedInput) {
+    return null;
+  }
+
+  const classes = availableClasses || classDirectory || [];
+  return (
+    classes.find((classItem) => {
+      const candidates = [classItem.id, classItem.name, getClassDisplayLabel(classItem)]
+        .filter(Boolean)
+        .map((candidate) => normalizeClassText(candidate));
+
+      return candidates.some(
+        (candidate) =>
+          candidate === normalizedInput ||
+          candidate.includes(normalizedInput) ||
+          normalizedInput.includes(candidate)
       );
     }) || null
   );

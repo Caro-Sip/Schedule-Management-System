@@ -127,6 +127,25 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
       }
     }
   }
+  if (bookingClassGroup && bookingClassInput) {
+    const showClassPicker = state.view === "room";
+    bookingClassGroup.toggleAttribute("hidden", !showClassPicker);
+    bookingClassInput.required = showClassPicker;
+    if (showClassPicker) {
+      const classCatalog = getBookingClasses();
+      const classItem = classCatalog.find((item) => String(item.id) === String(resolvedClassId)) || null;
+      bookingClassInput.value = classItem ? getClassDisplayLabel(classItem) : "";
+      bookingClassInput.dataset.classId = classItem ? String(classItem.id) : "";
+      renderBookingClassOptions();
+    } else {
+      bookingClassInput.value = "";
+      bookingClassInput.dataset.classId = "";
+      if (bookingClassResults) {
+        bookingClassResults.setAttribute("hidden", "");
+        bookingClassResults.innerHTML = "";
+      }
+    }
+  }
   if (bookingProfessor) {
     bookingProfessor.value = isEdit ? eventData.professor || "" : "";
   }
@@ -155,6 +174,14 @@ function closeBookingModal() {
     return;
   }
   bookingModal.setAttribute("hidden", "");
+  if (bookingClassInput) {
+    bookingClassInput.value = "";
+    bookingClassInput.dataset.classId = "";
+  }
+  if (bookingClassResults) {
+    bookingClassResults.setAttribute("hidden", "");
+    bookingClassResults.innerHTML = "";
+  }
   if (bookingRoomInput) {
     bookingRoomInput.value = "";
     bookingRoomInput.dataset.roomId = "";
@@ -379,6 +406,70 @@ function getAvailableRoomsForBooking(day, startMinutes, endMinutes, ignoreId) {
   return roomCatalog.filter(
     (roomItem) => !getRoomBookingConflict(day, startMinutes, endMinutes, ignoreId, roomItem.id)
   );
+}
+
+function renderBookingClassOptions() {
+  if (
+    !bookingClassGroup ||
+    !bookingClassInput ||
+    !bookingClassResults ||
+    !pendingBooking ||
+    state.view !== "room"
+  ) {
+    return;
+  }
+
+  const query = normalizeClassText(bookingClassInput.value);
+  const classCatalog = getBookingClasses();
+  const filteredClasses = classCatalog.filter((classItem) => {
+    if (!query) {
+      return true;
+    }
+    const searchText = normalizeClassText(
+      [classItem.id, classItem.name, getClassDisplayLabel(classItem)].filter(Boolean).join(" ")
+    );
+    return searchText.includes(query);
+  });
+
+  bookingClassResults.innerHTML = "";
+
+  if (filteredClasses.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "room-picker-empty";
+    empty.textContent = query ? "No classes match." : "No classes available.";
+    bookingClassResults.appendChild(empty);
+    bookingClassResults.removeAttribute("hidden");
+    return;
+  }
+
+  filteredClasses.forEach((classItem) => {
+    const option = document.createElement("button");
+    option.type = "button";
+    option.className = "room-picker-option";
+    option.dataset.classId = String(classItem.id);
+
+    const label = document.createElement("span");
+    label.className = "room-picker-label";
+    label.textContent = getClassDisplayLabel(classItem);
+
+    const subtext = document.createElement("span");
+    subtext.className = "room-picker-subtext";
+    subtext.textContent = String(classItem.id);
+
+    option.appendChild(label);
+    option.appendChild(subtext);
+    option.addEventListener("click", () => {
+      bookingClassInput.value = getClassDisplayLabel(classItem);
+      bookingClassInput.dataset.classId = String(classItem.id);
+      pendingBooking.classId = classItem.id;
+      pendingBooking.classIds = [classItem.id];
+      bookingClassResults.setAttribute("hidden", "");
+    });
+
+    bookingClassResults.appendChild(option);
+  });
+
+  bookingClassResults.removeAttribute("hidden");
 }
 
 function resolveRoomFromInput(roomInputValue, availableRooms) {

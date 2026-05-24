@@ -136,6 +136,9 @@ public class ApiServer {
             ClassEntity created = classService.createClass(
                     payload.getName(),
                     payload.getYear(),
+                    payload.getSemester(),
+                    payload.getStartDate(),
+                    payload.getEndDate(),
                     payload.getCreatedBy()
             );
             ctx.status(201).json(created);

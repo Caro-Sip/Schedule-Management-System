@@ -1,6 +1,8 @@
 package sms.DAO;
 
 import java.sql.*;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,9 +26,9 @@ public class ScheduleDAO {
             pstmt.setInt(1, schedule.getClassroomId());
             pstmt.setObject(2, schedule.getTeacherId(), Types.INTEGER);
             pstmt.setInt(3, schedule.getCourseId());
-            pstmt.setDate(4, Date.valueOf(schedule.getDate()));
-            pstmt.setTime(5, Time.valueOf(schedule.getStartTime()));
-            pstmt.setTime(6, Time.valueOf(schedule.getEndTime()));
+            pstmt.setString(4, schedule.getDate().toString());
+            pstmt.setString(5, schedule.getStartTime().toString());
+            pstmt.setString(6, schedule.getEndTime().toString());
             pstmt.setString(7, schedule.getStatus());
             pstmt.setString(8, schedule.getVisibility());
             pstmt.setString(9, schedule.getType());
@@ -67,9 +69,9 @@ public class ScheduleDAO {
                 schedule.setClassroomId(rs.getInt("classroom_id"));
                 schedule.setTeacherId((Integer) rs.getObject("teacher_id"));
                 schedule.setCourseId(rs.getInt("course_id"));
-                schedule.setDate(rs.getDate("date").toLocalDate());
-                schedule.setStartTime(rs.getTime("start_time").toLocalTime());
-                schedule.setEndTime(rs.getTime("end_time").toLocalTime());
+                schedule.setDate(LocalDate.parse(rs.getString("date")));
+                schedule.setStartTime(LocalTime.parse(rs.getString("start_time")));
+                schedule.setEndTime(LocalTime.parse(rs.getString("end_time")));
                 schedule.setStatus(rs.getString("status"));
                 schedule.setVisibility(rs.getString("visibility"));
                 schedule.setType(rs.getString("type"));
@@ -89,7 +91,7 @@ public class ScheduleDAO {
     }
 
     // READ - Get all schedules
-    public List<Schedule> getAllSchedules() {
+    public List<Schedule> getAllSchedules() throws SQLException {
         String sql = "SELECT id, classroom_id, teacher_id, course_id, date, start_time, end_time, status, visibility, type, priority, created_by, created_at, greyed_at, linked_schedule_id FROM schedule";
         List<Schedule> schedules = new ArrayList<>();
 
@@ -103,9 +105,9 @@ public class ScheduleDAO {
                 schedule.setClassroomId(rs.getInt("classroom_id"));
                 schedule.setTeacherId((Integer) rs.getObject("teacher_id"));
                 schedule.setCourseId(rs.getInt("course_id"));
-                schedule.setDate(rs.getDate("date").toLocalDate());
-                schedule.setStartTime(rs.getTime("start_time").toLocalTime());
-                schedule.setEndTime(rs.getTime("end_time").toLocalTime());
+                schedule.setDate(LocalDate.parse(rs.getString("date")));
+                schedule.setStartTime(LocalTime.parse(rs.getString("start_time")));
+                schedule.setEndTime(LocalTime.parse(rs.getString("end_time")));
                 schedule.setStatus(rs.getString("status"));
                 schedule.setVisibility(rs.getString("visibility"));
                 schedule.setType(rs.getString("type"));
@@ -118,8 +120,6 @@ public class ScheduleDAO {
                 if (rs.wasNull()) schedule.setLinkedScheduleId(null);
                 schedules.add(schedule);
             }
-        } catch (SQLException e) {
-            System.err.println("Error retrieving all schedules: " + e.getMessage());
         }
         return schedules;
     }
@@ -134,9 +134,9 @@ public class ScheduleDAO {
             pstmt.setInt(1, schedule.getClassroomId());
             pstmt.setObject(2, schedule.getTeacherId(), Types.INTEGER);
             pstmt.setInt(3, schedule.getCourseId());
-            pstmt.setDate(4, Date.valueOf(schedule.getDate()));
-            pstmt.setTime(5, Time.valueOf(schedule.getStartTime()));
-            pstmt.setTime(6, Time.valueOf(schedule.getEndTime()));
+            pstmt.setString(4, schedule.getDate().toString());
+            pstmt.setString(5, schedule.getStartTime().toString());
+            pstmt.setString(6, schedule.getEndTime().toString());
             pstmt.setString(7, schedule.getStatus());
             pstmt.setString(8, schedule.getVisibility());
             pstmt.setString(9, schedule.getType());

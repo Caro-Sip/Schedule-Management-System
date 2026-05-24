@@ -16,7 +16,7 @@ public class ScheduleHistoryDAO {
 
     // CREATE - Insert a new schedule history
     public boolean createScheduleHistory(ScheduleHistory scheduleHistory) {
-        String sql = "INSERT INTO schedule_history (scheduleId, action, changedBy, timestamp, note) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO schedule_history (schedule_id, action, changed_by, timestamp, note) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -37,7 +37,7 @@ public class ScheduleHistoryDAO {
 
     // READ - Get schedule history by ID
     public ScheduleHistory getById(int id) {
-        String sql = "SELECT id, scheduleId, action, changedBy, timestamp, note FROM schedule_history WHERE id = ?";
+        String sql = "SELECT id, schedule_id, action, changed_by, timestamp, note FROM schedule_history WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -48,9 +48,9 @@ public class ScheduleHistoryDAO {
             if (rs.next()) {
                 ScheduleHistory history = new ScheduleHistory();
                 history.setId(rs.getInt("id"));
-                history.setScheduleId(rs.getInt("scheduleId"));
+                history.setScheduleId(rs.getInt("schedule_id"));
                 history.setAction(rs.getString("action"));
-                history.setChangedBy(rs.getInt("changedBy"));
+                history.setChangedBy(rs.getInt("changed_by"));
                 history.setTimestamp(rs.getTimestamp("timestamp").toLocalDateTime());
                 history.setNote(rs.getString("note"));
                 return history;
@@ -63,7 +63,7 @@ public class ScheduleHistoryDAO {
 
     // READ - Get schedule histories by scheduleId
     public List<ScheduleHistory> getByScheduleId(int scheduleId) {
-        String sql = "SELECT id, scheduleId, action, changedBy, timestamp, note FROM schedule_history WHERE scheduleId = ?";
+        String sql = "SELECT id, schedule_id, action, changed_by, timestamp, note FROM schedule_history WHERE schedule_id = ?";
         List<ScheduleHistory> histories = new ArrayList<>();
 
         try (Connection conn = getConnection();
@@ -75,9 +75,9 @@ public class ScheduleHistoryDAO {
             while (rs.next()) {
                 ScheduleHistory history = new ScheduleHistory();
                 history.setId(rs.getInt("id"));
-                history.setScheduleId(rs.getInt("scheduleId"));
+                history.setScheduleId(rs.getInt("schedule_id"));
                 history.setAction(rs.getString("action"));
-                history.setChangedBy(rs.getInt("changedBy"));
+                history.setChangedBy(rs.getInt("changed_by"));
                 history.setTimestamp(rs.getTimestamp("timestamp").toLocalDateTime());
                 history.setNote(rs.getString("note"));
                 histories.add(history);
@@ -90,7 +90,7 @@ public class ScheduleHistoryDAO {
 
     // READ - Get all schedule histories
     public List<ScheduleHistory> getAll() {
-        String sql = "SELECT id, scheduleId, action, changedBy, timestamp, note FROM schedule_history";
+        String sql = "SELECT id, schedule_id, action, changed_by, timestamp, note FROM schedule_history";
         List<ScheduleHistory> histories = new ArrayList<>();
 
         try (Connection conn = getConnection();
@@ -100,9 +100,9 @@ public class ScheduleHistoryDAO {
             while (rs.next()) {
                 ScheduleHistory history = new ScheduleHistory();
                 history.setId(rs.getInt("id"));
-                history.setScheduleId(rs.getInt("scheduleId"));
+                history.setScheduleId(rs.getInt("schedule_id"));
                 history.setAction(rs.getString("action"));
-                history.setChangedBy(rs.getInt("changedBy"));
+                history.setChangedBy(rs.getInt("changed_by"));
                 history.setTimestamp(rs.getTimestamp("timestamp").toLocalDateTime());
                 history.setNote(rs.getString("note"));
                 histories.add(history);
@@ -115,7 +115,7 @@ public class ScheduleHistoryDAO {
 
     // READ - Get schedule histories by changedBy
     public List<ScheduleHistory> getByChangedBy(int changedBy) {
-        String sql = "SELECT id, scheduleId, action, changedBy, timestamp, note FROM schedule_history WHERE changedBy = ?";
+        String sql = "SELECT id, schedule_id, action, changed_by, timestamp, note FROM schedule_history WHERE changed_by = ?";
         List<ScheduleHistory> histories = new ArrayList<>();
 
         try (Connection conn = getConnection();
@@ -127,9 +127,9 @@ public class ScheduleHistoryDAO {
             while (rs.next()) {
                 ScheduleHistory history = new ScheduleHistory();
                 history.setId(rs.getInt("id"));
-                history.setScheduleId(rs.getInt("scheduleId"));
+                history.setScheduleId(rs.getInt("schedule_id"));
                 history.setAction(rs.getString("action"));
-                history.setChangedBy(rs.getInt("changedBy"));
+                history.setChangedBy(rs.getInt("changed_by"));
                 history.setTimestamp(rs.getTimestamp("timestamp").toLocalDateTime());
                 history.setNote(rs.getString("note"));
                 histories.add(history);
@@ -142,7 +142,7 @@ public class ScheduleHistoryDAO {
 
     // UPDATE - Update schedule history
     public boolean updateScheduleHistory(ScheduleHistory scheduleHistory) {
-        String sql = "UPDATE schedule_history SET scheduleId = ?, action = ?, changedBy = ?, timestamp = ?, note = ? WHERE id = ?";
+        String sql = "UPDATE schedule_history SET schedule_id = ?, action = ?, changed_by = ?, timestamp = ?, note = ? WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {

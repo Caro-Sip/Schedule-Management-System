@@ -202,7 +202,12 @@ function renderEvents() {
     if (!state.selectedClassId) {
       return;
     }
-    filteredItems = items.filter((item) => item.classId === state.selectedClassId);
+    filteredItems = items.filter((item) => {
+      if (Array.isArray(item.classIds) && item.classIds.length > 0) {
+        return item.classIds.includes(state.selectedClassId);
+      }
+      return item.classId === state.selectedClassId;
+    });
   }
 
   if (state.view === "room" && isAdminRole(state.role)) {

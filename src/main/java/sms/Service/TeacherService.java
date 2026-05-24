@@ -121,44 +121,45 @@ public class TeacherService {
         }
     }
 
-    public boolean isTeacherAvailable(int teacherId, TimeSlot slot) {
-        if (teacherId < 0) {
-            throw new IllegalArgumentException("Invalid teacher Id");
-        }
+    // TODO isTeacherAvailable function
+    // public boolean isTeacherAvailable(int teacherId, TimeSlot slot) {
+    //     if (teacherId < 0) {
+    //         throw new IllegalArgumentException("Invalid teacher Id");
+    //     }
 
-        if (slot == null || slot.getDate() == null || slot.getStartTime() == null || slot.getEndTime() == null) {
-            throw new IllegalArgumentException("Invalid time slot");
-        }
+    //     if (slot == null || slot.getDate() == null || slot.getStartTime() == null || slot.getEndTime() == null) {
+    //         throw new IllegalArgumentException("Invalid time slot");
+    //     }
 
-        try {
-            if (!teacherDAO.teacherExists(teacherId)) {
-                throw new IllegalArgumentException("Teacher not found with id:" + teacherId);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to check teacher availability", e);
-        }
+    //     try {
+    //         if (!teacherDAO.teacherExists(teacherId)) {
+    //             throw new IllegalArgumentException("Teacher not found with id:" + teacherId);
+    //         }
+    //     } catch (SQLException e) {
+    //         throw new RuntimeException("Failed to check teacher availability", e);
+    //     }
 
-        for (Schedule schedule : scheduleDAO.getAllSchedules()) {
-            Integer assignedTeacherId = schedule.getTeacherId();
-            if (assignedTeacherId == null || assignedTeacherId != teacherId) {
-                continue;
-            }
+    //     for (Schedule schedule : scheduleDAO.getAllSchedules()) {
+    //         Integer assignedTeacherId = schedule.getTeacherId();
+    //         if (assignedTeacherId == null || assignedTeacherId != teacherId) {
+    //             continue;
+    //         }
 
-            if (schedule.getDate() == null || !schedule.getDate().equals(slot.getDate())) {
-                continue;
-            }
+    //         if (schedule.getDate() == null || !schedule.getDate().equals(slot.getDate())) {
+    //             continue;
+    //         }
 
-            if (isCancelled(schedule)) {
-                continue;
-            }
+    //         if (isCancelled(schedule)) {
+    //             continue;
+    //         }
 
-            if (isTimeOverlapping(slot, schedule)) {
-                return false;
-            }
-        }
+    //         if (isTimeOverlapping(slot, schedule)) {
+    //             return false;
+    //         }
+    //     }
 
-        return true;
-    }
+    //     return true;
+    // }
 
     private boolean isTimeOverlapping(TimeSlot slot, Schedule schedule) {
         return slot.getStartTime().isBefore(schedule.getEndTime())

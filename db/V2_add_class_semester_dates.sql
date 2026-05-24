@@ -1,3 +1,4 @@
+-- UNUSED_SQL_FILE: SKIP 
 PRAGMA foreign_keys = ON;
 
 BEGIN TRANSACTION;

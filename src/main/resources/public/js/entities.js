@@ -178,6 +178,55 @@ async function createClassApi(payload) {
 	});
 }
 
+async function loadSchedules() {
+	try {
+		const schedules = await requestJson(`${API_BASE}/schedules`);
+		// reset events
+		eventsByView.class = [];
+		eventsByView.room = [];
+		eventsByView.teacher = [];
+
+		schedules.forEach((s) => {
+			const date = new Date(s.date);
+			if (isNaN(date.getTime())) return;
+			const day = date.getDay();
+			const dayIndex = day === 0 ? 6 : day - 1; // Monday=0
+			const start = s.startTime || s.start_time || s.start;
+			const end = s.endTime || s.end_time || s.end;
+			const title = s.title || `Course ${s.courseId}`;
+			const classIds = Array.isArray(s.classIds)
+				? s.classIds.map((value) => Number(value)).filter((value) => !Number.isNaN(value))
+				: [];
+			const metaParts = [];
+			if (s.teacherId) metaParts.push(`T:${s.teacherId}`);
+			if (s.classroomId) metaParts.push(`R:${s.classroomId}`);
+			const meta = metaParts.join(" | ");
+
+			const event = {
+				id: String(s.id),
+				day: dayIndex,
+				start: start || "",
+				end: end || "",
+				title,
+				meta,
+				type: s.type || "",
+				professor: s.teacherId || null,
+				classId: classIds.length === 1 ? classIds[0] : null,
+				classIds,
+				roomId: s.classroomId || null,
+			};
+
+			eventsByView.class.push(event);
+			eventsByView.room.push(Object.assign({}, event));
+			eventsByView.teacher.push(Object.assign({}, event));
+		});
+
+		renderEvents();
+	} catch (error) {
+		console.error("Failed to load schedules", error);
+	}
+}
+
 async function updateClassApi(id, payload) {
 	return requestJson(`${API_BASE}/classes/${id}`, {
 		method: "PUT",

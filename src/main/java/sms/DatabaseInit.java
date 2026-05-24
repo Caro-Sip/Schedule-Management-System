@@ -11,7 +11,7 @@ public class DatabaseInit {
     public static void initializeDatabase() {
         try{
             // Read SQL file
-            String sql = new String(Files.readAllBytes(Paths.get("db/V2_add_class_semester_dates.sql")));
+            String sql = new String(Files.readAllBytes(Paths.get("db/V3_iso_date_text_schema.sql")));
             
             // Connect to SQLite
             SQLiteDataSource ds = new SQLiteDataSource();

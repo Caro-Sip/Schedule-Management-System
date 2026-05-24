@@ -105,44 +105,45 @@ public class RoomService {
             throw new RuntimeException("Failed to delete room", e);
         }
     }
+ 
+    // TODO implement isRoomAvailable function
+    // public boolean isRoomAvailable(int roomId, TimeSlot slot) {
+    //     if (roomId < 0) {
+    //         throw new IllegalArgumentException("Invalid room id");
+    //     }
 
-    public boolean isRoomAvailable(int roomId, TimeSlot slot) {
-        if (roomId < 0) {
-            throw new IllegalArgumentException("Invalid room id");
-        }
+    //     if (slot == null || slot.getDate() == null || slot.getStartTime() == null || slot.getEndTime() == null) {
+    //         throw new IllegalArgumentException("Invalid time slot");
+    //     }
 
-        if (slot == null || slot.getDate() == null || slot.getStartTime() == null || slot.getEndTime() == null) {
-            throw new IllegalArgumentException("Invalid time slot");
-        }
+    //     try {
+    //         if (!classroomDAO.classroomExists(roomId)) {
+    //             throw new IllegalArgumentException("Room not found with id:" + roomId);
+    //         }
+    //     } catch (java.sql.SQLException e) {
+    //         throw new RuntimeException("Failed to check room availability", e);
+    //     }
 
-        try {
-            if (!classroomDAO.classroomExists(roomId)) {
-                throw new IllegalArgumentException("Room not found with id:" + roomId);
-            }
-        } catch (java.sql.SQLException e) {
-            throw new RuntimeException("Failed to check room availability", e);
-        }
+    //     for (Schedule schedule : scheduleDAO.getAllSchedules()) {
+    //         if (schedule.getClassroomId() != roomId) {
+    //             continue;
+    //         }
 
-        for (Schedule schedule : scheduleDAO.getAllSchedules()) {
-            if (schedule.getClassroomId() != roomId) {
-                continue;
-            }
+    //         if (schedule.getDate() == null || !schedule.getDate().equals(slot.getDate())) {
+    //             continue;
+    //         }
 
-            if (schedule.getDate() == null || !schedule.getDate().equals(slot.getDate())) {
-                continue;
-            }
+    //         if (isCancelled(schedule)) {
+    //             continue;
+    //         }
 
-            if (isCancelled(schedule)) {
-                continue;
-            }
+    //         if (isTimeOverlapping(slot, schedule)) {
+    //             return false;
+    //         }
+    //     }
 
-            if (isTimeOverlapping(slot, schedule)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
+    //     return true;
+    // }
 
     private boolean isTimeOverlapping(TimeSlot slot, Schedule schedule) {
         return slot.getStartTime().isBefore(schedule.getEndTime())

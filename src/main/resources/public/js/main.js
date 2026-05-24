@@ -733,3 +733,4 @@ updateFilterGroup();
 updateWeek();
 renderAuditLog();
 loadClasses();
+loadSchedules();

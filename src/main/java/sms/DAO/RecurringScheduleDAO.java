@@ -1,6 +1,8 @@
 package sms.DAO;
 
 import java.sql.*;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,8 +16,8 @@ public class RecurringScheduleDAO {
     }
 
     public boolean createSchedule(RecurringSchedule recurringSchedule) throws SQLException {
-        String sql = "INSERT INTO recurring_schedules (id, teacherId, classroomId, courseId, dayOfWeek, startTime, endTime, effectiveFrom, effectiveUntil) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO recurring_schedule (id, teacher_id, classroom_id, course_id, day_of_week, start_time, end_time, effective_from, effective_until) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -25,10 +27,14 @@ public class RecurringScheduleDAO {
             pstmt.setInt(3, recurringSchedule.getClassroomId());
             pstmt.setInt(4, recurringSchedule.getCourseId());
             pstmt.setInt(5, recurringSchedule.getDayOfWeek());
-            pstmt.setTime(6, Time.valueOf(recurringSchedule.getStartTime()));
-            pstmt.setTime(7, Time.valueOf(recurringSchedule.getEndTime()));
-            pstmt.setDate(8, Date.valueOf(recurringSchedule.getEffectiveFrom()));
-            pstmt.setDate(9, Date.valueOf(recurringSchedule.getEffectiveUntil()));
+            pstmt.setString(6, recurringSchedule.getStartTime().toString());
+            pstmt.setString(7, recurringSchedule.getEndTime().toString());
+            pstmt.setString(8, recurringSchedule.getEffectiveFrom().toString());
+            if (recurringSchedule.getEffectiveUntil() != null) {
+                pstmt.setString(9, recurringSchedule.getEffectiveUntil().toString());
+            } else {
+                pstmt.setNull(9, Types.VARCHAR);
+            }
 
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
@@ -39,8 +45,8 @@ public class RecurringScheduleDAO {
     }
 
     public RecurringSchedule getById(int id) {
-        String sql = "SELECT id, teacherId, classroomId, courseId, dayOfWeek, startTime, endTime, effectiveFrom, effectiveUntil "
-                + "FROM recurring_schedules WHERE id = ?";
+        String sql = "SELECT id, teacher_id, classroom_id, course_id, day_of_week, start_time, end_time, effective_from, effective_until "
+            + "FROM recurring_schedule WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -50,14 +56,14 @@ public class RecurringScheduleDAO {
                 if (rs.next()) {
                     return new RecurringSchedule(
                             rs.getInt("id"),
-                            rs.getInt("teacherId"),
-                            rs.getInt("classroomId"),
-                            rs.getInt("courseId"),
-                            rs.getInt("dayOfWeek"),
-                            rs.getTime("startTime"),
-                            rs.getTime("endTime"),
-                            rs.getDate("effectiveFrom"),
-                            rs.getDate("effectiveUntil")
+                            rs.getInt("teacher_id"),
+                            rs.getInt("classroom_id"),
+                            rs.getInt("course_id"),
+                            rs.getInt("day_of_week"),
+                            LocalTime.parse(rs.getString("start_time")),
+                            LocalTime.parse(rs.getString("end_time")),
+                            LocalDate.parse(rs.getString("effective_from")),
+                            rs.getString("effective_until") != null ? LocalDate.parse(rs.getString("effective_until")) : null
                     );
                 }
             }
@@ -68,8 +74,8 @@ public class RecurringScheduleDAO {
     }
 
     public List<RecurringSchedule> getByTeacherId(int teacherId) {
-        String sql = "SELECT id, teacherId, classroomId, courseId, dayOfWeek, startTime, endTime, effectiveFrom, effectiveUntil "
-                + "FROM recurring_schedules WHERE teacherId = ?";
+        String sql = "SELECT id, teacher_id, classroom_id, course_id, day_of_week, start_time, end_time, effective_from, effective_until "
+            + "FROM recurring_schedule WHERE teacher_id = ?";
         List<RecurringSchedule> schedules = new ArrayList<>();
 
         try (Connection conn = getConnection();
@@ -80,14 +86,14 @@ public class RecurringScheduleDAO {
                 while (rs.next()) {
                     schedules.add(new RecurringSchedule(
                             rs.getInt("id"),
-                            rs.getInt("teacherId"),
-                            rs.getInt("classroomId"),
-                            rs.getInt("courseId"),
-                            rs.getInt("dayOfWeek"),
-                            rs.getTime("startTime"),
-                            rs.getTime("endTime"),
-                            rs.getDate("effectiveFrom"),
-                            rs.getDate("effectiveUntil")
+                            rs.getInt("teacher_id"),
+                            rs.getInt("classroom_id"),
+                            rs.getInt("course_id"),
+                            rs.getInt("day_of_week"),
+                            LocalTime.parse(rs.getString("start_time")),
+                            LocalTime.parse(rs.getString("end_time")),
+                            LocalDate.parse(rs.getString("effective_from")),
+                            rs.getString("effective_until") != null ? LocalDate.parse(rs.getString("effective_until")) : null
                     ));
                 }
             }
@@ -98,8 +104,8 @@ public class RecurringScheduleDAO {
     }
 
     public List<RecurringSchedule> getByClassroomId(int classroomId) {
-        String sql = "SELECT id, teacherId, classroomId, courseId, dayOfWeek, startTime, endTime, effectiveFrom, effectiveUntil "
-                + "FROM recurring_schedules WHERE classroomId = ?";
+        String sql = "SELECT id, teacher_id, classroom_id, course_id, day_of_week, start_time, end_time, effective_from, effective_until "
+            + "FROM recurring_schedule WHERE classroom_id = ?";
         List<RecurringSchedule> schedules = new ArrayList<>();
 
         try (Connection conn = getConnection();
@@ -110,14 +116,14 @@ public class RecurringScheduleDAO {
                 while (rs.next()) {
                     schedules.add(new RecurringSchedule(
                             rs.getInt("id"),
-                            rs.getInt("teacherId"),
-                            rs.getInt("classroomId"),
-                            rs.getInt("courseId"),
-                            rs.getInt("dayOfWeek"),
-                            rs.getTime("startTime"),
-                            rs.getTime("endTime"),
-                            rs.getDate("effectiveFrom"),
-                            rs.getDate("effectiveUntil")
+                            rs.getInt("teacher_id"),
+                            rs.getInt("classroom_id"),
+                            rs.getInt("course_id"),
+                            rs.getInt("day_of_week"),
+                            LocalTime.parse(rs.getString("start_time")),
+                            LocalTime.parse(rs.getString("end_time")),
+                            LocalDate.parse(rs.getString("effective_from")),
+                            rs.getString("effective_until") != null ? LocalDate.parse(rs.getString("effective_until")) : null
                     ));
                 }
             }
@@ -128,8 +134,8 @@ public class RecurringScheduleDAO {
     }
 
     public List<RecurringSchedule> getByCourseId(int courseId) {
-        String sql = "SELECT id, teacherId, classroomId, courseId, dayOfWeek, startTime, endTime, effectiveFrom, effectiveUntil "
-                + "FROM recurring_schedules WHERE courseId = ?";
+        String sql = "SELECT id, teacher_id, classroom_id, course_id, day_of_week, start_time, end_time, effective_from, effective_until "
+            + "FROM recurring_schedule WHERE course_id = ?";
         List<RecurringSchedule> schedules = new ArrayList<>();
 
         try (Connection conn = getConnection();
@@ -140,14 +146,14 @@ public class RecurringScheduleDAO {
                 while (rs.next()) {
                     schedules.add(new RecurringSchedule(
                             rs.getInt("id"),
-                            rs.getInt("teacherId"),
-                            rs.getInt("classroomId"),
-                            rs.getInt("courseId"),
-                            rs.getInt("dayOfWeek"),
-                            rs.getTime("startTime"),
-                            rs.getTime("endTime"),
-                            rs.getDate("effectiveFrom"),
-                            rs.getDate("effectiveUntil")
+                            rs.getInt("teacher_id"),
+                            rs.getInt("classroom_id"),
+                            rs.getInt("course_id"),
+                            rs.getInt("day_of_week"),
+                            LocalTime.parse(rs.getString("start_time")),
+                            LocalTime.parse(rs.getString("end_time")),
+                            LocalDate.parse(rs.getString("effective_from")),
+                            rs.getString("effective_until") != null ? LocalDate.parse(rs.getString("effective_until")) : null
                     ));
                 }
             }
@@ -158,8 +164,8 @@ public class RecurringScheduleDAO {
     }
 
     public boolean updateSchedule(RecurringSchedule recurringSchedule) {
-        String sql = "UPDATE recurring_schedules SET teacherId = ?, classroomId = ?, courseId = ?, dayOfWeek = ?, "
-                + "startTime = ?, endTime = ?, effectiveFrom = ?, effectiveUntil = ? WHERE id = ?";
+        String sql = "UPDATE recurring_schedule SET teacher_id = ?, classroom_id = ?, course_id = ?, day_of_week = ?, "
+            + "start_time = ?, end_time = ?, effective_from = ?, effective_until = ? WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -168,10 +174,14 @@ public class RecurringScheduleDAO {
             pstmt.setInt(2, recurringSchedule.getClassroomId());
             pstmt.setInt(3, recurringSchedule.getCourseId());
             pstmt.setInt(4, recurringSchedule.getDayOfWeek());
-            pstmt.setTime(5, Time.valueOf(recurringSchedule.getStartTime()));
-            pstmt.setTime(6, Time.valueOf(recurringSchedule.getEndTime()));
-            pstmt.setDate(7, Date.valueOf(recurringSchedule.getEffectiveFrom()));
-            pstmt.setDate(8, Date.valueOf(recurringSchedule.getEffectiveUntil()));
+            pstmt.setString(5, recurringSchedule.getStartTime().toString());
+            pstmt.setString(6, recurringSchedule.getEndTime().toString());
+            pstmt.setString(7, recurringSchedule.getEffectiveFrom().toString());
+            if (recurringSchedule.getEffectiveUntil() != null) {
+                pstmt.setString(8, recurringSchedule.getEffectiveUntil().toString());
+            } else {
+                pstmt.setNull(8, Types.VARCHAR);
+            }
             pstmt.setInt(9, recurringSchedule.getId());
 
             int rowsAffected = pstmt.executeUpdate();
@@ -183,7 +193,7 @@ public class RecurringScheduleDAO {
     }
 
     public boolean deleteSchedule(int id) {
-        String sql = "DELETE FROM recurring_schedules WHERE id = ?";
+        String sql = "DELETE FROM recurring_schedule WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -198,7 +208,7 @@ public class RecurringScheduleDAO {
     }
 
     public boolean deleteAllSchedules() {
-        String sql = "DELETE FROM recurring_schedules";
+        String sql = "DELETE FROM recurring_schedule";
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
@@ -212,7 +222,7 @@ public class RecurringScheduleDAO {
     }
 
     public boolean scheduleExists(int id) {
-        String sql = "SELECT 1 FROM recurring_schedules WHERE id = ?";
+        String sql = "SELECT 1 FROM recurring_schedule WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -228,7 +238,7 @@ public class RecurringScheduleDAO {
     }
 
     public int getScheduleCount() {
-        String sql = "SELECT COUNT(*) FROM recurring_schedules";
+        String sql = "SELECT COUNT(*) FROM recurring_schedule";
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();

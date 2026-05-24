@@ -15,6 +15,8 @@ import sms.Objects.ClassEntity;
 import sms.Objects.Teacher;
 import sms.Service.ClassService;
 import sms.Service.TeacherService;
+import sms.Objects.Schedule;
+import sms.Service.ScheduleService;
 import sms.exception.ClassNotFoundException;
 import sms.exception.InvalidClassException;
 import sms.exception.InvalidTeacherException;
@@ -24,11 +26,13 @@ public class ApiServer {
 
     private static TeacherService teacherService;
     private static ClassService classService;
+    private static ScheduleService scheduleService;
     
     public static void main(String[] args) {
         ensureDatabase();
         teacherService = new TeacherService();
         classService = new ClassService();
+        scheduleService = new ScheduleService();
 
         @SuppressWarnings("unused")
         Javalin app = Javalin.create(config -> {
@@ -53,6 +57,10 @@ public class ApiServer {
                     put("/{id}", ApiServer::updateClass);
                     delete("/{id}", ApiServer::deleteClass);
                 });
+                path("/api/schedules", () -> {
+                    get(ApiServer::getAllSchedules);
+                    get("/{id}", ApiServer::getScheduleById);
+                });
             });
         })
         .start(8080);
@@ -70,6 +78,32 @@ public class ApiServer {
     private static void getAllTeachers(Context ctx) {
         List<Teacher> teachers = teacherService.getAllTeachers();
         ctx.json(teachers);
+    }
+
+    private static void getAllSchedules(Context ctx) {
+        try {
+            List<Schedule> schedules = scheduleService.getAllSchedules();
+            ctx.json(schedules);
+        } catch (Exception e) {
+            e.printStackTrace();
+            ctx.status(500).json(errorResponse(e, "Failed to load schedules"));
+        }
+    }
+
+    private static void getScheduleById(Context ctx) {
+        try {
+            int id = Integer.parseInt(ctx.pathParam("id"));
+            Map<String, Object> schedule = scheduleService.getScheduleView(id);
+            if (schedule == null) {
+                ctx.status(404).json(errorResponse(new RuntimeException("Not found"), "Schedule not found"));
+                return;
+            }
+            ctx.json(schedule);
+        } catch (NumberFormatException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid schedule id"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to load schedule"));
+        }
     }
 
     private static void getAllClasses(Context ctx) {

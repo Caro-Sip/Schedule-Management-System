@@ -1,4 +1,3 @@
--- UNUSED_SQL_FILE: SKIP
 PRAGMA foreign_keys = ON;
 
 BEGIN TRANSACTION;
@@ -26,6 +25,9 @@ CREATE TABLE classes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     year INTEGER NOT NULL,
+    semester INTEGER NOT NULL CHECK(semester IN (1, 2)),
+    start_date TEXT NOT NULL CHECK(date(start_date) IS NOT NULL),
+    end_date TEXT NOT NULL CHECK(date(end_date) IS NOT NULL),
     created_by INTEGER REFERENCES users(id)
 );
 
@@ -59,7 +61,7 @@ CREATE TABLE schedule (
     classroom_id INTEGER REFERENCES classrooms(id),
     teacher_id INTEGER REFERENCES teachers(id),
     course_id INTEGER REFERENCES courses(id),
-    date DATE NOT NULL,
+    date TEXT NOT NULL CHECK(date(date) IS NOT NULL),
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
     status TEXT NOT NULL DEFAULT 'BOOKED' CHECK(status IN ('BOOKED','CANCELLED','ABSENT','MAKEUP','GREYED')),
@@ -67,8 +69,8 @@ CREATE TABLE schedule (
     type TEXT NOT NULL DEFAULT 'DEFAULT' CHECK(type IN ('DEFAULT','MAKEUP','OVERRIDE','LECTURE')),
     priority INTEGER NOT NULL DEFAULT 0,
     created_by INTEGER REFERENCES users(id),
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    greyed_at DATETIME,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    greyed_at TEXT,
     linked_schedule_id INTEGER REFERENCES schedule(id)
 );
 
@@ -86,8 +88,8 @@ CREATE TABLE recurring_schedule (
     day_of_week INTEGER NOT NULL CHECK(day_of_week BETWEEN 0 AND 6),
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
-    effective_from DATE NOT NULL,
-    effective_until DATE
+    effective_from TEXT NOT NULL CHECK(date(effective_from) IS NOT NULL),
+    effective_until TEXT CHECK(effective_until IS NULL OR date(effective_until) IS NOT NULL)
 );
 
 CREATE TABLE schedule_history (
@@ -95,7 +97,7 @@ CREATE TABLE schedule_history (
     schedule_id INTEGER REFERENCES schedule(id),
     action TEXT NOT NULL CHECK(action IN ('CREATE','UPDATE','DELETE','FLAG','RESTORE')),
     changed_by INTEGER REFERENCES users(id),
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
     note TEXT
 );
 
@@ -111,10 +113,10 @@ INSERT INTO users (id, name, email, password_hash, role) VALUES
     (9, 'Priya Patel', 'priya.patel@school.local', 'hash_student_005', 'STUDENT'),
     (10, 'Daniel Nguyen', 'daniel.nguyen@school.local', 'hash_student_006', 'STUDENT');
 
-INSERT INTO classes (id, name, year, created_by) VALUES
-    (1, 'CS-Y2-A', 2, 1),
-    (2, 'CS-Y2-B', 2, 1),
-    (3, 'IT-Y1-A', 1, 1);
+INSERT INTO classes (id, name, year, semester, start_date, end_date, created_by) VALUES
+    (1, 'CS-Y2-A', 2, 2, '2026-02-01', '2026-06-30', 1),
+    (2, 'CS-Y2-B', 2, 2, '2026-02-01', '2026-06-30', 1),
+    (3, 'IT-Y1-A', 1, 2, '2026-02-01', '2026-06-30', 1);
 
 INSERT INTO class_students (class_id, user_id) VALUES
     (1, 5),

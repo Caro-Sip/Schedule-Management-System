@@ -16,11 +16,16 @@ import java.util.List;
 import java.util.Map;
 import sms.Config.DatabaseConfig;
 import sms.Objects.ClassEntity;
+import sms.Objects.Classroom;
+import sms.Objects.Course;
 import sms.Objects.Schedule;
 import sms.Objects.Teacher;
 import sms.Service.ClassService;
 import sms.Service.TeacherService;
 import sms.Service.ScheduleService;
+import sms.DAO.ClassroomDAO;
+import sms.DAO.CourseDAO;
+import sms.DAO.ClassroomDAO;
 import sms.exception.ClassNotFoundException;
 import sms.exception.InvalidClassException;
 import sms.exception.InvalidTeacherException;
@@ -31,12 +36,16 @@ public class ApiServer {
     private static TeacherService teacherService;
     private static ClassService classService;
     private static ScheduleService scheduleService;
+    private static ClassroomDAO classroomDAO;
+    private static CourseDAO courseDAO;
     
     public static void main(String[] args) {
         ensureDatabase();
         teacherService = new TeacherService();
         classService = new ClassService();
         scheduleService = new ScheduleService();
+        classroomDAO = new ClassroomDAO();
+        courseDAO = new CourseDAO();
 
         @SuppressWarnings("unused")
         Javalin app = Javalin.create(config -> {
@@ -60,6 +69,13 @@ public class ApiServer {
                     get("/{id}", ApiServer::getClassById);
                     put("/{id}", ApiServer::updateClass);
                     delete("/{id}", ApiServer::deleteClass);
+                });
+                path("/api/classrooms", () -> {
+                    get(ApiServer::getAllClassrooms);
+                });
+                path("/api/courses", () -> {
+                    get(ApiServer::getAllCourses);
+                    post(ApiServer::createCourse);
                 });
                 path("/api/schedules", () -> {
                     get(ApiServer::getAllSchedules);
@@ -101,8 +117,26 @@ public class ApiServer {
     private static void createSchedule(Context ctx) {
         try {
             Map<?, ?> payload = ctx.bodyAsClass(Map.class);
-            Schedule createdSchedule = scheduleService.createSchedule(
-                readInt(payload, "classroomId"),
+            Integer scheduleId = readOptionalInteger(payload, "id");
+            Schedule savedSchedule = scheduleId != null && scheduleId > 0
+                ? scheduleService.saveSchedule(
+                    scheduleId,
+                    readOptionalInteger(payload, "classroomId"),
+                    readOptionalInteger(payload, "teacherId"),
+                    readOptionalInteger(payload, "courseId"),
+                    readOptionalDate(payload, "date"),
+                    readOptionalTime(payload, "startTime"),
+                    readOptionalTime(payload, "endTime"),
+                    readOptionalString(payload, "status"),
+                    readOptionalString(payload, "visibility"),
+                    readOptionalString(payload, "type"),
+                    readOptionalInteger(payload, "priority"),
+                    readOptionalInteger(payload, "createdBy"),
+                    payload.get("classIds") == null ? null : readClassIds(payload.get("classIds")),
+                    readOptionalInteger(payload, "linkedScheduleId")
+                )
+                : scheduleService.createSchedule(
+                resolveClassroomId(payload.get("classroomId")),
                 readOptionalInteger(payload, "teacherId"),
                 readInt(payload, "courseId"),
                 LocalDate.parse(readString(payload, "date")),
@@ -116,13 +150,54 @@ public class ApiServer {
                 readClassIds(payload.get("classIds")),
                 readOptionalInteger(payload, "linkedScheduleId")
             );
-            ctx.status(201).json(scheduleService.getScheduleView(createdSchedule.getId()));
+            ctx.status(scheduleId != null && scheduleId > 0 ? 200 : 201).json(scheduleService.getScheduleView(savedSchedule.getId()));
         } catch (DateTimeParseException e) {
             ctx.status(400).json(errorResponse(e, "Invalid date or time format"));
         } catch (IllegalArgumentException e) {
             ctx.status(400).json(errorResponse(e, "Invalid schedule data"));
         } catch (Exception e) {
             ctx.status(500).json(errorResponse(e, "Failed to create schedule"));
+        }
+    }
+
+    private static int resolveClassroomId(Object value) {
+        if (value == null) {
+            throw new IllegalArgumentException("Missing required field: classroomId");
+        }
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        String text = value.toString().trim();
+        if (text.isEmpty()) {
+            throw new IllegalArgumentException("Missing required field: classroomId");
+        }
+
+        // Try parse as integer
+        try {
+            return Integer.parseInt(text);
+        } catch (NumberFormatException e) {
+            // Not a plain integer, try lookup by classroom name
+            try {
+                ClassroomDAO dao = new ClassroomDAO();
+                var classroom = dao.getClassroomByName(text);
+                if (classroom != null) {
+                    return classroom.getId();
+                }
+            } catch (Exception ex) {
+                // ignore and try other heuristics
+            }
+
+            // If value looks like an alphanumeric code like 'R-101', extract digits
+            String digits = text.replaceAll("\\D+", "");
+            if (!digits.isEmpty()) {
+                try {
+                    return Integer.parseInt(digits);
+                } catch (NumberFormatException ex) {
+                    // fall through
+                }
+            }
+
+            throw new IllegalArgumentException("Invalid classroom id: " + text);
         }
     }
 
@@ -182,6 +257,52 @@ public class ApiServer {
         } catch (Exception e) {
             e.printStackTrace();
             ctx.status(500).json(errorResponse(e, "Failed to load classes"));
+        }
+    }
+
+    private static void getAllClassrooms(Context ctx) {
+        try {
+            List<Classroom> classrooms = classroomDAO.getAllClassrooms();
+            ctx.json(classrooms);
+        } catch (Exception e) {
+            e.printStackTrace();
+            ctx.status(500).json(errorResponse(e, "Failed to load classrooms"));
+        }
+    }
+
+    private static void getAllCourses(Context ctx) {
+        try {
+            List<Course> courses = courseDAO.getAllCourses();
+            ctx.json(courses);
+        } catch (Exception e) {
+            e.printStackTrace();
+            ctx.status(500).json(errorResponse(e, "Failed to load courses"));
+        }
+    }
+
+    private static void createCourse(Context ctx) {
+        try {
+            Map<?, ?> payload = ctx.bodyAsClass(Map.class);
+            String name = readString(payload, "name");
+            String code = readString(payload, "code");
+            int totalHours = readOptionalInt(payload, "totalHours", 45);
+
+            Course existing = courseDAO.getByCode(code);
+            if (existing != null) {
+                ctx.status(200).json(existing);
+                return;
+            }
+
+            Course course = new Course(name, code, totalHours);
+            if (!courseDAO.createCourse(course)) {
+                throw new RuntimeException("Course was not created");
+            }
+            ctx.status(201).json(course);
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid course data"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            ctx.status(500).json(errorResponse(e, "Failed to create course"));
         }
     }
 
@@ -361,6 +482,22 @@ public class ApiServer {
             return null;
         }
         return Integer.valueOf(text);
+    }
+
+    private static LocalDate readOptionalDate(Map<?, ?> payload, String key) {
+        Object value = payload.get(key);
+        if (value == null || value.toString().trim().isEmpty()) {
+            return null;
+        }
+        return LocalDate.parse(value.toString());
+    }
+
+    private static LocalTime readOptionalTime(Map<?, ?> payload, String key) {
+        Object value = payload.get(key);
+        if (value == null || value.toString().trim().isEmpty()) {
+            return null;
+        }
+        return LocalTime.parse(value.toString());
     }
 
     private static int readOptionalInt(Map<?, ?> payload, String key, int defaultValue) {

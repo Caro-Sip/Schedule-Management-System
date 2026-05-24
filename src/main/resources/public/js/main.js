@@ -531,7 +531,7 @@ function bindEvents() {
   }
 
   if (bookingForm) {
-    bookingForm.addEventListener("submit", (event) => {
+    bookingForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       if (!pendingBooking) {
         return;
@@ -551,8 +551,10 @@ function bindEvents() {
       const bookingDay = pendingBooking.day;
       const ignoreId = pendingBooking.eventId || null;
       const classId = targetView === "class" ? pendingBooking.classId : null;
-      let roomId = targetView === "room" ? pendingBooking.roomId : null;
+      let classroomId = targetView === "room" ? pendingBooking.roomId : null;
       let roomLabel = "";
+
+      const roomCatalog = getBookingClassrooms();
 
       if (targetView === "class") {
         const availableRooms = getAvailableRoomsForBooking(
@@ -564,21 +566,32 @@ function bindEvents() {
         const roomInputValue = bookingRoomInput ? bookingRoomInput.value.trim() : "";
         const selectedRoomId = bookingRoomInput?.dataset.roomId || pendingBooking.roomId || "";
         const selectedRoom =
-          availableRooms.find((roomItem) => roomItem.id === selectedRoomId) ||
-          resolveRoomFromInput(roomInputValue, availableRooms);
-        roomId = selectedRoom ? selectedRoom.id : null;
+          availableRooms.find((roomItem) => String(roomItem.id) === String(selectedRoomId)) ||
+          resolveClassroomFromInput(roomInputValue, availableRooms);
+        classroomId = selectedRoom ? selectedRoom.id : null;
         roomLabel = selectedRoom ? getRoomDisplayLabel(selectedRoom) : "";
+      } else if (targetView === "room") {
+        const selectedRoom =
+          roomCatalog.find((roomItem) => String(roomItem.id) === String(pendingBooking.roomId)) ||
+          resolveClassroomFromInput(
+            roomDirectory.find((item) => item.id === pendingBooking.roomId)
+              ? getRoomDisplayLabel(roomDirectory.find((item) => item.id === pendingBooking.roomId))
+              : pendingBooking.roomId,
+            roomCatalog
+          );
+        classroomId = selectedRoom ? selectedRoom.id : classroomId;
+        roomLabel = selectedRoom ? getRoomDisplayLabel(selectedRoom) : roomLabel;
       }
 
       if (targetView === "class" && isAdminRole(state.role) && !classId) {
         alert("Select a class first.");
         return;
       }
-      if (targetView === "class" && !roomId) {
+      if (targetView === "class" && !classroomId) {
         alert("Select a room first.");
         return;
       }
-      if (targetView === "room" && isAdminRole(state.role) && !roomId) {
+      if (targetView === "room" && isAdminRole(state.role) && !classroomId) {
         alert("Select a room first.");
         return;
       }
@@ -589,12 +602,12 @@ function bindEvents() {
         endMinutes,
         ignoreId,
         classId,
-        roomId
+        classroomId
       );
 
       const roomConflict =
-        targetView === "class" && roomId
-          ? getRoomBookingConflict(bookingDay, startMinutes, endMinutes, ignoreId, roomId)
+        targetView === "class" && classroomId
+          ? getRoomBookingConflict(bookingDay, startMinutes, endMinutes, ignoreId, classroomId)
           : null;
 
       if (conflict) {
@@ -640,50 +653,118 @@ function bindEvents() {
         targetView === "class"
           ? { scopeType: "class", scopeId: classId }
           : targetView === "room"
-            ? { scopeType: "room", scopeId: roomId }
+            ? { scopeType: "room", scopeId: classroomId }
             : { scopeType: "general", scopeId: null };
 
-      if (pendingBooking.eventId) {
-        const existing = eventsByView[targetView].find(
-          (item) => item.id === pendingBooking.eventId
-        );
-        if (!existing) {
-          alert("Booking not found.");
-          return;
-        }
-        existing.day = bookingDay;
-        existing.start = startValue;
-        existing.end = endValue;
-        existing.title = subject || "Untitled class";
-        existing.meta = metaParts.join(" | ");
-        existing.type = typeValue;
-        existing.professor = professor;
-        if (targetView === "class") {
-          existing.classId = classId;
-          existing.roomId = roomId;
-        }
-        if (targetView === "room") {
-          existing.roomId = roomId;
-        }
-        addAuditEntry("Edited", actor, objectLabel, bookingTime, auditScope);
-      } else {
-        eventsByView[targetView].push({
-          id: createEventId(),
-          day: bookingDay,
-          start: startValue,
-          end: endValue,
-          title: subject || "Untitled class",
-          meta: metaParts.join(" | "),
-          type: typeValue,
-          professor,
-          classId: targetView === "class" ? classId : null,
-          roomId: targetView === "class" || targetView === "room" ? roomId : null,
-        });
-        addAuditEntry("Booked", actor, objectLabel, bookingTime, auditScope);
+      const courseId = await resolveCourseIdFromSubject(subjectLabel);
+      if (!courseId) {
+        alert("Select or enter a course name first.");
+        return;
       }
 
-      closeBookingModal();
-      renderEvents();
+      if (pendingBooking.eventId) {
+        const payload = {
+          classroomId,
+          teacherId: pendingBooking.teacherId || null,
+          courseId,
+          date: pendingBooking.date,
+          startTime: startValue,
+          endTime: endValue,
+          status: pendingBooking.status || "BOOKED",
+          visibility: pendingBooking.visibility || "VISIBLE",
+          type: typeValue || pendingBooking.type || "DEFAULT",
+          priority: pendingBooking.priority ?? 0,
+          createdBy: pendingBooking.createdBy || 1,
+          classIds: pendingBooking.classIds && pendingBooking.classIds.length > 0
+            ? pendingBooking.classIds
+            : classId
+              ? [classId]
+              : [],
+          linkedScheduleId: pendingBooking.linkedScheduleId || null,
+        };
+
+        saveScheduleApi(pendingBooking.eventId, payload)
+          .then((savedSchedule) => {
+            updateSavedSchedule(savedSchedule, {
+              title: subject || "Untitled class",
+              meta: metaParts.join(" | "),
+              professor,
+              type: typeValue,
+              classroomId,
+              teacherId: pendingBooking.teacherId || null,
+              courseId,
+              createdBy: pendingBooking.createdBy || 1,
+              status: pendingBooking.status || "BOOKED",
+              visibility: pendingBooking.visibility || "VISIBLE",
+              priority: pendingBooking.priority ?? 0,
+              linkedScheduleId: pendingBooking.linkedScheduleId || null,
+              date: pendingBooking.date,
+              classIds: payload.classIds,
+            });
+            addAuditEntry("Edited", actor, objectLabel, bookingTime, auditScope);
+            closeBookingModal();
+            renderEvents();
+          })
+          .catch((saveError) => {
+            console.error("Failed to save schedule", saveError);
+            alert(`Failed to save schedule: ${saveError.message}`);
+          });
+        return;
+      } else {
+        try {
+          const base = startOfWeek(new Date());
+          base.setDate(base.getDate() + state.weekOffset * 7 + bookingDay);
+          const dateStr = `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, "0")}-${String(base.getDate()).padStart(2, "0")}`;
+
+          const payload = {
+            classroomId,
+            teacherId: pendingBooking.teacherId || null,
+            courseId,
+            date: pendingBooking.date || dateStr,
+            startTime: startValue,
+            endTime: endValue,
+            status: pendingBooking.status || "BOOKED",
+            visibility: pendingBooking.visibility || "VISIBLE",
+            type: typeValue || pendingBooking.type || "DEFAULT",
+            priority: pendingBooking.priority ?? 0,
+            createdBy: pendingBooking.createdBy || 1,
+            classIds:
+              pendingBooking.classIds && pendingBooking.classIds.length > 0
+                ? pendingBooking.classIds
+                : classId
+                ? [classId]
+                : [],
+            linkedScheduleId: pendingBooking.linkedScheduleId || null,
+          };
+
+          const saved = await saveScheduleApi(null, payload);
+          const event = buildScheduleEvent(saved);
+          if (event) {
+            eventsByView[targetView].push(event);
+          } else {
+            // Fallback to a minimal client-side event if server didn't return usable data
+            eventsByView[targetView].push({
+              id: createEventId(),
+              day: bookingDay,
+              start: startValue,
+              end: endValue,
+              title: subject || "Untitled class",
+              meta: metaParts.join(" | "),
+              type: typeValue,
+              professor,
+              classId: targetView === "class" ? classId : null,
+              roomId: targetView === "class" || targetView === "room" ? classroomId : null,
+            });
+          }
+
+          addAuditEntry("Booked", actor, objectLabel, bookingTime, auditScope);
+          closeBookingModal();
+          renderEvents();
+        } catch (saveError) {
+          console.error("Failed to create schedule", saveError);
+          alert(`Failed to create booking: ${saveError.message}`);
+        }
+      }
     });
   }
 
@@ -800,5 +881,7 @@ bindEvents();
 updateFilterGroup();
 updateWeek();
 renderAuditLog();
+loadClassrooms();
+loadCourses();
 loadClasses();
 loadSchedules();

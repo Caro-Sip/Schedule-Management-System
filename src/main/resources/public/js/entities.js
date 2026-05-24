@@ -183,6 +183,54 @@ async function createClassApi(payload) {
 	});
 }
 
+function normalizeClassroomPayload(payload) {
+	return {
+		id: Number(payload.id),
+		name: payload.name || "",
+		building: payload.building || "",
+	};
+}
+
+function normalizeCoursePayload(payload) {
+	return {
+		id: Number(payload.id),
+		name: payload.name || "",
+		code: payload.code || "",
+		totalHours: Number(payload.totalHours ?? payload.total_hours ?? 0),
+	};
+}
+
+async function loadClassrooms() {
+	try {
+		const classrooms = await requestJson(`${API_BASE}/classrooms`);
+		classroomDirectory.length = 0;
+		classrooms.forEach((item) => {
+			classroomDirectory.push(normalizeClassroomPayload(item));
+		});
+	} catch (error) {
+		console.error("Failed to load classrooms", error);
+	}
+}
+
+async function loadCourses() {
+	try {
+		const courses = await requestJson(`${API_BASE}/courses`);
+		courseDirectory.length = 0;
+		courses.forEach((item) => {
+			courseDirectory.push(normalizeCoursePayload(item));
+		});
+	} catch (error) {
+		console.error("Failed to load courses", error);
+	}
+}
+
+async function createCourseApi(payload) {
+	return requestJson(`${API_BASE}/courses`, {
+		method: "POST",
+		body: JSON.stringify(payload),
+	});
+}
+
 async function loadSchedules() {
 	try {
 		const schedules = await requestJson(`${API_BASE}/schedules`);
@@ -192,35 +240,8 @@ async function loadSchedules() {
 		eventsByView.teacher = [];
 
 		schedules.forEach((s) => {
-			const date = new Date(s.date);
-			if (isNaN(date.getTime())) return;
-			const day = date.getDay();
-			const dayIndex = day === 0 ? 6 : day - 1; // Monday=0
-			const start = s.startTime || s.start_time || s.start;
-			const end = s.endTime || s.end_time || s.end;
-			const title = s.title || `Course ${s.courseId}`;
-			const classIds = Array.isArray(s.classIds)
-				? s.classIds.map((value) => Number(value)).filter((value) => !Number.isNaN(value))
-				: [];
-			const metaParts = [];
-			if (s.teacherId) metaParts.push(`T:${s.teacherId}`);
-			if (s.classroomId) metaParts.push(`R:${s.classroomId}`);
-			const meta = metaParts.join(" | ");
-
-			const event = {
-				id: String(s.id),
-				day: dayIndex,
-				start: start || "",
-				end: end || "",
-				title,
-				meta,
-				type: s.type || "",
-				professor: s.teacherId || null,
-				classId: classIds.length === 1 ? classIds[0] : null,
-				classIds,
-				roomId: s.classroomId || null,
-			};
-
+			const event = buildScheduleEvent(s);
+			if (!event) return;
 			eventsByView.class.push(event);
 			eventsByView.room.push(Object.assign({}, event));
 			eventsByView.teacher.push(Object.assign({}, event));
@@ -230,6 +251,72 @@ async function loadSchedules() {
 	} catch (error) {
 		console.error("Failed to load schedules", error);
 	}
+}
+
+function buildScheduleEvent(schedule, overrides = {}) {
+	const date = new Date(overrides.date || schedule.date);
+	if (isNaN(date.getTime())) return null;
+	const day = date.getDay();
+	const dayIndex = day === 0 ? 6 : day - 1; // Monday=0
+	const start = overrides.start || schedule.startTime || schedule.start_time || schedule.start;
+	const end = overrides.end || schedule.endTime || schedule.end_time || schedule.end;
+	const classIds = Array.isArray(overrides.classIds)
+		? overrides.classIds
+		: Array.isArray(schedule.classIds)
+			? schedule.classIds.map((value) => Number(value)).filter((value) => !Number.isNaN(value))
+			: [];
+	const title = overrides.title || schedule.title || `Course ${schedule.courseId}`;
+	const metaParts = [];
+	const teacherId = overrides.teacherId !== undefined ? overrides.teacherId : schedule.teacherId;
+	const classroomId = overrides.classroomId !== undefined ? overrides.classroomId : schedule.classroomId;
+	if (teacherId) metaParts.push(`T:${teacherId}`);
+	if (classroomId) metaParts.push(`R:${classroomId}`);
+	const meta = overrides.meta || metaParts.join(" | ");
+
+	return {
+		id: String(schedule.id),
+		day: dayIndex,
+		date: schedule.date,
+		start: start || "",
+		end: end || "",
+		title,
+		meta,
+		type: overrides.type || schedule.type || "",
+		professor: teacherId || null,
+		teacherId: teacherId || null,
+		courseId: overrides.courseId !== undefined ? overrides.courseId : schedule.courseId || null,
+		createdBy: overrides.createdBy !== undefined ? overrides.createdBy : schedule.createdBy || null,
+		status: overrides.status || schedule.status || "",
+		visibility: overrides.visibility || schedule.visibility || "",
+		priority: overrides.priority !== undefined ? overrides.priority : schedule.priority || 0,
+		linkedScheduleId:
+			overrides.linkedScheduleId !== undefined ? overrides.linkedScheduleId : schedule.linkedScheduleId || null,
+		classId: classIds.length === 1 ? classIds[0] : null,
+		classIds,
+		roomId: classroomId || null,
+	};
+}
+
+function updateSavedSchedule(savedSchedule, overrides = {}) {
+	const nextEvent = buildScheduleEvent(savedSchedule, overrides);
+	if (!nextEvent) {
+		return;
+	}
+
+	["class", "room", "teacher"].forEach((view) => {
+		const items = eventsByView[view] || [];
+		const index = items.findIndex((item) => item.id === nextEvent.id);
+		if (index !== -1) {
+			items[index] = Object.assign({}, items[index], nextEvent);
+		}
+	});
+}
+
+async function saveScheduleApi(id, payload) {
+	return requestJson(`${API_BASE}/schedules`, {
+		method: "POST",
+		body: JSON.stringify(Object.assign({ id }, payload)),
+	});
 }
 
 async function updateClassApi(id, payload) {

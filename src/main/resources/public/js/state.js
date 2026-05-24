@@ -85,6 +85,8 @@ const userDirectory = [
 ];
 
 const classDirectory = [];
+const classroomDirectory = [];
+const courseDirectory = [];
 
 const roomDirectory = [
   {

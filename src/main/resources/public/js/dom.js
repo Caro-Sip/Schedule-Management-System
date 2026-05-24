@@ -402,9 +402,17 @@ function renderClassList() {
 }
 
 function getSortedRooms() {
-  return roomDirectory
+  return getBookingClassrooms()
     .slice()
-    .sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified));
+    .sort((a, b) => {
+      const nameCompare = (a.name || String(a.id || "")).localeCompare(
+        b.name || String(b.id || "")
+      );
+      if (nameCompare !== 0) {
+        return nameCompare;
+      }
+      return String(a.id || "").localeCompare(String(b.id || ""));
+    });
 }
 
 function renderRoomList() {
@@ -428,7 +436,7 @@ function renderRoomList() {
     const row = document.createElement("div");
     row.className = "room-row";
     row.dataset.roomId = roomItem.id;
-    if (state.selectedRoomId === roomItem.id) {
+    if (String(state.selectedRoomId) === String(roomItem.id)) {
       row.classList.add("selected");
     }
 
@@ -455,7 +463,7 @@ function renderRoomList() {
 
     const floorTag = document.createElement("span");
     floorTag.className = "tag floor";
-    floorTag.textContent = `Floor ${roomItem.floor}`;
+    floorTag.textContent = getRoomFloorLabel(roomItem);
 
     tags.appendChild(buildingTag);
     tags.appendChild(floorTag);

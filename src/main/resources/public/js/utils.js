@@ -87,6 +87,108 @@ function normalizeRoomText(value) {
   return (value || "").toLowerCase().replace(/[^a-z0-9]+/g, "");
 }
 
+function normalizeCourseCode(value) {
+  const normalized = normalizeRoomText(value).toUpperCase();
+  return normalized ? `SUBJ-${normalized.slice(0, 24)}` : "";
+}
+
+function getBookingClassrooms() {
+  return classroomDirectory && classroomDirectory.length > 0 ? classroomDirectory : roomDirectory;
+}
+
+function parseRoomInput(value) {
+  const normalized = (value || "").trim();
+  const match = normalized.match(/([A-Za-z])\s*[-·]??\s*(\d{1,4})/);
+  if (match) {
+    return {
+      buildingLetter: match[1].toUpperCase(),
+      roomNumber: match[2],
+    };
+  }
+
+  const digits = normalized.match(/(\d{1,4})/);
+  return {
+    buildingLetter: "",
+    roomNumber: digits ? digits[1] : "",
+  };
+}
+
+function resolveClassroomFromInput(value, availableClassrooms) {
+  const query = normalizeRoomText(value);
+  if (!query) {
+    return null;
+  }
+
+  const { buildingLetter, roomNumber } = parseRoomInput(value);
+  const classrooms = availableClassrooms || classroomDirectory || [];
+
+  return (
+    classrooms.find((classroom) => {
+      const candidates = [
+        classroom.id,
+        classroom.name,
+        classroom.building,
+        getRoomShortLabel(classroom),
+        getRoomDisplayLabel(classroom),
+      ]
+        .filter(Boolean)
+        .map((candidate) => normalizeRoomText(candidate));
+
+      const buildingMatches =
+        buildingLetter &&
+        normalizeRoomText(classroom.building || "").includes(normalizeRoomText(buildingLetter));
+      const roomMatches =
+        roomNumber &&
+        normalizeRoomText(classroom.name || classroom.id || "").includes(normalizeRoomText(roomNumber));
+
+      return (
+        candidates.some(
+          (candidate) =>
+            candidate === query || candidate.includes(query) || query.includes(candidate)
+        ) ||
+        (buildingMatches && roomMatches)
+      );
+    }) || null
+  );
+}
+
+async function resolveCourseIdFromSubject(subject) {
+  const subjectText = (subject || "").trim();
+  if (!subjectText) {
+    return null;
+  }
+
+  const normalizedSubject = normalizeRoomText(subjectText);
+  const courseCode = normalizeCourseCode(subjectText);
+  const existing = (courseDirectory || []).find(
+    (course) =>
+      normalizeRoomText(course.name) === normalizedSubject ||
+      normalizeRoomText(course.code) === normalizeRoomText(courseCode)
+  );
+
+  if (existing) {
+    return existing.id;
+  }
+
+  if (typeof createCourseApi !== "function") {
+    throw new Error("Course API is not available");
+  }
+
+  const created = await createCourseApi({
+    name: subjectText,
+    code: courseCode,
+    totalHours: 45,
+  });
+
+  if (created) {
+    const normalized = normalizeCoursePayload(created);
+    courseDirectory.push(normalized);
+    return normalized.id;
+  }
+
+  return null;
+}
+
 function getRoomShortLabel(room) {
   if (!room) {
     return "";
@@ -107,6 +209,25 @@ function getRoomDisplayLabel(room) {
 
   const shortLabel = getRoomShortLabel(room);
   return shortLabel ? `${shortLabel} · ${room.name || room.id}` : room.name || room.id || "";
+}
+
+function getRoomFloorLabel(room) {
+  if (!room) {
+    return "";
+  }
+
+  if (room.floor) {
+    return `Floor ${room.floor}`;
+  }
+
+  const roomNumberMatch = (room.name || room.id || "").match(/(\d{3,4})$/);
+  if (!roomNumberMatch) {
+    return "";
+  }
+
+  const roomNumber = roomNumberMatch[1];
+  const floorDigit = roomNumber.length >= 3 ? roomNumber[0] : "";
+  return floorDigit ? `Floor ${floorDigit}` : "";
 }
 
 // Return the usual slot [startMinutes, endMinutes] that contains the given absolute minutes

@@ -17,7 +17,7 @@ public class ClassStudentDAO {
 
     // CREATE - Insert a new user
     public boolean createUser(ClassStudent student) {
-        String sql = "INSERT INTO users (classId,userId) VALUES (?, ?)";
+        String sql = "INSERT INTO class_students (class_id, user_id) VALUES (?, ?)";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -35,7 +35,7 @@ public class ClassStudentDAO {
 
     // READ - Get user by ID
     public ClassStudent getClassId(int id) {
-        String sql = "SELECT classId,userId FROM student WHERE classId = ?";
+        String sql = "SELECT class_id, user_id FROM class_students WHERE class_id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -45,8 +45,8 @@ public class ClassStudentDAO {
 
             if (rs.next()) {
                 return new ClassStudent(
-                        rs.getInt("classId"),
-                        rs.getInt("userId")
+                        rs.getInt("class_id"),
+                        rs.getInt("user_id")
                 );
             }
         } catch (SQLException e) {
@@ -58,13 +58,14 @@ public class ClassStudentDAO {
 
     // UPDATE - Update user information
     public boolean updateUser(ClassStudent student) {
-        String sql = "UPDATE student SET classId,userId WHERE id = ?";
+        String sql = "UPDATE class_students SET user_id = ? WHERE class_id = ? AND user_id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setInt(1, student.getUserId());
-            pstmt.setInt(1, student.getClassId());
+            pstmt.setInt(2, student.getClassId());
+            pstmt.setInt(3, student.getUserId());
 
 
             int rowsAffected = pstmt.executeUpdate();
@@ -77,7 +78,7 @@ public class ClassStudentDAO {
 
     // DELETE - Delete user by ID
     public boolean deleteUser(int id) {
-        String sql = "DELETE FROM student WHERE id = ?";
+        String sql = "DELETE FROM class_students WHERE class_id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -93,7 +94,7 @@ public class ClassStudentDAO {
 
     // DELETE - Delete all users
     public boolean deleteAllUsers() {
-        String sql = "DELETE FROM student";
+        String sql = "DELETE FROM class_students";
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
@@ -108,7 +109,7 @@ public class ClassStudentDAO {
 
     // Check if user exists
     public boolean userExists(int id) {
-        String sql = "SELECT 1 FROM student WHERE id = ?";
+        String sql = "SELECT 1 FROM class_students WHERE class_id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -124,7 +125,7 @@ public class ClassStudentDAO {
 
     // Get user count
     public int getUserCount() {
-        String sql = "SELECT COUNT(*) FROM student";
+        String sql = "SELECT COUNT(*) FROM class_students";
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();

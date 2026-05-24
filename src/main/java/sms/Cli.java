@@ -12,7 +12,10 @@ import sms.Service.UserService;
 import sms.Service.TeacherService;
 
 /**
+ * DEPRACATED FEATURE
  * Schedule Management System - CLI Interface (Phase 1)
+ * CLI was supposed to be used to test if features are working
+ * BUT NOW THIS PHASE IS DEPRACATED
  */
 public class Cli {
     private static final String DB_PATH = "schedule.db";
@@ -117,10 +120,10 @@ public class Cli {
                     handleClassSchedule();
                     break;
                 case 2:
-                    handleTeacherSchedule();
+                    // handleTeacherSchedule();
                     break;
                 case 3:
-                    handleRoomSchedule();
+                    // handleRoomSchedule();
                     break;
                 case 4:
                     handleTeacherManagement();
@@ -165,29 +168,30 @@ public class Cli {
         }
     }
 
-    private void handleTeacherSchedule() {
-        int teacherId = readInt("Teacher ID: ");
-        try {
-            List<Schedule> schedules = scheduleService.getSchedulesForTeacher(teacherId);
-            renderSchedules(schedules);
-        } catch (UnsupportedOperationException e) {
-            printFeatureUnavailable("Teacher schedule lookup", e);
-        } catch (Exception e) {
-            System.out.println("Failed to retrieve teacher schedule: " + e.getMessage());
-        }
-    }
+    // TODO CLI is currently ignored
+    // private void handleTeacherSchedule() {
+    //     int teacherId = readInt("Teacher ID: ");
+    //     try {
+    //         List<Schedule> schedules = scheduleService.getSchedulesForTeacher(teacherId);
+    //         renderSchedules(schedules);
+    //     } catch (UnsupportedOperationException e) {
+    //         printFeatureUnavailable("Teacher schedule lookup", e);
+    //     } catch (Exception e) {
+    //         System.out.println("Failed to retrieve teacher schedule: " + e.getMessage());
+    //     }
+    // }
 
-    private void handleRoomSchedule() {
-        int classroomId = readInt("Room ID: ");
-        try {
-            List<Schedule> schedules = scheduleService.getSchedulesForRoom(classroomId);
-            renderSchedules(schedules);
-        } catch (UnsupportedOperationException e) {
-            printFeatureUnavailable("Room schedule lookup", e);
-        } catch (Exception e) {
-            System.out.println("Failed to retrieve room schedule: " + e.getMessage());
-        }
-    }
+    // private void handleRoomSchedule() {
+    //     int classroomId = readInt("Room ID: ");
+    //     try {
+    //         List<Schedule> schedules = scheduleService.getSchedulesForRoom(classroomId);
+    //         renderSchedules(schedules);
+    //     } catch (UnsupportedOperationException e) {
+    //         printFeatureUnavailable("Room schedule lookup", e);
+    //     } catch (Exception e) {
+    //         System.out.println("Failed to retrieve room schedule: " + e.getMessage());
+    //     }
+    // }
 
     private void handleTeacherManagement() {
         boolean inTeacherMenu = true;

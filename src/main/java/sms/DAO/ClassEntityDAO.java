@@ -1,11 +1,9 @@
 package sms.DAO;
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Time;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -187,9 +185,9 @@ public class ClassEntityDAO {
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            pstmt.setDate(1, Date.valueOf(slot.getDate()));
-            pstmt.setTime(2, Time.valueOf(slot.getStartTime()));
-            pstmt.setTime(3, Time.valueOf(slot.getEndTime()));
+            pstmt.setString(1, slot.getDate().toString());
+            pstmt.setString(2, slot.getStartTime().toString());
+            pstmt.setString(3, slot.getEndTime().toString());
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {

@@ -518,9 +518,10 @@ function bindEvents() {
       const offsetY = event.clientY - rect.top;
       const totalMinutes = (END_HOUR - START_HOUR) * 60;
       const rawMinutes = Math.max(0, Math.min(totalMinutes, (offsetY / HOUR_HEIGHT) * 60));
-      const snapped = Math.round(rawMinutes / 30) * 30;
-      const clamped = Math.min(snapped, totalMinutes - 30);
-      const startMinutes = START_HOUR * 60 + clamped;
+      const absoluteClicked = START_HOUR * 60 + rawMinutes;
+      // Map the clicked time to the usual two-hour slot (7-9,9-11,11-1,1-3,3-5)
+      const slot = getUsualSlotForMinutes(absoluteClicked);
+      const startMinutes = slot ? slot[0] : START_HOUR * 60 + Math.min(rawMinutes, totalMinutes - 30);
       const dayIndex = Number(column.dataset.day || 0);
       openBookingModal(dayIndex, startMinutes);
     });
@@ -547,10 +548,31 @@ function bindEvents() {
       const bookingDay = pendingBooking.day;
       const ignoreId = pendingBooking.eventId || null;
       const classId = targetView === "class" ? pendingBooking.classId : null;
-      const roomId = targetView === "room" ? pendingBooking.roomId : null;
+      let roomId = targetView === "room" ? pendingBooking.roomId : null;
+      let roomLabel = "";
+
+      if (targetView === "class") {
+        const availableRooms = getAvailableRoomsForBooking(
+          bookingDay,
+          startMinutes,
+          endMinutes,
+          ignoreId
+        );
+        const roomInputValue = bookingRoomInput ? bookingRoomInput.value.trim() : "";
+        const selectedRoomId = bookingRoomInput?.dataset.roomId || pendingBooking.roomId || "";
+        const selectedRoom =
+          availableRooms.find((roomItem) => roomItem.id === selectedRoomId) ||
+          resolveRoomFromInput(roomInputValue, availableRooms);
+        roomId = selectedRoom ? selectedRoom.id : null;
+        roomLabel = selectedRoom ? getRoomDisplayLabel(selectedRoom) : "";
+      }
 
       if (targetView === "class" && isAdminRole(state.role) && !classId) {
         alert("Select a class first.");
+        return;
+      }
+      if (targetView === "class" && !roomId) {
+        alert("Select a room first.");
         return;
       }
       if (targetView === "room" && isAdminRole(state.role) && !roomId) {
@@ -567,11 +589,21 @@ function bindEvents() {
         roomId
       );
 
+      const roomConflict =
+        targetView === "class" && roomId
+          ? getRoomBookingConflict(bookingDay, startMinutes, endMinutes, ignoreId, roomId)
+          : null;
+
       if (conflict) {
         const conflictTitle = conflict.title || "Existing booking";
         alert(
           `That time slot is already occupied (${conflictTitle}, ${conflict.start} - ${conflict.end}).`
         );
+        return;
+      }
+
+      if (roomConflict) {
+        alert(`That room is already booked at this time (${roomLabel || roomConflict.roomId}).`);
         return;
       }
 
@@ -588,6 +620,9 @@ function bindEvents() {
       }
       if (typeLabel) {
         metaParts.push(typeLabel);
+      }
+      if (targetView === "class" && roomLabel) {
+        metaParts.push(roomLabel);
       }
 
       if (!eventsByView[targetView]) {
@@ -622,6 +657,7 @@ function bindEvents() {
         existing.professor = professor;
         if (targetView === "class") {
           existing.classId = classId;
+          existing.roomId = roomId;
         }
         if (targetView === "room") {
           existing.roomId = roomId;
@@ -638,13 +674,42 @@ function bindEvents() {
           type: typeValue,
           professor,
           classId: targetView === "class" ? classId : null,
-          roomId: targetView === "room" ? roomId : null,
+          roomId: targetView === "class" || targetView === "room" ? roomId : null,
         });
         addAuditEntry("Booked", actor, objectLabel, bookingTime, auditScope);
       }
 
       closeBookingModal();
       renderEvents();
+    });
+  }
+
+  if (bookingRoomInput) {
+    bookingRoomInput.addEventListener("input", () => {
+      if (pendingBooking) {
+        pendingBooking.roomId = null;
+      }
+      bookingRoomInput.dataset.roomId = "";
+      renderBookingRoomOptions();
+    });
+    bookingRoomInput.addEventListener("focus", renderBookingRoomOptions);
+  }
+
+  if (bookingStart) {
+    bookingStart.addEventListener("input", () => {
+      if (pendingBooking) {
+        pendingBooking.startMinutes = parseTimeInput(bookingStart.value);
+      }
+      renderBookingRoomOptions();
+    });
+  }
+
+  if (bookingEnd) {
+    bookingEnd.addEventListener("input", () => {
+      if (pendingBooking) {
+        pendingBooking.endMinutes = parseTimeInput(bookingEnd.value);
+      }
+      renderBookingRoomOptions();
     });
   }
 

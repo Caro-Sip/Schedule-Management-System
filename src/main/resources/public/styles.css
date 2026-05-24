@@ -423,6 +423,67 @@ a.tab {
   gap: 12px;
 }
 
+/* Put start and end time inputs on the same row in booking modal */
+.modal-form .time-pair {
+  display: flex;
+  gap: 12px;
+}
+.modal-form .time-pair label {
+  flex: 1 1 0;
+}
+
+.room-picker {
+  display: grid;
+  gap: 8px;
+}
+
+.room-picker-results {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.room-picker-option,
+.room-picker-empty {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 10px 12px;
+  text-align: left;
+  font: inherit;
+}
+
+.room-picker-option {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.room-picker-option:hover,
+.room-picker-option:focus {
+  background: #f1f3f4;
+}
+
+.room-picker-label {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.room-picker-subtext,
+.room-picker-help {
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+.room-picker-help {
+  padding-left: 2px;
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;
@@ -641,6 +702,40 @@ a.tab {
   background: #ffffff;
 }
 
+.class-row {
+  padding: 12px 14px;
+  gap: 12px;
+}
+
+.class-row .user-name {
+  font-size: 14px;
+}
+
+.class-row .user-id,
+.class-row .user-label,
+.class-row .user-date {
+  font-size: 12px;
+}
+
+.class-row .tag {
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+.class-row .icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+}
+
+.class-row .user-main {
+  gap: 4px;
+}
+
+.class-row .user-modified {
+  gap: 4px;
+}
+
 .class-row.selected,
 .room-row.selected {
   border-color: #c6dafc;
@@ -802,6 +897,13 @@ a.tab {
 
 .corner {
   height: 58px;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
 }
 
 .day {
@@ -853,6 +955,10 @@ a.tab {
   font-size: 12px;
   color: var(--ink-muted);
   border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  font-weight: 600;
 }
 
 .grid-area {

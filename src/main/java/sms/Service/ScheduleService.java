@@ -1,10 +1,8 @@
 package sms.Service;
 
 import java.sql.SQLException;
-import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,32 +10,26 @@ import java.util.Map;
 import sms.DAO.ClassEntityDAO;
 import sms.DAO.ScheduleClassDAO;
 import sms.DAO.ScheduleDAO;
-import sms.DAO.TeacherDAO;
 import sms.Objects.ClassEntity;
 import sms.Objects.Schedule;
-import sms.Objects.ScheduleConflict;
 import sms.Objects.TimeSlot;
 import sms.exception.ClassNotFoundException;
-import sms.exception.ScheduleConflictException;
 import sms.exception.ScheduleNotFoundException;
-import sms.exception.TeacherNotFoundException;
 
 public class ScheduleService {
     private final ScheduleDAO scheduleDAO;
     private final ScheduleClassDAO scheduleClassDAO;
     private final ClassEntityDAO classEntityDAO;
-    private final TeacherDAO teacherDAO;
 
     public ScheduleService() {
-        this(new ScheduleDAO(), new ScheduleClassDAO(), new ClassEntityDAO(), new TeacherDAO());
+        this(new ScheduleDAO(), new ScheduleClassDAO(), new ClassEntityDAO());
     }
 
     public ScheduleService(ScheduleDAO scheduleDAO, ScheduleClassDAO scheduleClassDAO,
-            ClassEntityDAO classEntityDAO, TeacherDAO teacherDAO) {
+            ClassEntityDAO classEntityDAO) {
         this.scheduleDAO = scheduleDAO;
         this.scheduleClassDAO = scheduleClassDAO;
         this.classEntityDAO = classEntityDAO;
-        this.teacherDAO = teacherDAO;
     }
 
     public List<Schedule> getAllSchedules() {
@@ -46,6 +38,14 @@ public class ScheduleService {
             return schedulesViewList;
         } catch (SQLException e){
             throw new RuntimeException("Failed to retrieve schedules",e);
+        }
+    }
+
+    public List<Map<String, Object>> getAllScheduleViews() {
+        try {
+            return buildScheduleViews(scheduleDAO.getAllSchedules());
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to retrieve schedules", e);
         }
     }
 
@@ -68,6 +68,58 @@ public class ScheduleService {
             return null;
         }
         return buildScheduleView(schedule);
+    }
+
+    public List<Map<String, Object>> getScheduleViewsForClass(int classId) {
+        validateClassId(classId);
+
+        try {
+            List<Map<String, Object>> schedules = new ArrayList<>();
+            for (int scheduleId : scheduleClassDAO.getScheduleIdsByClassId(classId)) {
+                Schedule schedule = scheduleDAO.getScheduleById(scheduleId);
+                if (schedule != null) {
+                    schedules.add(buildScheduleView(schedule));
+                }
+            }
+            return schedules;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get class schedule views", e);
+        }
+    }
+
+    public List<Map<String, Object>> getScheduleViewsForTeacher(int teacherId) {
+        validateTeacherId(teacherId);
+
+        try {
+            List<Map<String, Object>> schedules = new ArrayList<>();
+            for (Schedule schedule : scheduleDAO.getAllSchedules()) {
+                Integer assignedTeacherId = schedule.getTeacherId();
+                if (assignedTeacherId != null && assignedTeacherId == teacherId) {
+                    schedules.add(buildScheduleView(schedule));
+                }
+            }
+            return schedules;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get teacher schedule views", e);
+        }
+    }
+
+    public List<Map<String, Object>> getScheduleViewsForRoom(int roomId) {
+        if (roomId < 0) {
+            throw new IllegalArgumentException("Invalid room id");
+        }
+
+        try {
+            List<Map<String, Object>> schedules = new ArrayList<>();
+            for (Schedule schedule : scheduleDAO.getAllSchedules()) {
+                if (schedule.getClassroomId() == roomId) {
+                    schedules.add(buildScheduleView(schedule));
+                }
+            }
+            return schedules;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get room schedule views", e);
+        }
     }
 
     private Map<String, Object> buildScheduleView(Schedule schedule) {
@@ -93,6 +145,14 @@ public class ScheduleService {
         view.put("greyedAt", schedule.getGreyedAt() != null ? schedule.getGreyedAt().toString() : null);
         view.put("linkedScheduleId", schedule.getLinkedScheduleId());
         return view;
+    }
+
+    private List<Map<String, Object>> buildScheduleViews(Collection<Schedule> schedules) {
+        List<Map<String, Object>> views = new ArrayList<>();
+        for (Schedule schedule : schedules) {
+            views.add(buildScheduleView(schedule));
+        }
+        return views;
     }
 
     // TODO Schedule is not properly working yet

@@ -97,6 +97,15 @@ function openClassModal(mode, classItem) {
   if (classYearInput) {
     classYearInput.value = classItem?.year ?? "";
   }
+  if (typeof classSemesterInput !== "undefined" && classSemesterInput) {
+    classSemesterInput.value = classItem?.semester ?? "1";
+  }
+  if (typeof classStartDateInput !== "undefined" && classStartDateInput) {
+    classStartDateInput.value = classItem?.startDate ?? "";
+  }
+  if (typeof classEndDateInput !== "undefined" && classEndDateInput) {
+    classEndDateInput.value = classItem?.endDate ?? "";
+  }
 
   if (classDeleteBtn) {
     classDeleteBtn.toggleAttribute("hidden", mode !== "edit");
@@ -338,8 +347,21 @@ function renderClassList() {
     yearTag.textContent = Number.isFinite(classItem.year)
       ? `Year ${classItem.year}`
       : "Year —";
-
     tags.appendChild(yearTag);
+
+    const semesterTag = document.createElement("span");
+    semesterTag.className = "tag semester";
+    semesterTag.textContent = Number.isFinite(classItem.semester)
+      ? `Sem ${classItem.semester}`
+      : "Sem —";
+    tags.appendChild(semesterTag);
+
+    const dateRangeTag = document.createElement("span");
+    dateRangeTag.className = "tag date-range";
+    const start = classItem.startDate || classItem.start_date || null;
+    const end = classItem.endDate || classItem.end_date || null;
+    dateRangeTag.textContent = start && end ? `${formatDate(start)} — ${formatDate(end)}` : "";
+    tags.appendChild(dateRangeTag);
 
     const modified = document.createElement("div");
     modified.className = "user-modified";

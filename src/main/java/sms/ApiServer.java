@@ -10,7 +10,6 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
 import sms.Config.DatabaseConfig;
 import sms.Objects.ClassEntity;
 import sms.Objects.Teacher;
@@ -74,8 +73,13 @@ public class ApiServer {
     }
 
     private static void getAllClasses(Context ctx) {
-        List<ClassEntity> classes = classService.getAllClasses();
-        ctx.json(classes);
+        try {
+            List<ClassEntity> classes = classService.getAllClasses();
+            ctx.json(classes);
+        } catch (Exception e) {
+            e.printStackTrace();
+            ctx.status(500).json(errorResponse(e, "Failed to load classes"));
+        }
     }
 
     private static void getTeacherById(Context ctx) {

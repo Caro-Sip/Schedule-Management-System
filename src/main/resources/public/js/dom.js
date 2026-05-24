@@ -178,6 +178,21 @@ function selectClass(classId) {
   renderEvents();
 }
 
+function getSelectedClassId() {
+  if (Number.isFinite(state.selectedClassId)) {
+    return state.selectedClassId;
+  }
+
+  const selectedRow = document.querySelector("#class-list .class-row.selected");
+  const classId = selectedRow?.dataset.classId;
+  if (classId !== undefined && classId !== null && classId !== "") {
+    const numericId = Number(classId);
+    return Number.isNaN(numericId) ? classId : numericId;
+  }
+
+  return null;
+}
+
 function selectRoom(roomId) {
   const numericRoomId = Number(roomId);
   state.selectedRoomId = Number.isNaN(numericRoomId) ? roomId : numericRoomId;

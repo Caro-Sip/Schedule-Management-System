@@ -550,7 +550,11 @@ function bindEvents() {
       const targetView = pendingBooking.view || "class";
       const bookingDay = pendingBooking.day;
       const ignoreId = pendingBooking.eventId || null;
-      const classId = targetView === "class" ? pendingBooking.classId : null;
+      const activeClassId = getSelectedClassId();
+      const classId =
+        targetView === "class"
+          ? pendingBooking.classId || pendingBooking.classIds?.[0] || activeClassId || null
+          : null;
       let classroomId = targetView === "room" ? pendingBooking.roomId : null;
       let roomLabel = "";
 

@@ -42,21 +42,26 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
 
   const isEdit = Boolean(eventData);
   const bookingDay = isEdit ? eventData.day : dayIndex;
+  const activeClassId = getSelectedClassId();
+  const attachedClassIds = isEdit
+    ? Array.isArray(eventData.classIds) && eventData.classIds.length > 0
+      ? eventData.classIds.slice()
+      : eventData.classId
+        ? [eventData.classId]
+        : []
+    : activeClassId
+      ? [activeClassId]
+      : [];
+  const resolvedClassId = isEdit
+    ? eventData.classId || attachedClassIds[0] || activeClassId || null
+    : activeClassId || null;
 
   pendingBooking = {
     day: bookingDay,
     view: state.view,
     eventId: isEdit ? eventData.id : null,
-    classId: isEdit ? eventData.classId || null : state.selectedClassId || null,
-    classIds: isEdit
-      ? Array.isArray(eventData.classIds) && eventData.classIds.length > 0
-        ? eventData.classIds.slice()
-        : eventData.classId
-          ? [eventData.classId]
-          : []
-      : state.selectedClassId
-        ? [state.selectedClassId]
-        : [],
+    classId: resolvedClassId,
+    classIds: attachedClassIds,
     roomId: isEdit ? eventData.roomId || null : state.selectedRoomId || null,
     classroomId: isEdit ? eventData.roomId || null : state.selectedRoomId || null,
     teacherId: isEdit ? eventData.teacherId || null : null,

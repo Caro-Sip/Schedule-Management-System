@@ -551,10 +551,13 @@ function bindEvents() {
       const bookingDay = pendingBooking.day;
       const ignoreId = pendingBooking.eventId || null;
       const activeClassId = getSelectedClassId();
+      const roomSelectedClassId = bookingClassInput?.dataset.classId || pendingBooking.classId || "";
       const classId =
         targetView === "class"
           ? pendingBooking.classId || pendingBooking.classIds?.[0] || activeClassId || null
-          : null;
+          : targetView === "room"
+            ? roomSelectedClassId || pendingBooking.classId || pendingBooking.classIds?.[0] || null
+            : null;
       let classroomId = targetView === "room" ? pendingBooking.roomId : null;
       let roomLabel = "";
 
@@ -593,6 +596,10 @@ function bindEvents() {
       }
       if (targetView === "class" && !classroomId) {
         alert("Select a room first.");
+        return;
+      }
+      if (targetView === "room" && isAdminRole(state.role) && !classId) {
+        alert("Select a class first.");
         return;
       }
       if (targetView === "room" && isAdminRole(state.role) && !classroomId) {
@@ -781,6 +788,18 @@ function bindEvents() {
       renderBookingRoomOptions();
     });
     bookingRoomInput.addEventListener("focus", renderBookingRoomOptions);
+  }
+
+  if (bookingClassInput) {
+    bookingClassInput.addEventListener("input", () => {
+      if (pendingBooking) {
+        pendingBooking.classId = null;
+        pendingBooking.classIds = [];
+      }
+      bookingClassInput.dataset.classId = "";
+      renderBookingClassOptions();
+    });
+    bookingClassInput.addEventListener("focus", renderBookingClassOptions);
   }
 
   if (bookingStart) {

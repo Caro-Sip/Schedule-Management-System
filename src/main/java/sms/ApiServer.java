@@ -25,10 +25,10 @@ import sms.Service.TeacherService;
 import sms.Service.ScheduleService;
 import sms.DAO.ClassroomDAO;
 import sms.DAO.CourseDAO;
-import sms.DAO.ClassroomDAO;
 import sms.exception.ClassNotFoundException;
 import sms.exception.InvalidClassException;
 import sms.exception.InvalidTeacherException;
+import sms.exception.ScheduleNotFoundException;
 import sms.exception.TeacherNotFoundException;
 
 public class ApiServer {
@@ -80,6 +80,7 @@ public class ApiServer {
                 path("/api/schedules", () -> {
                     get(ApiServer::getAllSchedules);
                     post(ApiServer::createSchedule);
+                    delete("/{id}", ApiServer::deleteSchedule);
                     get("/class/{classId}", ApiServer::getSchedulesForClass);
                     get("/teacher/{teacherId}", ApiServer::getSchedulesForTeacher);
                     get("/room/{roomId}", ApiServer::getSchedulesForRoom);
@@ -157,6 +158,22 @@ public class ApiServer {
             ctx.status(400).json(errorResponse(e, "Invalid schedule data"));
         } catch (Exception e) {
             ctx.status(500).json(errorResponse(e, "Failed to create schedule"));
+        }
+    }
+
+    private static void deleteSchedule(Context ctx) {
+        try {
+            int id = Integer.parseInt(ctx.pathParam("id"));
+            scheduleService.deleteSchedule(id);
+            ctx.status(204);
+        } catch (NumberFormatException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid schedule id"));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid schedule id"));
+        } catch (ScheduleNotFoundException e) {
+            ctx.status(404).json(errorResponse(e, "Schedule not found"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to delete schedule"));
         }
     }
 

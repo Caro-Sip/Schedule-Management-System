@@ -695,26 +695,10 @@ function bindEvents() {
         };
 
         saveScheduleApi(pendingBooking.eventId, payload)
-          .then((savedSchedule) => {
-            updateSavedSchedule(savedSchedule, {
-              title: subject || "Untitled class",
-              meta: metaParts.join(" | "),
-              professor,
-              type: typeValue,
-              classroomId,
-              teacherId: pendingBooking.teacherId || null,
-              courseId,
-              createdBy: pendingBooking.createdBy || 1,
-              status: pendingBooking.status || "BOOKED",
-              visibility: pendingBooking.visibility || "VISIBLE",
-              priority: pendingBooking.priority ?? 0,
-              linkedScheduleId: pendingBooking.linkedScheduleId || null,
-              date: pendingBooking.date,
-              classIds: payload.classIds,
-            });
+          .then(async () => {
+            await refreshSchedules();
             addAuditEntry("Edited", actor, objectLabel, bookingTime, auditScope);
             closeBookingModal();
-            renderEvents();
           })
           .catch((saveError) => {
             console.error("Failed to save schedule", saveError);
@@ -748,29 +732,10 @@ function bindEvents() {
             linkedScheduleId: pendingBooking.linkedScheduleId || null,
           };
 
-          const saved = await saveScheduleApi(null, payload);
-          const event = buildScheduleEvent(saved);
-          if (event) {
-            eventsByView[targetView].push(event);
-          } else {
-            // Fallback to a minimal client-side event if server didn't return usable data
-            eventsByView[targetView].push({
-              id: createEventId(),
-              day: bookingDay,
-              start: startValue,
-              end: endValue,
-              title: subject || "Untitled class",
-              meta: metaParts.join(" | "),
-              type: typeValue,
-              professor,
-              classId: targetView === "class" ? classId : null,
-              roomId: targetView === "class" || targetView === "room" ? classroomId : null,
-            });
-          }
-
+          await saveScheduleApi(null, payload);
+          await refreshSchedules();
           addAuditEntry("Booked", actor, objectLabel, bookingTime, auditScope);
           closeBookingModal();
-          renderEvents();
         } catch (saveError) {
           console.error("Failed to create schedule", saveError);
           alert(`Failed to create booking: ${saveError.message}`);
@@ -844,16 +809,22 @@ function bindEvents() {
       const objectLabel = subjectLabel;
       const bookingTime = formatBookingTimeRange(removed.start, removed.end);
       const actor = state.userName || "User";
-      items.splice(index, 1);
       const auditScope =
         targetView === "class"
           ? { scopeType: "class", scopeId: removed.classId }
           : targetView === "room"
             ? { scopeType: "room", scopeId: removed.roomId }
             : { scopeType: "general", scopeId: null };
-      addAuditEntry("Deleted", actor, objectLabel, bookingTime, auditScope);
-      closeBookingModal();
-      renderEvents();
+      deleteScheduleApi(pendingBooking.eventId)
+        .then(async () => {
+          await refreshSchedules();
+          addAuditEntry("Deleted", actor, objectLabel, bookingTime, auditScope);
+          closeBookingModal();
+        })
+        .catch((deleteError) => {
+          console.error("Failed to delete schedule", deleteError);
+          alert(`Failed to delete booking: ${deleteError.message}`);
+        });
     });
   }
 
@@ -904,6 +875,12 @@ bindEvents();
 updateFilterGroup();
 updateWeek();
 renderAuditLog();
+const restoredSession = restoreSession();
+if (restoredSession) {
+  showSchedule(restoredSession.role, restoredSession.userName);
+} else {
+  showLogin();
+}
 loadClassrooms();
 loadCourses();
 loadClasses();

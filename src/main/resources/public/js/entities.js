@@ -45,6 +45,9 @@ const classForm = document.getElementById("class-form");
 const classNameInput = document.getElementById("class-name");
 const classIdInput = document.getElementById("class-id");
 const classYearInput = document.getElementById("class-year");
+const classSemesterInput = document.getElementById("class-semester");
+const classStartDateInput = document.getElementById("class-start-date");
+const classEndDateInput = document.getElementById("class-end-date");
 const classDeleteBtn = document.getElementById("class-delete");
 const classCancelBtn = document.getElementById("class-cancel");
 const classCloseBtn = document.getElementById("class-close");
@@ -137,6 +140,9 @@ function normalizeClassPayload(payload) {
 		id: Number(payload.id),
 		name: payload.name || "",
 		year: Number(payload.year),
+		semester: payload.semester ? Number(payload.semester) : null,
+		startDate: payload.startDate || payload.start_date || null,
+		endDate: payload.endDate || payload.end_date || null,
 		createdBy: Number(payload.createdBy),
 		lastModified: timestamp,
 	};

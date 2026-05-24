@@ -23,7 +23,7 @@ public class ClassService {
     }
 
     public ClassEntity createClass(String name, int year, int semester,
-                                   LocalDate startDate, LocalDate endDate, int createdBy)
+                                   String startDate, String endDate, int createdBy)
             throws InvalidClassException {
         if(name == null || name.trim().isEmpty()){
             throw new IllegalArgumentException("Name cannot be empty");
@@ -41,7 +41,10 @@ public class ClassService {
             throw new IllegalArgumentException("Start date and end date are required");
         }
 
-        if (startDate.isAfter(endDate)) {
+        LocalDate parsedStartDate = LocalDate.parse(startDate);
+        LocalDate parsedEndDate = LocalDate.parse(endDate);
+
+        if (parsedStartDate.isAfter(parsedEndDate)) {
             throw new IllegalArgumentException("Start date cannot be after end date");
         }
 
@@ -111,7 +114,10 @@ public class ClassService {
             throw new IllegalArgumentException("Start date and end date are required");
         }
 
-        if (classEntity.getStartDate().isAfter(classEntity.getEndDate())) {
+        LocalDate parsedStartDate = LocalDate.parse(classEntity.getStartDate());
+        LocalDate parsedEndDate = LocalDate.parse(classEntity.getEndDate());
+
+        if (parsedStartDate.isAfter(parsedEndDate)) {
             throw new IllegalArgumentException("Start date cannot be after end date");
         }
 

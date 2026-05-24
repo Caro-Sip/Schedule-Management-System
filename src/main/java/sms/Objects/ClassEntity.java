@@ -1,20 +1,18 @@
 package sms.Objects;
 
-import java.time.LocalDate;
-
 public class ClassEntity {
     private int id;
     private String name;
     private int year;
     private int semester;
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private String startDate;
+    private String endDate;
     private int createdBy;
 
     public ClassEntity() {}
 
     public ClassEntity(int id, String name, int year, int semester,
-                       LocalDate startDate, LocalDate endDate, int createdBy) {
+                       String startDate, String endDate, int createdBy) {
         this.id = id;
         this.name = name;
         this.year = year;
@@ -25,7 +23,7 @@ public class ClassEntity {
     }
 
     public ClassEntity(String name, int year, int semester,
-                       LocalDate startDate, LocalDate endDate, int createdBy) {
+                       String startDate, String endDate, int createdBy) {
         this.name = name;
         this.year = year;
         this.semester = semester;
@@ -46,11 +44,11 @@ public class ClassEntity {
     public int getSemester() { return semester; }
     public void setSemester(int semester) { this.semester = semester; }
 
-    public LocalDate getStartDate() { return startDate; }
-    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
+    public String getStartDate() { return startDate; }
+    public void setStartDate(String startDate) { this.startDate = startDate; }
 
-    public LocalDate getEndDate() { return endDate; }
-    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
+    public String getEndDate() { return endDate; }
+    public void setEndDate(String endDate) { this.endDate = endDate; }
 
     public int getCreatedBy() { return createdBy; }
     public void setCreatedBy(int createdBy) { this.createdBy = createdBy; }

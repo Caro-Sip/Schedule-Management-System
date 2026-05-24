@@ -30,8 +30,8 @@ public class ClassEntityDAO {
             pstmt.setString(1, classEntity.getName());
             pstmt.setInt(2, classEntity.getYear());
             pstmt.setInt(3, classEntity.getSemester());
-            pstmt.setDate(4, Date.valueOf(classEntity.getStartDate()));
-            pstmt.setDate(5, Date.valueOf(classEntity.getEndDate()));
+            pstmt.setString(4, classEntity.getStartDate());
+            pstmt.setString(5, classEntity.getEndDate());
             pstmt.setInt(6, classEntity.getCreatedBy());
 
             int rowsAffected = pstmt.executeUpdate();
@@ -62,8 +62,8 @@ public class ClassEntityDAO {
                     rs.getString("name"),
                     rs.getInt("year"),
                     rs.getInt("semester"),
-                    rs.getDate("start_date").toLocalDate(),
-                    rs.getDate("end_date").toLocalDate(),
+                    rs.getString("start_date"),
+                    rs.getString("end_date"),
                     rs.getInt("created_by")
                 );
             }
@@ -87,8 +87,8 @@ public class ClassEntityDAO {
                     rs.getString("name"),
                     rs.getInt("year"),
                     rs.getInt("semester"),
-                    rs.getDate("start_date").toLocalDate(),
-                    rs.getDate("end_date").toLocalDate(),
+                    rs.getString("start_date"),
+                    rs.getString("end_date"),
                     rs.getInt("created_by")
                 );
             }
@@ -111,8 +111,8 @@ public class ClassEntityDAO {
                     rs.getString("name"),
                     rs.getInt("year"),
                     rs.getInt("semester"),
-                    rs.getDate("start_date").toLocalDate(),
-                    rs.getDate("end_date").toLocalDate(),
+                    rs.getString("start_date"),
+                    rs.getString("end_date"),
                     rs.getInt("created_by")
                 );
                 classEntities.add(classEntity);
@@ -138,8 +138,8 @@ public class ClassEntityDAO {
                     rs.getString("name"),
                     rs.getInt("year"),
                     rs.getInt("semester"),
-                    rs.getDate("start_date").toLocalDate(),
-                    rs.getDate("end_date").toLocalDate(),
+                    rs.getString("start_date"),
+                    rs.getString("end_date"),
                     rs.getInt("created_by")
                 );
                 classEntities.add(classEntity);
@@ -165,8 +165,8 @@ public class ClassEntityDAO {
                     rs.getString("name"),
                     rs.getInt("year"),
                     rs.getInt("semester"),
-                    rs.getDate("start_date").toLocalDate(),
-                    rs.getDate("end_date").toLocalDate(),
+                    rs.getDate("start_date").toLocalDate().toString(),
+                    rs.getDate("end_date").toLocalDate().toString(),
                     rs.getInt("created_by")
                 );
                 classEntities.add(classEntity);
@@ -198,8 +198,8 @@ public class ClassEntityDAO {
                     rs.getString("name"),
                     rs.getInt("year"),
                     rs.getInt("semester"),
-                    rs.getDate("start_date").toLocalDate(),
-                    rs.getDate("end_date").toLocalDate(),
+                    rs.getDate("start_date").toLocalDate().toString(),
+                    rs.getDate("end_date").toLocalDate().toString(),
                     rs.getInt("created_by")
                 );
                 classEntities.add(classEntity);
@@ -218,8 +218,8 @@ public class ClassEntityDAO {
             pstmt.setString(1, classEntity.getName());
             pstmt.setInt(2, classEntity.getYear());
             pstmt.setInt(3, classEntity.getSemester());
-            pstmt.setDate(4, Date.valueOf(classEntity.getStartDate()));
-            pstmt.setDate(5, Date.valueOf(classEntity.getEndDate()));
+            pstmt.setString(4, classEntity.getStartDate());
+            pstmt.setString(5, classEntity.getEndDate());
             pstmt.setInt(6, classEntity.getCreatedBy());
             pstmt.setInt(7, classEntity.getId());
 

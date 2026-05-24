@@ -279,6 +279,25 @@ function bindEvents() {
         ? existing.createdBy
         : 1;
 
+      const semesterValue = classSemesterInput ? Number(classSemesterInput.value) : null;
+      const startDate = classStartDateInput ? classStartDateInput.value : null;
+      const endDate = classEndDateInput ? classEndDateInput.value : null;
+
+      if (!semesterValue || (semesterValue !== 1 && semesterValue !== 2)) {
+        alert("Semester must be 1 or 2.");
+        return;
+      }
+
+      if (!startDate || !endDate) {
+        alert("Semester start and end dates are required.");
+        return;
+      }
+
+      if (new Date(startDate) > new Date(endDate)) {
+        alert("Start date cannot be after end date.");
+        return;
+      }
+
       const wasEditing = Boolean(editingClassId);
       const previousId = editingClassId;
 
@@ -286,13 +305,13 @@ function bindEvents() {
         let targetId = previousId ? Number(previousId) : null;
 
         if (wasEditing && editingClassId) {
-          await updateClassApi(editingClassId, { name, year, createdBy });
+          await updateClassApi(editingClassId, { name, year, semester: semesterValue, startDate, endDate, createdBy });
           addAuditEntry("Edited class", state.userName || "User", name, "", {
             scopeType: "class",
             scopeId: editingClassId,
           });
         } else {
-          const created = await createClassApi({ name, year, createdBy });
+          const created = await createClassApi({ name, year, semester: semesterValue, startDate, endDate, createdBy });
           targetId = created?.id ? Number(created.id) : null;
           addAuditEntry("Added class", state.userName || "User", name, "", {
             scopeType: "class",

@@ -237,7 +237,10 @@ function bindEvents() {
     classList.addEventListener("click", (event) => {
       const editButton = event.target.closest(".class-edit");
       if (editButton) {
-        const classId = editButton.dataset.classId;
+        const classId = Number(editButton.dataset.classId);
+        if (Number.isNaN(classId)) {
+          return;
+        }
         const classItem = classDirectory.find((item) => item.id === classId);
         if (classItem) {
           openClassModal("edit", classItem);

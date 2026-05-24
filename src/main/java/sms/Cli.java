@@ -2,9 +2,9 @@ package sms;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
-import sms.Objects.Schedule;
 import sms.Objects.Teacher;
 import sms.Objects.User;
 import sms.Service.ScheduleService;
@@ -120,10 +120,10 @@ public class Cli {
                     handleClassSchedule();
                     break;
                 case 2:
-                    // handleTeacherSchedule();
+                    handleTeacherSchedule();
                     break;
                 case 3:
-                    // handleRoomSchedule();
+                    handleRoomSchedule();
                     break;
                 case 4:
                     handleTeacherManagement();
@@ -159,7 +159,7 @@ public class Cli {
     private void handleClassSchedule() {
         int classId = readInt("Class ID: ");
         try {
-            List<Schedule> schedules = scheduleService.getSchedulesForClass(classId);
+            List<Map<String, Object>> schedules = scheduleService.getScheduleViewsForClass(classId);
             renderSchedules(schedules);
         } catch (UnsupportedOperationException e) {
             printFeatureUnavailable("Class schedule lookup", e);
@@ -168,30 +168,29 @@ public class Cli {
         }
     }
 
-    // TODO CLI is currently ignored
-    // private void handleTeacherSchedule() {
-    //     int teacherId = readInt("Teacher ID: ");
-    //     try {
-    //         List<Schedule> schedules = scheduleService.getSchedulesForTeacher(teacherId);
-    //         renderSchedules(schedules);
-    //     } catch (UnsupportedOperationException e) {
-    //         printFeatureUnavailable("Teacher schedule lookup", e);
-    //     } catch (Exception e) {
-    //         System.out.println("Failed to retrieve teacher schedule: " + e.getMessage());
-    //     }
-    // }
+    private void handleTeacherSchedule() {
+        int teacherId = readInt("Teacher ID: ");
+        try {
+            List<Map<String, Object>> schedules = scheduleService.getScheduleViewsForTeacher(teacherId);
+            renderSchedules(schedules);
+        } catch (UnsupportedOperationException e) {
+            printFeatureUnavailable("Teacher schedule lookup", e);
+        } catch (Exception e) {
+            System.out.println("Failed to retrieve teacher schedule: " + e.getMessage());
+        }
+    }
 
-    // private void handleRoomSchedule() {
-    //     int classroomId = readInt("Room ID: ");
-    //     try {
-    //         List<Schedule> schedules = scheduleService.getSchedulesForRoom(classroomId);
-    //         renderSchedules(schedules);
-    //     } catch (UnsupportedOperationException e) {
-    //         printFeatureUnavailable("Room schedule lookup", e);
-    //     } catch (Exception e) {
-    //         System.out.println("Failed to retrieve room schedule: " + e.getMessage());
-    //     }
-    // }
+    private void handleRoomSchedule() {
+        int classroomId = readInt("Room ID: ");
+        try {
+            List<Map<String, Object>> schedules = scheduleService.getScheduleViewsForRoom(classroomId);
+            renderSchedules(schedules);
+        } catch (UnsupportedOperationException e) {
+            printFeatureUnavailable("Room schedule lookup", e);
+        } catch (Exception e) {
+            System.out.println("Failed to retrieve room schedule: " + e.getMessage());
+        }
+    }
 
     private void handleTeacherManagement() {
         boolean inTeacherMenu = true;
@@ -321,16 +320,31 @@ public class Cli {
         }
     }
 
-    private void renderSchedules(List<Schedule> schedules) {
+    private void renderSchedules(List<Map<String, Object>> schedules) {
         if (schedules == null || schedules.isEmpty()) {
             System.out.println("No schedules found.");
             return;
         }
 
         System.out.println();
-        for (Schedule schedule : schedules) {
-            System.out.println(schedule);
+        for (Map<String, Object> schedule : schedules) {
+            System.out.println(formatSchedule(schedule));
         }
+    }
+
+    private String formatSchedule(Map<String, Object> schedule) {
+        return "Schedule{" +
+                "id=" + schedule.get("id") +
+                ", classroomId=" + schedule.get("classroomId") +
+                ", teacherId=" + schedule.get("teacherId") +
+                ", courseId=" + schedule.get("courseId") +
+                ", classIds=" + schedule.get("classIds") +
+                ", date=" + schedule.get("date") +
+                ", startTime=" + schedule.get("startTime") +
+                ", endTime=" + schedule.get("endTime") +
+                ", status='" + schedule.get("status") + '\'' +
+                ", type='" + schedule.get("type") + '\'' +
+                '}';
     }
 
     private int readInt(String prompt) {

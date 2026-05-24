@@ -15,7 +15,6 @@ import sms.Objects.ClassEntity;
 import sms.Objects.Teacher;
 import sms.Service.ClassService;
 import sms.Service.TeacherService;
-import sms.Objects.Schedule;
 import sms.Service.ScheduleService;
 import sms.exception.ClassNotFoundException;
 import sms.exception.InvalidClassException;
@@ -59,6 +58,9 @@ public class ApiServer {
                 });
                 path("/api/schedules", () -> {
                     get(ApiServer::getAllSchedules);
+                    get("/class/{classId}", ApiServer::getSchedulesForClass);
+                    get("/teacher/{teacherId}", ApiServer::getSchedulesForTeacher);
+                    get("/room/{roomId}", ApiServer::getSchedulesForRoom);
                     get("/{id}", ApiServer::getScheduleById);
                 });
             });
@@ -82,11 +84,44 @@ public class ApiServer {
 
     private static void getAllSchedules(Context ctx) {
         try {
-            List<Schedule> schedules = scheduleService.getAllSchedules();
+            List<Map<String, Object>> schedules = scheduleService.getAllScheduleViews();
             ctx.json(schedules);
         } catch (Exception e) {
             e.printStackTrace();
             ctx.status(500).json(errorResponse(e, "Failed to load schedules"));
+        }
+    }
+
+    private static void getSchedulesForClass(Context ctx) {
+        try {
+            int classId = Integer.parseInt(ctx.pathParam("classId"));
+            ctx.json(scheduleService.getScheduleViewsForClass(classId));
+        } catch (NumberFormatException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid class id"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to load class schedules"));
+        }
+    }
+
+    private static void getSchedulesForTeacher(Context ctx) {
+        try {
+            int teacherId = Integer.parseInt(ctx.pathParam("teacherId"));
+            ctx.json(scheduleService.getScheduleViewsForTeacher(teacherId));
+        } catch (NumberFormatException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid teacher id"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to load teacher schedules"));
+        }
+    }
+
+    private static void getSchedulesForRoom(Context ctx) {
+        try {
+            int roomId = Integer.parseInt(ctx.pathParam("roomId"));
+            ctx.json(scheduleService.getScheduleViewsForRoom(roomId));
+        } catch (NumberFormatException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid room id"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to load room schedules"));
         }
     }
 

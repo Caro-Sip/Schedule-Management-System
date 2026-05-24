@@ -266,7 +266,9 @@ function renderEvents() {
     if (!state.selectedRoomId) {
       return;
     }
-    filteredItems = items.filter((item) => item.roomId === state.selectedRoomId);
+    filteredItems = items.filter(
+      (item) => String(item.roomId) === String(state.selectedRoomId)
+    );
   }
 
   filteredItems.forEach((eventItem) => {

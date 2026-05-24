@@ -1,5 +1,5 @@
-const START_HOUR = 6;
-const END_HOUR = 18;
+const START_HOUR = 7;
+const END_HOUR = 17;
 const HOUR_HEIGHT = 56;
 
 const state = {

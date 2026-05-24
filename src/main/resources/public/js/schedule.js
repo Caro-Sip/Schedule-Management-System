@@ -49,6 +49,13 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
     eventId: isEdit ? eventData.id : null,
     classId: isEdit ? eventData.classId || null : state.selectedClassId || null,
     roomId: isEdit ? eventData.roomId || null : state.selectedRoomId || null,
+    startMinutes: isEdit ? parseTimeInput(eventData.start) : startMinutes,
+    endMinutes: isEdit
+      ? parseTimeInput(eventData.end)
+      : (() => {
+          const slot = getUsualSlotForMinutes(startMinutes);
+          return slot ? Math.min(slot[1], END_HOUR * 60) : Math.min(startMinutes + 60, END_HOUR * 60);
+        })(),
   };
 
   if (bookingTitle) {
@@ -74,8 +81,26 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
     if (isEdit) {
       bookingEnd.value = eventData.end;
     } else {
-      const endMinutes = Math.min(startMinutes + 60, END_HOUR * 60);
-      bookingEnd.value = minutesToTime(endMinutes);
+      // Default to the usual 2-hour slot that contains startMinutes (if available)
+      bookingEnd.value = minutesToTime(pendingBooking.endMinutes);
+    }
+  }
+  if (bookingRoomGroup && bookingRoomInput) {
+    const showRoomPicker = state.view === "class";
+    bookingRoomGroup.toggleAttribute("hidden", !showRoomPicker);
+    bookingRoomInput.required = showRoomPicker;
+    if (showRoomPicker) {
+      const roomItem = roomDirectory.find((item) => item.id === pendingBooking.roomId) || null;
+      bookingRoomInput.value = roomItem ? getRoomDisplayLabel(roomItem) : "";
+      bookingRoomInput.dataset.roomId = roomItem ? roomItem.id : "";
+      renderBookingRoomOptions();
+    } else {
+      bookingRoomInput.value = "";
+      bookingRoomInput.dataset.roomId = "";
+      if (bookingRoomResults) {
+        bookingRoomResults.setAttribute("hidden", "");
+        bookingRoomResults.innerHTML = "";
+      }
     }
   }
   if (bookingProfessor) {
@@ -106,6 +131,14 @@ function closeBookingModal() {
     return;
   }
   bookingModal.setAttribute("hidden", "");
+  if (bookingRoomInput) {
+    bookingRoomInput.value = "";
+    bookingRoomInput.dataset.roomId = "";
+  }
+  if (bookingRoomResults) {
+    bookingRoomResults.setAttribute("hidden", "");
+    bookingRoomResults.innerHTML = "";
+  }
   pendingBooking = null;
 }
 
@@ -137,7 +170,7 @@ function updateWeek() {
 
 function renderHeader(startDate, today) {
   const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  scheduleHeader.innerHTML = '<div class="corner"></div>';
+  scheduleHeader.innerHTML = '<div class="corner">Time</div>';
 
   for (let i = 0; i < 7; i += 1) {
     const current = new Date(startDate);
@@ -290,4 +323,140 @@ function getBookingConflict(view, day, startMinutes, endMinutes, ignoreId, class
       return startMinutes < eventEnd && endMinutes > eventStart;
     }) || null
   );
+}
+
+function getRoomBookingConflict(day, startMinutes, endMinutes, ignoreId, roomId) {
+  const items = [...(eventsByView.class || []), ...(eventsByView.room || [])];
+  return (
+    items.find((eventItem) => {
+      if (!roomId || eventItem.roomId !== roomId) {
+        return false;
+      }
+      if (ignoreId && eventItem.id === ignoreId) {
+        return false;
+      }
+      if (eventItem.day !== day) {
+        return false;
+      }
+      const eventStart = parseTimeInput(eventItem.start);
+      const eventEnd = parseTimeInput(eventItem.end);
+      if (eventStart === null || eventEnd === null) {
+        return false;
+      }
+      return startMinutes < eventEnd && endMinutes > eventStart;
+    }) || null
+  );
+}
+
+function getAvailableRoomsForBooking(day, startMinutes, endMinutes, ignoreId) {
+  return roomDirectory.filter(
+    (roomItem) => !getRoomBookingConflict(day, startMinutes, endMinutes, ignoreId, roomItem.id)
+  );
+}
+
+function resolveRoomFromInput(roomInputValue, availableRooms) {
+  const normalizedInput = normalizeRoomText(roomInputValue);
+  if (!normalizedInput) {
+    return null;
+  }
+
+  const rooms = availableRooms || roomDirectory;
+  return (
+    rooms.find((roomItem) => {
+      const candidates = [
+        roomItem.id,
+        roomItem.name,
+        roomItem.building,
+        getRoomShortLabel(roomItem),
+        getRoomDisplayLabel(roomItem),
+      ]
+        .filter(Boolean)
+        .map((candidate) => normalizeRoomText(candidate));
+
+      return candidates.some(
+        (candidate) =>
+          candidate === normalizedInput ||
+          candidate.includes(normalizedInput) ||
+          normalizedInput.includes(candidate)
+      );
+    }) || null
+  );
+}
+
+function renderBookingRoomOptions() {
+  if (
+    !bookingRoomGroup ||
+    !bookingRoomInput ||
+    !bookingRoomResults ||
+    !pendingBooking ||
+    state.view !== "class"
+  ) {
+    return;
+  }
+
+  const startMinutes = parseTimeInput(bookingStart?.value || "");
+  const endMinutes = parseTimeInput(bookingEnd?.value || "");
+  if (startMinutes === null || endMinutes === null || endMinutes <= startMinutes) {
+    bookingRoomResults.setAttribute("hidden", "");
+    bookingRoomResults.innerHTML = "";
+    return;
+  }
+
+  const query = normalizeRoomText(bookingRoomInput.value);
+  const availableRooms = getAvailableRoomsForBooking(
+    pendingBooking.day,
+    startMinutes,
+    endMinutes,
+    pendingBooking.eventId
+  );
+  const filteredRooms = availableRooms.filter((roomItem) => {
+    if (!query) {
+      return true;
+    }
+    const searchText = normalizeRoomText(
+      [roomItem.id, roomItem.name, roomItem.building, getRoomShortLabel(roomItem), getRoomDisplayLabel(roomItem)]
+        .filter(Boolean)
+        .join(" ")
+    );
+    return searchText.includes(query);
+  });
+
+  bookingRoomResults.innerHTML = "";
+
+  if (filteredRooms.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "room-picker-empty";
+    empty.textContent = query ? "No available rooms match." : "No available rooms at this time.";
+    bookingRoomResults.appendChild(empty);
+    bookingRoomResults.removeAttribute("hidden");
+    return;
+  }
+
+  filteredRooms.forEach((roomItem) => {
+    const option = document.createElement("button");
+    option.type = "button";
+    option.className = "room-picker-option";
+    option.dataset.roomId = roomItem.id;
+
+    const label = document.createElement("span");
+    label.className = "room-picker-label";
+    label.textContent = getRoomDisplayLabel(roomItem);
+
+    const subtext = document.createElement("span");
+    subtext.className = "room-picker-subtext";
+    subtext.textContent = roomItem.id;
+
+    option.appendChild(label);
+    option.appendChild(subtext);
+    option.addEventListener("click", () => {
+      bookingRoomInput.value = getRoomDisplayLabel(roomItem);
+      bookingRoomInput.dataset.roomId = roomItem.id;
+      pendingBooking.roomId = roomItem.id;
+      bookingRoomResults.setAttribute("hidden", "");
+    });
+
+    bookingRoomResults.appendChild(option);
+  });
+
+  bookingRoomResults.removeAttribute("hidden");
 }

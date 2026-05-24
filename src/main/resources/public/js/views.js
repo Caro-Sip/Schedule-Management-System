@@ -136,7 +136,34 @@ function showSchedule(role, label) {
     guestNote.classList.add("hidden");
   }
 
-  setView("class");
+  // Hide the Audit Log tab for class monitors and professors (teachers).
+  // Keep the audit sidebar toggle available for all roles.
+  if (auditTab) {
+    if (role === "class-monitor" || isTeacherRole(role)) {
+      auditTab.classList.add("hidden");
+    } else {
+      auditTab.classList.remove("hidden");
+    }
+  }
+
+  if (scheduleTabs && teacherTab) {
+    const classTab = scheduleTabs.querySelector('[data-view="class"]');
+    const roomTab = scheduleTabs.querySelector('[data-view="room"]');
+    if (classTab) {
+      if (isTeacherRole(role)) {
+        scheduleTabs.insertBefore(teacherTab, classTab);
+      } else if (roomTab) {
+        scheduleTabs.insertBefore(teacherTab, roomTab);
+      }
+    }
+  }
+
+  // Default view: teacher for professors, otherwise class
+  if (isTeacherRole(role)) {
+    setView("teacher");
+  } else {
+    setView("class");
+  }
   updateWeek();
 }
 

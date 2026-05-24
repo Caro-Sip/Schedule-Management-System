@@ -591,14 +591,29 @@
           </button>
         </div>
         <form class="modal-form" id="booking-form">
-          <label>
-            Start time
-            <input type="time" id="booking-start" required min="06:00" max="18:00" step="1800" />
-          </label>
-          <label>
-            End time
-            <input type="time" id="booking-end" required min="06:00" max="18:00" step="1800" />
-          </label>
+          <div class="time-pair">
+            <label>
+              Start time
+              <input type="time" id="booking-start" required min="07:00" max="17:00" step="1800" />
+            </label>
+            <label>
+              End time
+              <input type="time" id="booking-end" required min="07:00" max="17:00" step="1800" />
+            </label>
+          </div>
+          <div class="room-picker" id="booking-room-group" hidden>
+            <label>
+              Room
+              <input
+                type="text"
+                id="booking-room"
+                placeholder="Type A 101 or Room 101"
+                autocomplete="off"
+              />
+            </label>
+            <div class="room-picker-results" id="booking-room-results" hidden></div>
+            <p class="room-picker-help">Available rooms update as you type.</p>
+          </div>
           <label>
             Professor name
             <input type="text" id="booking-professor" required placeholder="Dr. Smith" />
@@ -642,14 +657,29 @@
           </button>
         </div>
         <form class="modal-form" id="booking-form">
-          <label>
-            Start time
-            <input type="time" id="booking-start" required min="06:00" max="18:00" step="1800" />
-          </label>
-          <label>
-            End time
-            <input type="time" id="booking-end" required min="06:00" max="18:00" step="1800" />
-          </label>
+          <div class="time-pair">
+            <label>
+              Start time
+              <input type="time" id="booking-start" required min="07:00" max="17:00" step="1800" />
+            </label>
+            <label>
+              End time
+              <input type="time" id="booking-end" required min="07:00" max="17:00" step="1800" />
+            </label>
+          </div>
+          <div class="room-picker" id="booking-room-group" hidden>
+            <label>
+              Room
+              <input
+                type="text"
+                id="booking-room"
+                placeholder="Type A 101 or Room 101"
+                autocomplete="off"
+              />
+            </label>
+            <div class="room-picker-results" id="booking-room-results" hidden></div>
+            <p class="room-picker-help">Available rooms update as you type.</p>
+          </div>
           <label>
             Professor name
             <input type="text" id="booking-professor" required placeholder="Dr. Smith" />

@@ -196,6 +196,28 @@ public class ScheduleService {
         }
     }
 
+    public void deleteSchedule(int scheduleId) throws ScheduleNotFoundException {
+        if (scheduleId <= 0) {
+            throw new IllegalArgumentException("Invalid schedule id");
+        }
+
+        try {
+            Schedule existing = scheduleDAO.getScheduleById(scheduleId);
+            if (existing == null) {
+                throw new ScheduleNotFoundException("Schedule not found with id: " + scheduleId);
+            }
+
+            scheduleClassDAO.deleteByScheduleId(scheduleId);
+            if (!scheduleDAO.deleteSchedule(scheduleId)) {
+                throw new RuntimeException("Schedule was not deleted");
+            }
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to delete schedule", e);
+        }
+    }
+
     public List<Schedule> getAllSchedules() {
         try{
             List<Schedule> schedulesViewList = scheduleDAO.getAllSchedules();

@@ -1,3 +1,59 @@
+const SESSION_STORAGE_KEY = "sms.session";
+
+function resetSessionState() {
+  state.role = "guest";
+  state.view = "class";
+  state.weekOffset = 0;
+  state.userName = "Guest";
+  state.selectedClassId = null;
+  state.selectedRoomId = null;
+}
+
+function saveSession(role, userName) {
+  try {
+    sessionStorage.setItem(
+      SESSION_STORAGE_KEY,
+      JSON.stringify({
+        role,
+        userName,
+      })
+    );
+  } catch (error) {
+    console.warn("Failed to save session state", error);
+  }
+}
+
+function restoreSession() {
+  try {
+    const rawSession = sessionStorage.getItem(SESSION_STORAGE_KEY);
+    if (!rawSession) {
+      return null;
+    }
+
+    const session = JSON.parse(rawSession);
+    if (!session || !session.role) {
+      return null;
+    }
+
+    return {
+      role: session.role,
+      userName: session.userName || "User",
+    };
+  } catch (error) {
+    console.warn("Failed to restore session state", error);
+    clearSession();
+    return null;
+  }
+}
+
+function clearSession() {
+  try {
+    sessionStorage.removeItem(SESSION_STORAGE_KEY);
+  } catch (error) {
+    console.warn("Failed to clear session state", error);
+  }
+}
+
 function setView(view) {
   if (view === "user" && !isAdminRole(state.role)) {
     return;
@@ -158,6 +214,8 @@ function showSchedule(role, label) {
     }
   }
 
+  saveSession(role, state.userName);
+
   // Default view: teacher for professors, otherwise class
   if (isTeacherRole(role)) {
     setView("teacher");
@@ -168,6 +226,9 @@ function showSchedule(role, label) {
 }
 
 function showLogin() {
+  clearSession();
+  resetSessionState();
   scheduleView.classList.add("hidden");
   loginView.classList.remove("hidden");
+  welcomeLine.textContent = "Welcome, Guest";
 }

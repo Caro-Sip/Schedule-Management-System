@@ -256,6 +256,11 @@ async function loadSchedules() {
 	}
 }
 
+async function refreshSchedules() {
+	await loadSchedules();
+	renderCurrentView();
+}
+
 function buildScheduleEvent(schedule, overrides = {}) {
 	const date = new Date(overrides.date || schedule.date);
 	if (isNaN(date.getTime())) return null;
@@ -319,6 +324,12 @@ async function saveScheduleApi(id, payload) {
 	return requestJson(`${API_BASE}/schedules`, {
 		method: "POST",
 		body: JSON.stringify(Object.assign({ id }, payload)),
+	});
+}
+
+async function deleteScheduleApi(id) {
+	return requestJson(`${API_BASE}/schedules/${id}`, {
+		method: "DELETE",
 	});
 }
 

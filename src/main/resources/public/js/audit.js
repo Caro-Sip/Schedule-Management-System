@@ -26,7 +26,7 @@ function getSidebarAuditEntries() {
       return [];
     }
     return auditLog.filter(
-      (entry) => entry.scopeType === "room" && entry.scopeId === state.selectedRoomId
+      (entry) => String(entry.scopeType) === "room" && String(entry.scopeId) === String(state.selectedRoomId)
     );
   }
   return [];

@@ -179,7 +179,8 @@ function selectClass(classId) {
 }
 
 function selectRoom(roomId) {
-  state.selectedRoomId = roomId;
+  const numericRoomId = Number(roomId);
+  state.selectedRoomId = Number.isNaN(numericRoomId) ? roomId : numericRoomId;
   updateViewVisibility();
   renderRoomList();
   renderEvents();

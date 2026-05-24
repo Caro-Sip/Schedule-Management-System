@@ -97,4 +97,15 @@ public class ScheduleClassDAO {
         }
         return classIds;
     }
+
+    public int deleteByScheduleId(int scheduleId) throws SQLException {
+        String sql = "DELETE FROM schedule_classes WHERE schedule_id = ?";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, scheduleId);
+            return pstmt.executeUpdate();
+        }
+    }
 }

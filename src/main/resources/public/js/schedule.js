@@ -48,7 +48,25 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
     view: state.view,
     eventId: isEdit ? eventData.id : null,
     classId: isEdit ? eventData.classId || null : state.selectedClassId || null,
+    classIds: isEdit
+      ? Array.isArray(eventData.classIds) && eventData.classIds.length > 0
+        ? eventData.classIds.slice()
+        : eventData.classId
+          ? [eventData.classId]
+          : []
+      : state.selectedClassId
+        ? [state.selectedClassId]
+        : [],
     roomId: isEdit ? eventData.roomId || null : state.selectedRoomId || null,
+    classroomId: isEdit ? eventData.roomId || null : state.selectedRoomId || null,
+    teacherId: isEdit ? eventData.teacherId || null : null,
+    courseId: isEdit ? eventData.courseId || null : null,
+    createdBy: isEdit ? eventData.createdBy || null : null,
+    status: isEdit ? eventData.status || "BOOKED" : "BOOKED",
+    visibility: isEdit ? eventData.visibility || "VISIBLE" : "VISIBLE",
+    priority: isEdit ? eventData.priority || 0 : 0,
+    linkedScheduleId: isEdit ? eventData.linkedScheduleId || null : null,
+    date: isEdit ? eventData.date || null : null,
     startMinutes: isEdit ? parseTimeInput(eventData.start) : startMinutes,
     endMinutes: isEdit
       ? parseTimeInput(eventData.end)
@@ -90,7 +108,8 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
     bookingRoomGroup.toggleAttribute("hidden", !showRoomPicker);
     bookingRoomInput.required = showRoomPicker;
     if (showRoomPicker) {
-      const roomItem = roomDirectory.find((item) => item.id === pendingBooking.roomId) || null;
+      const roomCatalog = getBookingClassrooms();
+      const roomItem = roomCatalog.find((item) => item.id === pendingBooking.roomId) || null;
       bookingRoomInput.value = roomItem ? getRoomDisplayLabel(roomItem) : "";
       bookingRoomInput.dataset.roomId = roomItem ? roomItem.id : "";
       renderBookingRoomOptions();
@@ -349,7 +368,8 @@ function getRoomBookingConflict(day, startMinutes, endMinutes, ignoreId, roomId)
 }
 
 function getAvailableRoomsForBooking(day, startMinutes, endMinutes, ignoreId) {
-  return roomDirectory.filter(
+  const roomCatalog = getBookingClassrooms();
+  return roomCatalog.filter(
     (roomItem) => !getRoomBookingConflict(day, startMinutes, endMinutes, ignoreId, roomItem.id)
   );
 }

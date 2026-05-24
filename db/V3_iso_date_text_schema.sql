@@ -132,7 +132,14 @@ INSERT INTO classrooms (id, name, building) VALUES
     (1, 'Room 101', 'Main Block'),
     (2, 'Room 202', 'Main Block'),
     (3, 'Lab A', 'Science Wing'),
-    (4, 'Auditorium', 'Central Hall');
+    (4, 'Auditorium', 'Central Hall'),
+    (5, 'A401', 'Building A'),
+    (6, 'A402', 'Building A'),
+    (7, 'A417', 'Building A'),
+    (8, 'A420', 'Building A'),
+    (9, 'J602', 'Building J'),
+    (10, 'J603', 'Building J'),
+    (11, 'J604', 'Building J');
 
 INSERT INTO teachers (id, user_id, department) VALUES
     (1, 2, 'Computer Science'),

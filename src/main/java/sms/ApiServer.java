@@ -7,11 +7,16 @@ import static io.javalin.apibuilder.ApiBuilder.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import sms.Config.DatabaseConfig;
 import sms.Objects.ClassEntity;
+import sms.Objects.Schedule;
 import sms.Objects.Teacher;
 import sms.Service.ClassService;
 import sms.Service.TeacherService;
@@ -58,6 +63,7 @@ public class ApiServer {
                 });
                 path("/api/schedules", () -> {
                     get(ApiServer::getAllSchedules);
+                    post(ApiServer::createSchedule);
                     get("/class/{classId}", ApiServer::getSchedulesForClass);
                     get("/teacher/{teacherId}", ApiServer::getSchedulesForTeacher);
                     get("/room/{roomId}", ApiServer::getSchedulesForRoom);
@@ -89,6 +95,34 @@ public class ApiServer {
         } catch (Exception e) {
             e.printStackTrace();
             ctx.status(500).json(errorResponse(e, "Failed to load schedules"));
+        }
+    }
+
+    private static void createSchedule(Context ctx) {
+        try {
+            Map<?, ?> payload = ctx.bodyAsClass(Map.class);
+            Schedule createdSchedule = scheduleService.createSchedule(
+                readInt(payload, "classroomId"),
+                readOptionalInteger(payload, "teacherId"),
+                readInt(payload, "courseId"),
+                LocalDate.parse(readString(payload, "date")),
+                LocalTime.parse(readString(payload, "startTime")),
+                LocalTime.parse(readString(payload, "endTime")),
+                readOptionalString(payload, "status"),
+                readOptionalString(payload, "visibility"),
+                readOptionalString(payload, "type"),
+                readOptionalInt(payload, "priority", 0),
+                readInt(payload, "createdBy"),
+                readClassIds(payload.get("classIds")),
+                readOptionalInteger(payload, "linkedScheduleId")
+            );
+            ctx.status(201).json(scheduleService.getScheduleView(createdSchedule.getId()));
+        } catch (DateTimeParseException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid date or time format"));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid schedule data"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to create schedule"));
         }
     }
 
@@ -288,5 +322,88 @@ public class ApiServer {
             message = fallback;
         }
         return Collections.singletonMap("error", message);
+    }
+
+    private static String readString(Map<?, ?> payload, String key) {
+        Object value = payload.get(key);
+        if (value == null) {
+            throw new IllegalArgumentException("Missing required field: " + key);
+        }
+        return value.toString();
+    }
+
+    private static String readOptionalString(Map<?, ?> payload, String key) {
+        Object value = payload.get(key);
+        return value == null ? null : value.toString();
+    }
+
+    private static int readInt(Map<?, ?> payload, String key) {
+        Object value = payload.get(key);
+        if (value == null) {
+            throw new IllegalArgumentException("Missing required field: " + key);
+        }
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        return Integer.parseInt(value.toString());
+    }
+
+    private static Integer readOptionalInteger(Map<?, ?> payload, String key) {
+        Object value = payload.get(key);
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        String text = value.toString().trim();
+        if (text.isEmpty()) {
+            return null;
+        }
+        return Integer.valueOf(text);
+    }
+
+    private static int readOptionalInt(Map<?, ?> payload, String key, int defaultValue) {
+        Object value = payload.get(key);
+        if (value == null) {
+            return defaultValue;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        String text = value.toString().trim();
+        return text.isEmpty() ? defaultValue : Integer.parseInt(text);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Integer> readClassIds(Object value) {
+        if (value == null) {
+            throw new IllegalArgumentException("Missing required field: classIds");
+        }
+
+        List<Integer> classIds = new ArrayList<>();
+        if (value instanceof List<?>) {
+            for (Object item : (List<Object>) value) {
+                if (item instanceof Number) {
+                    classIds.add(((Number) item).intValue());
+                } else if (item != null) {
+                    classIds.add(Integer.valueOf(item.toString()));
+                }
+            }
+            return classIds;
+        }
+
+        String text = value.toString().trim();
+        if (text.isEmpty()) {
+            return classIds;
+        }
+
+        for (String part : text.split(",")) {
+            String trimmed = part.trim();
+            if (!trimmed.isEmpty()) {
+                classIds.add(Integer.valueOf(trimmed));
+            }
+        }
+        return classIds;
     }
 }

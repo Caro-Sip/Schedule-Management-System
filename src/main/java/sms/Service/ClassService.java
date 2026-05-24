@@ -1,6 +1,7 @@
 package sms.Service;
 
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -21,7 +22,9 @@ public class ClassService {
         this.classEntityDAO = classEntityDAO;
     }
 
-    public ClassEntity createClass(String name, int year, int createdBy) throws InvalidClassException {
+    public ClassEntity createClass(String name, int year, int semester,
+                                   LocalDate startDate, LocalDate endDate, int createdBy)
+            throws InvalidClassException {
         if(name == null || name.trim().isEmpty()){
             throw new IllegalArgumentException("Name cannot be empty");
         }
@@ -30,12 +33,24 @@ public class ClassService {
             throw new IllegalArgumentException("Year cannot be in the negative");
         }
 
+        if (semester != 1 && semester != 2) {
+            throw new IllegalArgumentException("Semester must be 1 or 2");
+        }
+
+        if (startDate == null || endDate == null) {
+            throw new IllegalArgumentException("Start date and end date are required");
+        }
+
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Start date cannot be after end date");
+        }
+
         if (createdBy <= 0) {
             throw new IllegalArgumentException("Creator id must be positive");
         }
 
         try{
-            ClassEntity classEntity = new ClassEntity(name,year,createdBy);
+            ClassEntity classEntity = new ClassEntity(name, year, semester, startDate, endDate, createdBy);
 
             boolean isCreated = classEntityDAO.createClass(classEntity);
 
@@ -78,6 +93,30 @@ public class ClassService {
     public void updateClass(ClassEntity classEntity) throws ClassNotFoundException {
         if(classEntity == null){
             throw new IllegalArgumentException("Class cannot be empty");
+        }
+
+        if(classEntity.getName() == null || classEntity.getName().trim().isEmpty()){
+            throw new IllegalArgumentException("Name cannot be empty");
+        }
+
+        if(classEntity.getYear() < 0){
+            throw new IllegalArgumentException("Year cannot be in the negative");
+        }
+
+        if (classEntity.getSemester() != 1 && classEntity.getSemester() != 2) {
+            throw new IllegalArgumentException("Semester must be 1 or 2");
+        }
+
+        if (classEntity.getStartDate() == null || classEntity.getEndDate() == null) {
+            throw new IllegalArgumentException("Start date and end date are required");
+        }
+
+        if (classEntity.getStartDate().isAfter(classEntity.getEndDate())) {
+            throw new IllegalArgumentException("Start date cannot be after end date");
+        }
+
+        if (classEntity.getCreatedBy() <= 0) {
+            throw new IllegalArgumentException("Creator id must be positive");
         }
 
         try{

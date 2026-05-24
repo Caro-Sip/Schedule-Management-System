@@ -22,14 +22,17 @@ public class ClassEntityDAO {
 
     // CREATE - Insert a new class
     public boolean createClass(ClassEntity classEntity) throws SQLException {
-        String sql = "INSERT INTO classes (name, year, created_by) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO classes (name, year, semester, start_date, end_date, created_by) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             pstmt.setString(1, classEntity.getName());
             pstmt.setInt(2, classEntity.getYear());
-            pstmt.setInt(3, classEntity.getCreatedBy());
+            pstmt.setInt(3, classEntity.getSemester());
+            pstmt.setDate(4, Date.valueOf(classEntity.getStartDate()));
+            pstmt.setDate(5, Date.valueOf(classEntity.getEndDate()));
+            pstmt.setInt(6, classEntity.getCreatedBy());
 
             int rowsAffected = pstmt.executeUpdate();
             if (rowsAffected > 0) {
@@ -45,7 +48,7 @@ public class ClassEntityDAO {
 
     // READ - Get class by ID
     public ClassEntity getById(int id) throws SQLException {
-        String sql = "SELECT id, name, year, created_by FROM classes WHERE id = ?";
+        String sql = "SELECT id, name, year, semester, start_date, end_date, created_by FROM classes WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -55,10 +58,13 @@ public class ClassEntityDAO {
 
             if (rs.next()) {
                 return new ClassEntity(
-                        rs.getInt("id"),
-                        rs.getString("name"),
-                        rs.getInt("year"),
-                        rs.getInt("created_by")
+                    rs.getInt("id"),
+                    rs.getString("name"),
+                    rs.getInt("year"),
+                    rs.getInt("semester"),
+                    rs.getDate("start_date").toLocalDate(),
+                    rs.getDate("end_date").toLocalDate(),
+                    rs.getInt("created_by")
                 );
             }
         }
@@ -67,7 +73,7 @@ public class ClassEntityDAO {
 
     // READ - Get class by name
     public ClassEntity getByName(String name) throws SQLException {
-        String sql = "SELECT id, name, year, created_by FROM classes WHERE name = ?";
+        String sql = "SELECT id, name, year, semester, start_date, end_date, created_by FROM classes WHERE name = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -77,10 +83,13 @@ public class ClassEntityDAO {
 
             if (rs.next()) {
                 return new ClassEntity(
-                        rs.getInt("id"),
-                        rs.getString("name"),
-                        rs.getInt("year"),
-                        rs.getInt("created_by")
+                    rs.getInt("id"),
+                    rs.getString("name"),
+                    rs.getInt("year"),
+                    rs.getInt("semester"),
+                    rs.getDate("start_date").toLocalDate(),
+                    rs.getDate("end_date").toLocalDate(),
+                    rs.getInt("created_by")
                 );
             }
         }
@@ -89,7 +98,7 @@ public class ClassEntityDAO {
 
     // READ - Get all classes
     public List<ClassEntity> getAllClasses() throws SQLException {
-        String sql = "SELECT id, name, year, created_by FROM classes";
+        String sql = "SELECT id, name, year, semester, start_date, end_date, created_by FROM classes";
         List<ClassEntity> classEntities = new ArrayList<>();
 
         try (Connection conn = getConnection();
@@ -98,10 +107,13 @@ public class ClassEntityDAO {
 
             while (rs.next()) {
                 ClassEntity classEntity = new ClassEntity(
-                        rs.getInt("id"),
-                        rs.getString("name"),
-                        rs.getInt("year"),
-                        rs.getInt("created_by")
+                    rs.getInt("id"),
+                    rs.getString("name"),
+                    rs.getInt("year"),
+                    rs.getInt("semester"),
+                    rs.getDate("start_date").toLocalDate(),
+                    rs.getDate("end_date").toLocalDate(),
+                    rs.getInt("created_by")
                 );
                 classEntities.add(classEntity);
             }
@@ -111,7 +123,7 @@ public class ClassEntityDAO {
 
     // READ - Get classes by year
     public List<ClassEntity> getByYear(int year) throws SQLException {
-        String sql = "SELECT id, name, year, created_by FROM classes WHERE year = ?";
+        String sql = "SELECT id, name, year, semester, start_date, end_date, created_by FROM classes WHERE year = ?";
         List<ClassEntity> classEntities = new ArrayList<>();
 
         try (Connection conn = getConnection();
@@ -122,10 +134,13 @@ public class ClassEntityDAO {
 
             while (rs.next()) {
                 ClassEntity classEntity = new ClassEntity(
-                        rs.getInt("id"),
-                        rs.getString("name"),
-                        rs.getInt("year"),
-                        rs.getInt("created_by")
+                    rs.getInt("id"),
+                    rs.getString("name"),
+                    rs.getInt("year"),
+                    rs.getInt("semester"),
+                    rs.getDate("start_date").toLocalDate(),
+                    rs.getDate("end_date").toLocalDate(),
+                    rs.getInt("created_by")
                 );
                 classEntities.add(classEntity);
             }
@@ -135,7 +150,7 @@ public class ClassEntityDAO {
 
     // READ - Get classes by creator
     public List<ClassEntity> getByCreatedBy(int createdBy) throws SQLException {
-        String sql = "SELECT id, name, year, created_by FROM classes WHERE created_by = ?";
+        String sql = "SELECT id, name, year, semester, start_date, end_date, created_by FROM classes WHERE created_by = ?";
         List<ClassEntity> classEntities = new ArrayList<>();
 
         try (Connection conn = getConnection();
@@ -146,10 +161,13 @@ public class ClassEntityDAO {
 
             while (rs.next()) {
                 ClassEntity classEntity = new ClassEntity(
-                        rs.getInt("id"),
-                        rs.getString("name"),
-                        rs.getInt("year"),
-                        rs.getInt("created_by")
+                    rs.getInt("id"),
+                    rs.getString("name"),
+                    rs.getInt("year"),
+                    rs.getInt("semester"),
+                    rs.getDate("start_date").toLocalDate(),
+                    rs.getDate("end_date").toLocalDate(),
+                    rs.getInt("created_by")
                 );
                 classEntities.add(classEntity);
             }
@@ -159,7 +177,7 @@ public class ClassEntityDAO {
 
     // READ - Get classes by time slot
     public List<ClassEntity> getByTimeSlot(TimeSlot slot) throws SQLException {
-        String sql = "SELECT DISTINCT c.id, c.name, c.year, c.created_by "
+        String sql = "SELECT DISTINCT c.id, c.name, c.year, c.semester, c.start_date, c.end_date, c.created_by "
                 + "FROM classes c "
                 + "JOIN schedule_classes sc ON sc.class_id = c.id "
                 + "JOIN schedule s ON s.id = sc.schedule_id "
@@ -176,10 +194,13 @@ public class ClassEntityDAO {
 
             while (rs.next()) {
                 ClassEntity classEntity = new ClassEntity(
-                        rs.getInt("id"),
-                        rs.getString("name"),
-                        rs.getInt("year"),
-                        rs.getInt("created_by")
+                    rs.getInt("id"),
+                    rs.getString("name"),
+                    rs.getInt("year"),
+                    rs.getInt("semester"),
+                    rs.getDate("start_date").toLocalDate(),
+                    rs.getDate("end_date").toLocalDate(),
+                    rs.getInt("created_by")
                 );
                 classEntities.add(classEntity);
             }
@@ -189,15 +210,18 @@ public class ClassEntityDAO {
 
     // UPDATE - Update class information
     public boolean updateClass(ClassEntity classEntity) throws SQLException {
-        String sql = "UPDATE classes SET name = ?, year = ?, created_by = ? WHERE id = ?";
+        String sql = "UPDATE classes SET name = ?, year = ?, semester = ?, start_date = ?, end_date = ?, created_by = ? WHERE id = ?";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, classEntity.getName());
             pstmt.setInt(2, classEntity.getYear());
-            pstmt.setInt(3, classEntity.getCreatedBy());
-            pstmt.setInt(4, classEntity.getId());
+            pstmt.setInt(3, classEntity.getSemester());
+            pstmt.setDate(4, Date.valueOf(classEntity.getStartDate()));
+            pstmt.setDate(5, Date.valueOf(classEntity.getEndDate()));
+            pstmt.setInt(6, classEntity.getCreatedBy());
+            pstmt.setInt(7, classEntity.getId());
 
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;

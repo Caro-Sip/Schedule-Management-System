@@ -1,15 +1,22 @@
 package sms.Service;
 
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
 import sms.DAO.ClassEntityDAO;
+import sms.DAO.ClassroomDAO;
+import sms.DAO.CourseDAO;
 import sms.DAO.ScheduleClassDAO;
 import sms.DAO.ScheduleDAO;
+import sms.DAO.TeacherDAO;
 import sms.Objects.ClassEntity;
 import sms.Objects.Schedule;
 import sms.Objects.TimeSlot;
@@ -20,16 +27,132 @@ public class ScheduleService {
     private final ScheduleDAO scheduleDAO;
     private final ScheduleClassDAO scheduleClassDAO;
     private final ClassEntityDAO classEntityDAO;
+    private final ClassroomDAO classroomDAO;
+    private final CourseDAO courseDAO;
+    private final TeacherDAO teacherDAO;
 
     public ScheduleService() {
-        this(new ScheduleDAO(), new ScheduleClassDAO(), new ClassEntityDAO());
+        this(new ScheduleDAO(), new ScheduleClassDAO(), new ClassEntityDAO(), new ClassroomDAO(), new CourseDAO(), new TeacherDAO());
     }
 
     public ScheduleService(ScheduleDAO scheduleDAO, ScheduleClassDAO scheduleClassDAO,
             ClassEntityDAO classEntityDAO) {
+        this(scheduleDAO, scheduleClassDAO, classEntityDAO, new ClassroomDAO(), new CourseDAO(), new TeacherDAO());
+    }
+
+    public ScheduleService(ScheduleDAO scheduleDAO, ScheduleClassDAO scheduleClassDAO,
+            ClassEntityDAO classEntityDAO, ClassroomDAO classroomDAO, CourseDAO courseDAO, TeacherDAO teacherDAO) {
         this.scheduleDAO = scheduleDAO;
         this.scheduleClassDAO = scheduleClassDAO;
         this.classEntityDAO = classEntityDAO;
+        this.classroomDAO = classroomDAO;
+        this.courseDAO = courseDAO;
+        this.teacherDAO = teacherDAO;
+    }
+
+    public Schedule createSchedule(int classroomId, Integer teacherId, int courseId, LocalDate date,
+            LocalTime startTime, LocalTime endTime, String status, String visibility, String type,
+            int priority, int createdBy, List<Integer> classIds, Integer linkedScheduleId) {
+        if (classroomId <= 0) {
+            throw new IllegalArgumentException("Invalid classroom id");
+        }
+
+        if (teacherId != null && teacherId <= 0) {
+            throw new IllegalArgumentException("Invalid teacher id");
+        }
+
+        if (courseId <= 0) {
+            throw new IllegalArgumentException("Invalid course id");
+        }
+
+        if (date == null || startTime == null || endTime == null) {
+            throw new IllegalArgumentException("Date, start time, and end time are required");
+        }
+
+        if (!startTime.isBefore(endTime)) {
+            throw new IllegalArgumentException("Start time must be before end time");
+        }
+
+        if (priority < 0) {
+            throw new IllegalArgumentException("Priority cannot be negative");
+        }
+
+        if (createdBy <= 0) {
+            throw new IllegalArgumentException("Creator id must be positive");
+        }
+
+        List<Integer> normalizedClassIds = normalizeClassIds(classIds);
+        if (normalizedClassIds.isEmpty()) {
+            throw new IllegalArgumentException("At least one class id is required");
+        }
+
+        String normalizedStatus = normalizeValue(status, "BOOKED");
+        String normalizedVisibility = normalizeValue(visibility, "VISIBLE");
+        String normalizedType = normalizeValue(type, "DEFAULT");
+
+        try {
+            if (!classroomDAO.classroomExists(classroomId)) {
+                throw new IllegalArgumentException("Classroom not found with id: " + classroomId);
+            }
+
+            if (!courseDAO.courseExists(courseId)) {
+                throw new IllegalArgumentException("Course not found with id: " + courseId);
+            }
+
+            if (teacherId != null && !teacherDAO.teacherExists(teacherId)) {
+                throw new IllegalArgumentException("Teacher not found with id: " + teacherId);
+            }
+
+            if (linkedScheduleId != null && linkedScheduleId > 0 && !scheduleDAO.scheduleExists(linkedScheduleId)) {
+                throw new IllegalArgumentException("Linked schedule not found with id: " + linkedScheduleId);
+            }
+
+            for (int classId : normalizedClassIds) {
+                if (!classEntityDAO.classExists(classId)) {
+                    throw new IllegalArgumentException("Class not found with id: " + classId);
+                }
+            }
+
+            Schedule schedule = new Schedule(
+                    classroomId,
+                    teacherId,
+                    courseId,
+                    date,
+                    startTime,
+                    endTime,
+                    normalizedStatus,
+                    normalizedVisibility,
+                    normalizedType,
+                    priority,
+                    createdBy
+            );
+            schedule.setCreatedAt(LocalDateTime.now());
+            schedule.setLinkedScheduleId(linkedScheduleId != null && linkedScheduleId > 0 ? linkedScheduleId : null);
+
+            boolean created = scheduleDAO.createSchedule(schedule);
+            if (!created) {
+                throw new RuntimeException("Schedule was not created");
+            }
+
+            List<Integer> linkedClassIds = new ArrayList<>();
+            try {
+                for (int classId : normalizedClassIds) {
+                    if (!scheduleClassDAO.createScheduleClass(schedule.getId(), classId)) {
+                        throw new RuntimeException("Failed to link class " + classId + " to schedule");
+                    }
+                    linkedClassIds.add(classId);
+                }
+            } catch (Exception e) {
+                rollbackCreatedSchedule(schedule.getId(), linkedClassIds);
+                throw e;
+            }
+
+            return schedule;
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create schedule", e);
+        }
     }
 
     public List<Schedule> getAllSchedules() {
@@ -623,5 +746,44 @@ public class ScheduleService {
     private boolean isMakeup(Schedule schedule) {
         String type = schedule.getType();
         return type != null && type.equalsIgnoreCase("MAKEUP");
+    }
+
+    private List<Integer> normalizeClassIds(List<Integer> classIds) {
+        List<Integer> normalized = new ArrayList<>();
+        if (classIds == null) {
+            return normalized;
+        }
+
+        for (Integer classId : new LinkedHashSet<>(classIds)) {
+            if (classId == null || classId <= 0) {
+                throw new IllegalArgumentException("Invalid class id");
+            }
+            normalized.add(classId);
+        }
+
+        return normalized;
+    }
+
+    private String normalizeValue(String value, String defaultValue) {
+        if (value == null || value.trim().isEmpty()) {
+            return defaultValue;
+        }
+        return value.trim().toUpperCase();
+    }
+
+    private void rollbackCreatedSchedule(int scheduleId, List<Integer> classIds) {
+        for (int classId : classIds) {
+            try {
+                scheduleClassDAO.deleteScheduleClass(scheduleId, classId);
+            } catch (Exception ignored) {
+                // Best-effort rollback only.
+            }
+        }
+
+        try {
+            scheduleDAO.deleteSchedule(scheduleId);
+        } catch (Exception ignored) {
+            // Best-effort rollback only.
+        }
     }
 }

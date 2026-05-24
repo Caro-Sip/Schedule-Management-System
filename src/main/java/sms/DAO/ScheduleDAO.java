@@ -2,7 +2,9 @@ package sms.DAO;
 
 import java.sql.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,6 +12,7 @@ import sms.Config.DatabaseConfig;
 import sms.Objects.Schedule;
 
 public class ScheduleDAO {
+    private static final DateTimeFormatter SCHEDULE_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     // Helper method to get database connection
     private Connection getConnection() throws SQLException {
@@ -34,9 +37,18 @@ public class ScheduleDAO {
             pstmt.setString(9, schedule.getType());
             pstmt.setInt(10, schedule.getPriority());
             pstmt.setInt(11, schedule.getCreatedBy());
-            pstmt.setTimestamp(12, Timestamp.valueOf(schedule.getCreatedAt()));
-            pstmt.setTimestamp(13, schedule.getGreyedAt() != null ? Timestamp.valueOf(schedule.getGreyedAt()) : null);
-            pstmt.setObject(14, schedule.getLinkedScheduleId(), Types.INTEGER);
+            LocalDateTime createdAt = schedule.getCreatedAt() != null ? schedule.getCreatedAt() : LocalDateTime.now();
+            pstmt.setString(12, createdAt.format(SCHEDULE_TIMESTAMP_FORMAT));
+            if (schedule.getGreyedAt() != null) {
+                pstmt.setString(13, schedule.getGreyedAt().format(SCHEDULE_TIMESTAMP_FORMAT));
+            } else {
+                pstmt.setNull(13, Types.VARCHAR);
+            }
+            if (schedule.getLinkedScheduleId() != null) {
+                pstmt.setInt(14, schedule.getLinkedScheduleId());
+            } else {
+                pstmt.setNull(14, Types.INTEGER);
+            }
 
             int rowsAffected = pstmt.executeUpdate();
             if (rowsAffected > 0) {
@@ -77,9 +89,8 @@ public class ScheduleDAO {
                 schedule.setType(rs.getString("type"));
                 schedule.setPriority(rs.getInt("priority"));
                 schedule.setCreatedBy(rs.getInt("created_by"));
-                schedule.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
-                Timestamp greyedAt = rs.getTimestamp("greyed_at");
-                schedule.setGreyedAt(greyedAt != null ? greyedAt.toLocalDateTime() : null);
+                schedule.setCreatedAt(parseDateTime(rs.getString("created_at")));
+                schedule.setGreyedAt(parseDateTime(rs.getString("greyed_at")));
                 schedule.setLinkedScheduleId(rs.getInt("linked_schedule_id"));
                 if (rs.wasNull()) schedule.setLinkedScheduleId(null);
                 return schedule;
@@ -113,9 +124,8 @@ public class ScheduleDAO {
                 schedule.setType(rs.getString("type"));
                 schedule.setPriority(rs.getInt("priority"));
                 schedule.setCreatedBy(rs.getInt("created_by"));
-                schedule.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
-                Timestamp greyedAt = rs.getTimestamp("greyed_at");
-                schedule.setGreyedAt(greyedAt != null ? greyedAt.toLocalDateTime() : null);
+                schedule.setCreatedAt(parseDateTime(rs.getString("created_at")));
+                schedule.setGreyedAt(parseDateTime(rs.getString("greyed_at")));
                 schedule.setLinkedScheduleId(rs.getInt("linked_schedule_id"));
                 if (rs.wasNull()) schedule.setLinkedScheduleId(null);
                 schedules.add(schedule);
@@ -142,9 +152,18 @@ public class ScheduleDAO {
             pstmt.setString(9, schedule.getType());
             pstmt.setInt(10, schedule.getPriority());
             pstmt.setInt(11, schedule.getCreatedBy());
-            pstmt.setTimestamp(12, Timestamp.valueOf(schedule.getCreatedAt()));
-            pstmt.setTimestamp(13, schedule.getGreyedAt() != null ? Timestamp.valueOf(schedule.getGreyedAt()) : null);
-            pstmt.setObject(14, schedule.getLinkedScheduleId(), Types.INTEGER);
+            LocalDateTime createdAt = schedule.getCreatedAt() != null ? schedule.getCreatedAt() : LocalDateTime.now();
+            pstmt.setString(12, createdAt.format(SCHEDULE_TIMESTAMP_FORMAT));
+            if (schedule.getGreyedAt() != null) {
+                pstmt.setString(13, schedule.getGreyedAt().format(SCHEDULE_TIMESTAMP_FORMAT));
+            } else {
+                pstmt.setNull(13, Types.VARCHAR);
+            }
+            if (schedule.getLinkedScheduleId() != null) {
+                pstmt.setInt(14, schedule.getLinkedScheduleId());
+            } else {
+                pstmt.setNull(14, Types.INTEGER);
+            }
             pstmt.setInt(15, schedule.getId());
 
             int rowsAffected = pstmt.executeUpdate();
@@ -217,5 +236,18 @@ public class ScheduleDAO {
             System.err.println("Error getting schedule count: " + e.getMessage());
         }
         return 0;
+    }
+
+    private LocalDateTime parseDateTime(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+
+        String normalized = value.trim();
+        if (normalized.matches("\\d+")) {
+            return LocalDateTime.ofInstant(java.time.Instant.ofEpochMilli(Long.parseLong(normalized)), java.time.ZoneId.systemDefault());
+        }
+
+        return LocalDateTime.parse(normalized.replace(' ', 'T'));
     }
 }

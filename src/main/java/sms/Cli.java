@@ -1,6 +1,10 @@
 package sms;
 
 import java.io.File;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -126,6 +130,9 @@ public class Cli {
                     handleRoomSchedule();
                     break;
                 case 4:
+                    handleCreateSchedule();
+                    break;
+                case 5:
                     handleTeacherManagement();
                     break;
                 case 0:
@@ -144,7 +151,8 @@ public class Cli {
         System.out.println("1. View Class Schedule");
         System.out.println("2. View Teacher Schedule");
         System.out.println("3. View Room Schedule");
-        System.out.println("4. Manage Teachers");
+        System.out.println("4. Create Schedule");
+        System.out.println("5. Manage Teachers");
         System.out.println("0. Exit");
     }
 
@@ -189,6 +197,44 @@ public class Cli {
             printFeatureUnavailable("Room schedule lookup", e);
         } catch (Exception e) {
             System.out.println("Failed to retrieve room schedule: " + e.getMessage());
+        }
+    }
+
+    private void handleCreateSchedule() {
+        int classroomId = readInt("Classroom ID: ");
+        Integer teacherId = readOptionalInt("Teacher ID (blank for none): ");
+        int courseId = readInt("Course ID: ");
+        LocalDate date = readDate("Date (YYYY-MM-DD): ");
+        LocalTime startTime = readTime("Start time (HH:MM): ");
+        LocalTime endTime = readTime("End time (HH:MM): ");
+        String status = readLine("Status [BOOKED]: ");
+        String visibility = readLine("Visibility [VISIBLE]: ");
+        String type = readLine("Type [DEFAULT]: ");
+        int priority = readOptionalIntOrDefault("Priority [0]: ", 0);
+        int createdBy = readInt("Created by user ID: ");
+        Integer linkedScheduleId = readOptionalInt("Linked schedule ID (blank for none): ");
+        List<Integer> classIds = readClassIds("Class IDs (comma-separated): ");
+
+        try {
+            var createdSchedule = scheduleService.createSchedule(
+                    classroomId,
+                    teacherId,
+                    courseId,
+                    date,
+                    startTime,
+                    endTime,
+                    status,
+                    visibility,
+                    type,
+                    priority,
+                    createdBy,
+                    classIds,
+                    linkedScheduleId
+            );
+            System.out.println("Schedule created successfully.");
+            System.out.println(scheduleService.getScheduleView(createdSchedule.getId()));
+        } catch (Exception e) {
+            System.out.println("Failed to create schedule: " + e.getMessage());
         }
     }
 
@@ -354,6 +400,86 @@ public class Cli {
                 return Integer.parseInt(input);
             } catch (NumberFormatException e) {
                 System.out.println("Please enter a valid number.");
+            }
+        }
+    }
+
+    private Integer readOptionalInt(String prompt) {
+        String input = readLine(prompt);
+        if (input.isBlank()) {
+            return null;
+        }
+
+        try {
+            return Integer.valueOf(input);
+        } catch (NumberFormatException e) {
+            System.out.println("Please enter a valid number or leave it blank.");
+            return readOptionalInt(prompt);
+        }
+    }
+
+    private int readOptionalIntOrDefault(String prompt, int defaultValue) {
+        String input = readLine(prompt);
+        if (input.isBlank()) {
+            return defaultValue;
+        }
+
+        try {
+            return Integer.parseInt(input);
+        } catch (NumberFormatException e) {
+            System.out.println("Please enter a valid number.");
+            return readOptionalIntOrDefault(prompt, defaultValue);
+        }
+    }
+
+    private LocalDate readDate(String prompt) {
+        while (true) {
+            String input = readLine(prompt);
+            try {
+                return LocalDate.parse(input);
+            } catch (Exception e) {
+                System.out.println("Please enter a valid date in YYYY-MM-DD format.");
+            }
+        }
+    }
+
+    private LocalTime readTime(String prompt) {
+        while (true) {
+            String input = readLine(prompt);
+            try {
+                return LocalTime.parse(input);
+            } catch (Exception e) {
+                System.out.println("Please enter a valid time in HH:MM format.");
+            }
+        }
+    }
+
+    private List<Integer> readClassIds(String prompt) {
+        while (true) {
+            String input = readLine(prompt);
+            List<Integer> classIds = new ArrayList<>();
+
+            if (input.isBlank()) {
+                System.out.println("Please provide at least one class id.");
+                continue;
+            }
+
+            try {
+                for (String part : input.split(",")) {
+                    String trimmed = part.trim();
+                    if (!trimmed.isEmpty()) {
+                        classIds.add(Integer.parseInt(trimmed));
+                    }
+                }
+
+                if (classIds.isEmpty()) {
+                    System.out.println("Please provide at least one class id.");
+                    continue;
+                }
+
+                return new ArrayList<>(new LinkedHashSet<>(classIds));
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter valid numeric class ids separated by commas.");
             }
         }
     }

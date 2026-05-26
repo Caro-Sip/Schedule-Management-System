@@ -27,15 +27,19 @@ import sms.DAO.ClassroomDAO;
 import sms.DAO.CourseDAO;
 import sms.exception.ClassNotFoundException;
 import sms.exception.InvalidClassException;
+import sms.exception.InvalidRoomException;
 import sms.exception.InvalidTeacherException;
+import sms.exception.RoomNotFoundException;
 import sms.exception.ScheduleNotFoundException;
 import sms.exception.TeacherNotFoundException;
+import sms.Service.RoomService;
 
 public class ApiServer {
 
     private static TeacherService teacherService;
     private static ClassService classService;
     private static ScheduleService scheduleService;
+    private static RoomService roomService;
     private static ClassroomDAO classroomDAO;
     private static CourseDAO courseDAO;
     
@@ -45,6 +49,7 @@ public class ApiServer {
         classService = new ClassService();
         scheduleService = new ScheduleService();
         classroomDAO = new ClassroomDAO();
+        roomService = new RoomService(classroomDAO);
         courseDAO = new CourseDAO();
 
         @SuppressWarnings("unused")
@@ -72,6 +77,10 @@ public class ApiServer {
                 });
                 path("/api/classrooms", () -> {
                     get(ApiServer::getAllClassrooms);
+                    post(ApiServer::createClassroom);
+                    get("/{id}", ApiServer::getClassroomById);
+                    put("/{id}", ApiServer::updateClassroom);
+                    delete("/{id}", ApiServer::deleteClassroom);
                 });
                 path("/api/courses", () -> {
                     get(ApiServer::getAllCourses);
@@ -279,11 +288,70 @@ public class ApiServer {
 
     private static void getAllClassrooms(Context ctx) {
         try {
-            List<Classroom> classrooms = classroomDAO.getAllClassrooms();
+            List<Classroom> classrooms = roomService.getAllRooms();
             ctx.json(classrooms);
         } catch (Exception e) {
             e.printStackTrace();
             ctx.status(500).json(errorResponse(e, "Failed to load classrooms"));
+        }
+    }
+
+    private static void getClassroomById(Context ctx) {
+        try {
+            int id = Integer.parseInt(ctx.pathParam("id"));
+            Classroom classroom = roomService.getRoom(id);
+            ctx.json(classroom);
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid classroom id"));
+        } catch (RoomNotFoundException e) {
+            ctx.status(404).json(errorResponse(e, "Classroom not found"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to load classroom"));
+        }
+    }
+
+    private static void createClassroom(Context ctx) {
+        try {
+            Classroom payload = ctx.bodyAsClass(Classroom.class);
+            Classroom created = roomService.createRoom(payload.getName(), payload.getBuilding());
+            ctx.status(201).json(created);
+        } catch (InvalidRoomException | IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid classroom data"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            ctx.status(500).json(errorResponse(e, "Failed to create classroom"));
+        }
+    }
+
+    private static void updateClassroom(Context ctx) {
+        try {
+            int id = Integer.parseInt(ctx.pathParam("id"));
+            Classroom payload = ctx.bodyAsClass(Classroom.class);
+            payload.setId(id);
+            roomService.updateRoom(payload);
+            ctx.json(roomService.getRoom(id));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid classroom data"));
+        } catch (RoomNotFoundException e) {
+            ctx.status(404).json(errorResponse(e, "Classroom not found"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            ctx.status(500).json(errorResponse(e, "Failed to update classroom"));
+        }
+    }
+
+    private static void deleteClassroom(Context ctx) {
+        try {
+            int id = Integer.parseInt(ctx.pathParam("id"));
+            roomService.deleteRoom(id);
+            ctx.status(204);
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid classroom id"));
+        } catch (RoomNotFoundException e) {
+            ctx.status(404).json(errorResponse(e, "Classroom not found"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            ctx.status(500).json(errorResponse(e, "Failed to delete classroom"));
         }
     }
 

@@ -3,23 +3,18 @@ package sms.Service;
 import java.util.List;
 
 import sms.DAO.ClassroomDAO;
-import sms.DAO.ScheduleDAO;
 import sms.Objects.Classroom;
-import sms.Objects.Schedule;
-import sms.Objects.TimeSlot;
 import sms.exception.InvalidRoomException;
 import sms.exception.RoomNotFoundException;
 
 public class RoomService {
     private final ClassroomDAO classroomDAO;
-    private final ScheduleDAO scheduleDAO;
 
-    public RoomService(ClassroomDAO classroomDAO, ScheduleDAO scheduleDAO) {
+    public RoomService(ClassroomDAO classroomDAO) {
         this.classroomDAO = classroomDAO;
-        this.scheduleDAO = scheduleDAO;
     }
 
-    public void createRoom(String name, String building) throws InvalidRoomException {
+    public Classroom createRoom(String name, String building) throws InvalidRoomException {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Name cannot be empty");
         }
@@ -33,6 +28,8 @@ public class RoomService {
             if (!isCreated) {
                 throw new InvalidRoomException("Room was not created");
             }
+
+            return classroom;
         } catch (java.sql.SQLException e) {
             throw new InvalidRoomException("Failed to create room", e);
         }
@@ -104,55 +101,6 @@ public class RoomService {
         } catch (java.sql.SQLException e) {
             throw new RuntimeException("Failed to delete room", e);
         }
-    }
- 
-    // TODO implement isRoomAvailable function
-    // public boolean isRoomAvailable(int roomId, TimeSlot slot) {
-    //     if (roomId < 0) {
-    //         throw new IllegalArgumentException("Invalid room id");
-    //     }
-
-    //     if (slot == null || slot.getDate() == null || slot.getStartTime() == null || slot.getEndTime() == null) {
-    //         throw new IllegalArgumentException("Invalid time slot");
-    //     }
-
-    //     try {
-    //         if (!classroomDAO.classroomExists(roomId)) {
-    //             throw new IllegalArgumentException("Room not found with id:" + roomId);
-    //         }
-    //     } catch (java.sql.SQLException e) {
-    //         throw new RuntimeException("Failed to check room availability", e);
-    //     }
-
-    //     for (Schedule schedule : scheduleDAO.getAllSchedules()) {
-    //         if (schedule.getClassroomId() != roomId) {
-    //             continue;
-    //         }
-
-    //         if (schedule.getDate() == null || !schedule.getDate().equals(slot.getDate())) {
-    //             continue;
-    //         }
-
-    //         if (isCancelled(schedule)) {
-    //             continue;
-    //         }
-
-    //         if (isTimeOverlapping(slot, schedule)) {
-    //             return false;
-    //         }
-    //     }
-
-    //     return true;
-    // }
-
-    private boolean isTimeOverlapping(TimeSlot slot, Schedule schedule) {
-        return slot.getStartTime().isBefore(schedule.getEndTime())
-                && slot.getEndTime().isAfter(schedule.getStartTime());
-    }
-
-    private boolean isCancelled(Schedule schedule) {
-        String status = schedule.getStatus();
-        return status != null && status.equalsIgnoreCase("CANCELLED");
     }
 
     private String normalizeBuilding(String building) {

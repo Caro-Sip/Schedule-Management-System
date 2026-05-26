@@ -29,7 +29,6 @@ const userModal = document.getElementById("user-modal");
 const userModalTitle = document.getElementById("user-modal-title");
 const userForm = document.getElementById("user-form");
 const userNameInput = document.getElementById("user-name");
-const userIdInput = document.getElementById("user-id");
 const userPasswordInput = document.getElementById("user-password");
 const userRoleInput = document.getElementById("user-role");
 const userDepartmentInput = document.getElementById("user-department");
@@ -45,7 +44,6 @@ const classModal = document.getElementById("class-modal");
 const classModalTitle = document.getElementById("class-modal-title");
 const classForm = document.getElementById("class-form");
 const classNameInput = document.getElementById("class-name");
-const classIdInput = document.getElementById("class-id");
 const classYearInput = document.getElementById("class-year");
 const classSemesterInput = document.getElementById("class-semester");
 const classStartDateInput = document.getElementById("class-start-date");
@@ -187,10 +185,17 @@ async function createClassApi(payload) {
 }
 
 function normalizeClassroomPayload(payload) {
+	const existingRoom = roomDirectory.find(
+		(item) => String(item.id) === String(payload.id)
+	);
+	const timestamp = new Date().toISOString();
 	return {
 		id: Number(payload.id),
 		name: payload.name || "",
 		building: payload.building || "",
+		floor: payload.floor || existingRoom?.floor || getRoomFloorLabel(payload),
+		lastModified:
+			payload.lastModified || payload.last_modified || existingRoom?.lastModified || timestamp,
 	};
 }
 
@@ -213,6 +218,26 @@ async function loadClassrooms() {
 	} catch (error) {
 		console.error("Failed to load classrooms", error);
 	}
+}
+
+async function createClassroomApi(payload) {
+	return requestJson(`${API_BASE}/classrooms`, {
+		method: "POST",
+		body: JSON.stringify(payload),
+	});
+}
+
+async function updateClassroomApi(id, payload) {
+	return requestJson(`${API_BASE}/classrooms/${id}`, {
+		method: "PUT",
+		body: JSON.stringify(payload),
+	});
+}
+
+async function deleteClassroomApi(id) {
+	return requestJson(`${API_BASE}/classrooms/${id}`, {
+		method: "DELETE",
+	});
 }
 
 async function loadCourses() {

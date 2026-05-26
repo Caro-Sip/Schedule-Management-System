@@ -995,20 +995,51 @@ a.tab {
   padding: 8px 10px;
   font-size: 12px;
   display: grid;
-  gap: 4px;
+  gap: 6px;
   color: #202124;
   box-shadow: none;
   border: 1px solid transparent;
   border-left-width: 4px;
+  align-content: start;
+  overflow: hidden;
 }
 
-.event strong {
+.event strong,
+.event-title {
   font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 .event .meta {
   color: rgba(16, 20, 31, 0.7);
   font-size: 11px;
+}
+
+.event-details {
+  display: grid;
+  gap: 2px;
+}
+
+.event-detail {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px;
+  font-size: 11px;
+  color: rgba(16, 20, 31, 0.72);
+  line-height: 1.2;
+}
+
+.event-detail-label {
+  font-weight: 600;
+  color: rgba(16, 20, 31, 0.85);
+}
+
+.event-detail-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .event.class {

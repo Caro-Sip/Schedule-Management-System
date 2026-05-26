@@ -144,6 +144,12 @@ function bindEvents() {
     });
   }
 
+  if (scheduleSearch) {
+    scheduleSearch.addEventListener("focus", () => {
+      scheduleSearch.select();
+    });
+  }
+
   if (userAddBtn) {
     userAddBtn.addEventListener("click", () => {
       openUserModal("add");

@@ -135,6 +135,10 @@ function updateViewVisibility() {
   if (typeof renderAuditLog === "function") {
     renderAuditLog();
   }
+
+  if (typeof updateActiveScopeLabel === "function") {
+    updateActiveScopeLabel();
+  }
 }
 
 function renderCurrentView() {

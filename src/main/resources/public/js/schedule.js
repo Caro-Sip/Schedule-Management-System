@@ -8,6 +8,26 @@ function updateFilterGroup() {
   filterGroupRoom.toggleAttribute("hidden", !isRoom);
 }
 
+function updateActiveScopeLabel() {
+  let label = "";
+  if (state.view === "class" && state.selectedClassId) {
+    const classItem = (classDirectory || []).find(
+      (item) => String(item.id) === String(state.selectedClassId)
+    );
+    label = classItem?.name || `Class ${state.selectedClassId}`;
+  } else if (state.view === "room" && state.selectedRoomId) {
+    const roomItem = (getBookingClassrooms() || []).find(
+      (item) => String(item.id) === String(state.selectedRoomId)
+    );
+    label = roomItem?.name || getRoomShortLabel(roomItem) || `Room ${state.selectedRoomId}`;
+  }
+
+  if (scheduleSearch) {
+    scheduleSearch.placeholder = "Search class or room";
+    scheduleSearch.value = label;
+  }
+}
+
 function openFilterPanel() {
   if (!filterPanel || !filterToggle) {
     return;
@@ -210,6 +230,7 @@ function updateWeek() {
   renderHeader(base, today);
   renderTimes();
   renderEvents();
+  updateActiveScopeLabel();
 
   const label = base.toLocaleDateString("en-US", {
     month: "long",
@@ -323,41 +344,48 @@ function renderEvents() {
     eventEl.style.top = `${top}px`;
     eventEl.style.height = `${height}px`;
 
+    const typeLabel = formatEventType(eventItem.type);
+
+    const header = document.createElement("div");
+    header.className = "event-header";
+
     const title = document.createElement("strong");
     title.className = "event-title";
     title.textContent = eventItem.title || "Untitled";
 
+    header.appendChild(title);
+
+    if (typeLabel) {
+      const typeBadge = document.createElement("span");
+      typeBadge.className = "event-type";
+      typeBadge.textContent = typeLabel;
+      header.appendChild(typeBadge);
+    }
+
     const roomLabel = resolveEventRoomLabel(eventItem.roomId);
     const teacherLabel = resolveEventTeacherLabel(eventItem);
-    const typeLabel = formatEventType(eventItem.type);
     const timeRange = eventItem.start && eventItem.end ? `${eventItem.start} - ${eventItem.end}` : "";
 
     const details = document.createElement("div");
     details.className = "event-details";
 
     [
-      { label: "Room", value: normalizeEventValue(roomLabel) },
-      { label: "Hours", value: normalizeEventValue(timeRange) },
-      { label: "Teacher", value: normalizeEventValue(teacherLabel) },
-      { label: "Type", value: normalizeEventValue(typeLabel) },
+      normalizeEventValue(roomLabel),
+      normalizeEventValue(timeRange),
+      normalizeEventValue(teacherLabel),
     ].forEach((item) => {
       const row = document.createElement("div");
       row.className = "event-detail";
 
-      const label = document.createElement("span");
-      label.className = "event-detail-label";
-      label.textContent = `${item.label}:`;
-
       const value = document.createElement("span");
       value.className = "event-detail-value";
-      value.textContent = item.value;
+      value.textContent = item;
 
-      row.appendChild(label);
       row.appendChild(value);
       details.appendChild(row);
     });
 
-    eventEl.appendChild(title);
+    eventEl.appendChild(header);
     eventEl.appendChild(details);
 
     column.appendChild(eventEl);

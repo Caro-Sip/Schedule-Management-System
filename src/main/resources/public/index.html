@@ -103,16 +103,17 @@
 
         <div class="schedule-controls" id="schedule-controls">
           <div class="week-controls">
+            <button class="btn btn-ghost" id="back-to-list" type="button" hidden>
+              Back to list
+            </button>
             <button class="btn btn-ghost" id="prev-week">Previous</button>
             <div class="week-label">
               <span id="week-range">Week of</span>
               <span class="week-sub" id="week-sub"></span>
             </div>
+            <span class="week-scope" id="active-scope-label" hidden></span>
             <button class="btn btn-ghost" id="next-week">Next</button>
           </div>
-          <button class="btn btn-ghost" id="back-to-list" type="button" hidden>
-            Back to list
-          </button>
           <div class="search-filter">
             <div class="search-field">
               <input

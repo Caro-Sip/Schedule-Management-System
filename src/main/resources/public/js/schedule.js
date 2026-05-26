@@ -324,23 +324,87 @@ function renderEvents() {
     eventEl.style.height = `${height}px`;
 
     const title = document.createElement("strong");
-    title.textContent = eventItem.title;
+    title.className = "event-title";
+    title.textContent = eventItem.title || "Untitled";
 
-    const time = document.createElement("span");
-    time.textContent = `${eventItem.start} - ${eventItem.end}`;
+    const roomLabel = resolveEventRoomLabel(eventItem.roomId);
+    const teacherLabel = resolveEventTeacherLabel(eventItem);
+    const typeLabel = formatEventType(eventItem.type);
+    const timeRange = eventItem.start && eventItem.end ? `${eventItem.start} - ${eventItem.end}` : "";
 
-    const meta = document.createElement("span");
-    meta.className = "meta";
-    meta.textContent = eventItem.meta || "";
+    const details = document.createElement("div");
+    details.className = "event-details";
+
+    [
+      { label: "Room", value: normalizeEventValue(roomLabel) },
+      { label: "Hours", value: normalizeEventValue(timeRange) },
+      { label: "Teacher", value: normalizeEventValue(teacherLabel) },
+      { label: "Type", value: normalizeEventValue(typeLabel) },
+    ].forEach((item) => {
+      const row = document.createElement("div");
+      row.className = "event-detail";
+
+      const label = document.createElement("span");
+      label.className = "event-detail-label";
+      label.textContent = `${item.label}:`;
+
+      const value = document.createElement("span");
+      value.className = "event-detail-value";
+      value.textContent = item.value;
+
+      row.appendChild(label);
+      row.appendChild(value);
+      details.appendChild(row);
+    });
 
     eventEl.appendChild(title);
-    eventEl.appendChild(time);
-    if (eventItem.meta) {
-      eventEl.appendChild(meta);
-    }
+    eventEl.appendChild(details);
 
     column.appendChild(eventEl);
   });
+}
+
+function normalizeEventValue(value) {
+  if (value === 0) {
+    return "0";
+  }
+  const text = (value || "").toString().trim();
+  return text || "TBD";
+}
+
+function resolveEventRoomLabel(roomId) {
+  if (!roomId) {
+    return "";
+  }
+  const rooms = typeof getBookingClassrooms === "function" ? getBookingClassrooms() : [];
+  const roomItem = (rooms || []).find((item) => String(item.id) === String(roomId));
+  if (roomItem) {
+    return getRoomShortLabel(roomItem) || roomItem.name || String(roomId);
+  }
+  return String(roomId);
+}
+
+function resolveEventTeacherLabel(eventItem) {
+  const teacherValue = eventItem.professor || eventItem.teacherId || "";
+  if (!teacherValue) {
+    return "";
+  }
+  const teacherMatch = (userDirectory || []).find(
+    (user) => String(user.id) === String(teacherValue)
+  );
+  return teacherMatch ? teacherMatch.name : String(teacherValue);
+}
+
+function formatEventType(value) {
+  const text = (value || "").toString().trim();
+  if (!text) {
+    return "";
+  }
+  return text
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
 }
 
 function ensureEventIds(view) {

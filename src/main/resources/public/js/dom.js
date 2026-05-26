@@ -39,9 +39,6 @@ function openUserModal(mode, user) {
   if (userNameInput) {
     userNameInput.value = user?.name || "";
   }
-  if (userIdInput) {
-    userIdInput.value = user?.id || "";
-  }
   if (userPasswordInput) {
     userPasswordInput.value = "";
     if (mode === "edit") {
@@ -91,9 +88,6 @@ function openClassModal(mode, classItem) {
   if (classNameInput) {
     classNameInput.value = classItem?.name || "";
   }
-  if (classIdInput) {
-    classIdInput.value = classItem?.id ?? "";
-  }
   if (classYearInput) {
     classYearInput.value = classItem?.year ?? "";
   }
@@ -141,6 +135,8 @@ function openRoomModal(mode, roomItem) {
   }
   if (roomIdInput) {
     roomIdInput.value = roomItem?.id || "";
+    roomIdInput.readOnly = true;
+    roomIdInput.placeholder = "Auto-generated";
   }
   if (roomBuildingInput) {
     roomBuildingInput.value = roomItem?.building || "";
@@ -401,6 +397,10 @@ function renderClassList() {
     editButton.className = "icon-btn class-edit";
     editButton.setAttribute("aria-label", "Edit class");
     editButton.dataset.classId = classItem.id;
+    editButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      openClassModal("edit", classItem);
+    });
     editButton.innerHTML =
       '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
       '<path fill="currentColor" d="M3 17.25V21h3.75l11.06-11.06-3.75-3.75L3 17.25zm2.92 2.33H5v-.92l9.06-9.06.92.92-9.06 9.06zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />' +
@@ -534,7 +534,8 @@ function isDuplicateClassId(nextId) {
 
 function isDuplicateRoomId(nextId) {
   const normalized = nextId.toLowerCase();
-  return roomDirectory.some(
+  const rooms = typeof getBookingClassrooms === "function" ? getBookingClassrooms() : roomDirectory;
+  return rooms.some(
     (item) => item.id.toLowerCase() === normalized && item.id !== editingRoomId
   );
 }
@@ -583,8 +584,9 @@ function upsertClass({ id, name, year, createdBy }) {
 function upsertRoom({ id, name, building, floor }) {
   const timestamp = new Date().toISOString();
   const actor = state.userName || "User";
+  const rooms = typeof getBookingClassrooms === "function" ? getBookingClassrooms() : roomDirectory;
   if (editingRoomId) {
-    const target = roomDirectory.find((item) => item.id === editingRoomId);
+    const target = rooms.find((item) => String(item.id) === String(editingRoomId));
     if (!target) {
       return;
     }
@@ -598,7 +600,7 @@ function upsertRoom({ id, name, building, floor }) {
       scopeId: id,
     });
   } else {
-    roomDirectory.push({
+    rooms.push({
       id,
       name,
       building,

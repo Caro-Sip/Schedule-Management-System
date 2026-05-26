@@ -1,3 +1,16 @@
+function generateUserId() {
+  const base = `U-${Date.now().toString().slice(-6)}`;
+  if (!userDirectory.some((user) => user.id === base)) {
+    return base;
+  }
+
+  let suffix = 1;
+  while (userDirectory.some((user) => user.id === `${base}-${suffix}`)) {
+    suffix += 1;
+  }
+  return `${base}-${suffix}`;
+}
+
 function handleTabClick(event) {
   const view = event.currentTarget.dataset.view;
   if (!view) {
@@ -157,7 +170,6 @@ function bindEvents() {
       event.preventDefault();
       if (
         !userNameInput ||
-        !userIdInput ||
         !userPasswordInput ||
         !userRoleInput ||
         !userDepartmentInput
@@ -166,23 +178,18 @@ function bindEvents() {
       }
 
       const name = userNameInput.value.trim();
-      const id = userIdInput.value.trim();
       const password = userPasswordInput.value.trim();
       const role = userRoleInput.value;
       const department = userDepartmentInput.value;
+      const id = editingUserId || generateUserId();
 
-      if (!name || !id) {
-        alert("Name and ID are required.");
+      if (!name) {
+        alert("Name is required.");
         return;
       }
 
       if (!editingUserId && !password) {
         alert("Password is required for new users.");
-        return;
-      }
-
-      if (isDuplicateUserId(id)) {
-        alert("User ID already exists.");
         return;
       }
 
@@ -386,10 +393,11 @@ function bindEvents() {
 
   if (roomList) {
     roomList.addEventListener("click", (event) => {
+      const roomStore = typeof getBookingClassrooms === "function" ? getBookingClassrooms() : roomDirectory;
       const editButton = event.target.closest(".room-edit");
       if (editButton) {
         const roomId = editButton.dataset.roomId;
-        const roomItem = roomDirectory.find((item) => item.id === roomId);
+        const roomItem = roomStore.find((item) => String(item.id) === String(roomId));
         if (roomItem) {
           openRoomModal("edit", roomItem);
         }
@@ -410,36 +418,43 @@ function bindEvents() {
   if (roomForm) {
     roomForm.addEventListener("submit", (event) => {
       event.preventDefault();
-      if (!roomNameInput || !roomIdInput || !roomBuildingInput || !roomFloorInput) {
+      if (!roomNameInput || !roomBuildingInput || !roomFloorInput) {
         return;
       }
 
       const name = roomNameInput.value.trim();
-      const id = roomIdInput.value.trim();
       const building = roomBuildingInput.value.trim();
       const floor = roomFloorInput.value.trim();
 
-      if (!name || !id || !building || !floor) {
-        alert("Room name, ID, building, and floor are required.");
-        return;
-      }
-
-      if (isDuplicateRoomId(id)) {
-        alert("Room ID already exists.");
+      if (!name || !building || !floor) {
+        alert("Room name, building, and floor are required.");
         return;
       }
 
       const wasEditing = Boolean(editingRoomId);
       const previousId = editingRoomId;
-      upsertRoom({ id, name, building, floor });
-      closeRoomModal();
-      renderRoomList();
 
-      if (!wasEditing) {
-        selectRoom(id);
-      } else if (previousId && previousId !== id && state.selectedRoomId === previousId) {
-        selectRoom(id);
-      }
+      const savePromise = wasEditing
+        ? updateClassroomApi(previousId, { name, building })
+        : createClassroomApi({ name, building });
+
+      savePromise
+        .then(async (savedRoom) => {
+          const roomId = Number(savedRoom?.id || previousId);
+          upsertRoom({ id: String(roomId), name, building, floor });
+          await loadClassrooms();
+          closeRoomModal();
+          renderRoomList();
+
+          if (!wasEditing && Number.isFinite(roomId)) {
+            selectRoom(roomId);
+          } else if (previousId && String(state.selectedRoomId) === String(previousId)) {
+            selectRoom(previousId);
+          }
+        })
+        .catch((error) => {
+          alert(error?.message || "Failed to save room.");
+        });
     });
   }
 
@@ -452,24 +467,35 @@ function bindEvents() {
       if (!confirmed) {
         return;
       }
-      const index = roomDirectory.findIndex((item) => item.id === editingRoomId);
-      if (index === -1) {
-        return;
-      }
+
+      const roomStore = typeof getBookingClassrooms === "function" ? getBookingClassrooms() : roomDirectory;
       const actor = state.userName || "User";
-      const removed = roomDirectory[index];
-      roomDirectory.splice(index, 1);
-      addAuditEntry("Deleted room", actor, removed.name, "", {
-        scopeType: "room",
-        scopeId: removed.id,
-      });
-      closeRoomModal();
-      if (state.selectedRoomId === removed.id) {
-        state.selectedRoomId = null;
-        updateViewVisibility();
-      }
-      renderRoomList();
-      renderEvents();
+      const removed = roomStore.find((item) => String(item.id) === String(editingRoomId)) || null;
+
+      deleteClassroomApi(editingRoomId)
+        .then(async () => {
+          const index = roomStore.findIndex((item) => String(item.id) === String(editingRoomId));
+          if (index !== -1) {
+            roomStore.splice(index, 1);
+          }
+          if (removed) {
+            addAuditEntry("Deleted room", actor, removed.name, "", {
+              scopeType: "room",
+              scopeId: removed.id,
+            });
+          }
+          closeRoomModal();
+          if (String(state.selectedRoomId) === String(removed?.id)) {
+            state.selectedRoomId = null;
+            updateViewVisibility();
+          }
+          await loadClassrooms();
+          renderRoomList();
+          renderEvents();
+        })
+        .catch((error) => {
+          alert(error?.message || "Failed to delete room.");
+        });
     });
   }
 

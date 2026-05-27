@@ -1,16 +1,3 @@
-function generateUserId() {
-  const base = `U-${Date.now().toString().slice(-6)}`;
-  if (!userDirectory.some((user) => user.id === base)) {
-    return base;
-  }
-
-  let suffix = 1;
-  while (userDirectory.some((user) => user.id === `${base}-${suffix}`)) {
-    suffix += 1;
-  }
-  return `${base}-${suffix}`;
-}
-
 function handleTabClick(event) {
   const view = event.currentTarget.dataset.view;
   if (!view) {
@@ -163,7 +150,7 @@ function bindEvents() {
         return;
       }
       const userId = editButton.dataset.userId;
-      const user = userDirectory.find((item) => item.id === userId);
+      const user = userDirectory.find((item) => String(item.id) === String(userId));
       if (!user) {
         return;
       }
@@ -172,10 +159,11 @@ function bindEvents() {
   }
 
   if (userForm) {
-    userForm.addEventListener("submit", (event) => {
+    userForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       if (
         !userNameInput ||
+        !userEmailInput ||
         !userPasswordInput ||
         !userRoleInput ||
         !userDepartmentInput
@@ -184,13 +172,18 @@ function bindEvents() {
       }
 
       const name = userNameInput.value.trim();
+      const email = userEmailInput.value.trim();
       const password = userPasswordInput.value.trim();
       const role = userRoleInput.value;
       const department = userDepartmentInput.value;
-      const id = editingUserId || generateUserId();
 
       if (!name) {
         alert("Name is required.");
+        return;
+      }
+
+      if (!email) {
+        alert("Email is required.");
         return;
       }
 
@@ -199,14 +192,33 @@ function bindEvents() {
         return;
       }
 
-      upsertUser({ id, name, role, department, password: password || null });
-      closeUserModal();
-      renderUserList();
+      const payload = {
+        name,
+        email,
+        role,
+        department,
+      };
+
+      if (password) {
+        payload.password = password;
+      }
+
+      try {
+        if (editingUserId) {
+          await updateUserApi(editingUserId, payload);
+        } else {
+          await createUserApi(payload);
+        }
+        await loadUsers();
+        closeUserModal();
+      } catch (error) {
+        alert(error?.message || "Failed to save user.");
+      }
     });
   }
 
   if (userDeleteBtn) {
-    userDeleteBtn.addEventListener("click", () => {
+    userDeleteBtn.addEventListener("click", async () => {
       if (!editingUserId) {
         return;
       }
@@ -214,13 +226,14 @@ function bindEvents() {
       if (!confirmed) {
         return;
       }
-      const index = userDirectory.findIndex((user) => user.id === editingUserId);
-      if (index === -1) {
-        return;
+
+      try {
+        await deleteUserApi(editingUserId);
+        await loadUsers();
+        closeUserModal();
+      } catch (error) {
+        alert(error?.message || "Failed to delete user.");
       }
-      userDirectory.splice(index, 1);
-      closeUserModal();
-      renderUserList();
     });
   }
 
@@ -917,3 +930,4 @@ loadClassrooms();
 loadCourses();
 loadClasses();
 loadSchedules();
+loadUsers();

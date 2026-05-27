@@ -173,7 +173,11 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
     bookingSubject.value = isEdit ? eventData.title || "" : "";
   }
   if (bookingType) {
-    bookingType.value = isEdit ? eventData.type || "lecture" : "lecture";
+    bookingType.value = resolveSelectValue(
+      bookingType,
+      isEdit ? eventData.type : "lecture",
+      "lecture"
+    );
   }
 
   if (bookingDelete) {

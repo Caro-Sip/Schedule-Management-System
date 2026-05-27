@@ -12,6 +12,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import sms.Config.DatabaseConfig;
@@ -19,12 +20,15 @@ import sms.Objects.ClassEntity;
 import sms.Objects.Classroom;
 import sms.Objects.Course;
 import sms.Objects.Schedule;
+import sms.Objects.User;
 import sms.Objects.Teacher;
 import sms.Service.ClassService;
 import sms.Service.TeacherService;
 import sms.Service.ScheduleService;
+import sms.Service.UserService;
 import sms.DAO.ClassroomDAO;
 import sms.DAO.CourseDAO;
+import sms.DAO.TeacherDAO;
 import sms.exception.ClassNotFoundException;
 import sms.exception.InvalidClassException;
 import sms.exception.InvalidRoomException;
@@ -40,6 +44,8 @@ public class ApiServer {
     private static ClassService classService;
     private static ScheduleService scheduleService;
     private static RoomService roomService;
+    private static UserService userService;
+    private static TeacherDAO teacherDAO;
     private static ClassroomDAO classroomDAO;
     private static CourseDAO courseDAO;
     
@@ -48,6 +54,8 @@ public class ApiServer {
         teacherService = new TeacherService();
         classService = new ClassService();
         scheduleService = new ScheduleService();
+        userService = new UserService();
+        teacherDAO = new TeacherDAO();
         classroomDAO = new ClassroomDAO();
         roomService = new RoomService(classroomDAO);
         courseDAO = new CourseDAO();
@@ -67,6 +75,13 @@ public class ApiServer {
                     get("/{id}", ApiServer::getTeacherById);
                     put("/{id}", ApiServer::updateTeacher);
                     delete("/{id}", ApiServer::deleteTeacher);
+                });
+                path("/api/users", () -> {
+                    get(ApiServer::getAllUsers);
+                    post(ApiServer::createUser);
+                    get("/{id}", ApiServer::getUserById);
+                    put("/{id}", ApiServer::updateUser);
+                    delete("/{id}", ApiServer::deleteUser);
                 });
                 path("/api/classes", () -> {
                     get(ApiServer::getAllClasses);
@@ -112,6 +127,19 @@ public class ApiServer {
     private static void getAllTeachers(Context ctx) {
         List<Teacher> teachers = teacherService.getAllTeachers();
         ctx.json(teachers);
+    }
+
+    private static void getAllUsers(Context ctx) {
+        try {
+            List<User> users = userService.getAllUsers();
+            List<Map<String, Object>> publicUsers = new ArrayList<>();
+            for (User user : users) {
+                publicUsers.add(toPublicUser(user));
+            }
+            ctx.json(publicUsers);
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to load users"));
+        }
     }
 
     private static void getAllSchedules(Context ctx) {
@@ -167,6 +195,17 @@ public class ApiServer {
             ctx.status(400).json(errorResponse(e, "Invalid schedule data"));
         } catch (Exception e) {
             ctx.status(500).json(errorResponse(e, "Failed to create schedule"));
+        }
+    }
+
+    private static void getUserById(Context ctx) {
+        try {
+            int id = Integer.parseInt(ctx.pathParam("id"));
+            ctx.json(toPublicUser(userService.getUser(id)));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid user id"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to load user"));
         }
     }
 
@@ -522,12 +561,96 @@ public class ApiServer {
         }
     }
 
+    private static void createUser(Context ctx) {
+        try {
+            Map<?, ?> payload = ctx.bodyAsClass(Map.class);
+            User created = userService.createUser(
+                readString(payload, "name"),
+                readOptionalString(payload, "email"),
+                readString(payload, "password"),
+                readString(payload, "role"),
+                readString(payload, "department")
+            );
+            ctx.status(201).json(toPublicUser(created));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid user data"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to create user"));
+        }
+    }
+
+    private static void updateUser(Context ctx) {
+        try {
+            int id = Integer.parseInt(ctx.pathParam("id"));
+            Map<?, ?> payload = ctx.bodyAsClass(Map.class);
+            User updated = userService.updateUser(
+                id,
+                readString(payload, "name"),
+                readOptionalString(payload, "email"),
+                readOptionalString(payload, "password"),
+                readString(payload, "role"),
+                readString(payload, "department")
+            );
+            ctx.json(toPublicUser(updated));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid user data"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to update user"));
+        }
+    }
+
+    private static void deleteUser(Context ctx) {
+        try {
+            int id = Integer.parseInt(ctx.pathParam("id"));
+            userService.deleteUser(id);
+            ctx.json(Collections.singletonMap("message", "User deleted"));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid user id"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to delete user"));
+        }
+    }
+
     private static Map<String, String> errorResponse(Exception e, String fallback) {
         String message = e.getMessage();
         if (message == null || message.trim().isEmpty()) {
             message = fallback;
         }
         return Collections.singletonMap("error", message);
+    }
+
+    private static Map<String, Object> toPublicUser(User user) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        String department = null;
+        if (user != null && "TEACHER".equalsIgnoreCase(user.getRole())) {
+            try {
+                Teacher teacher = teacherDAO.getByUserId(user.getId());
+                department = teacher != null ? teacher.getDepartment() : null;
+            } catch (Exception e) {
+                department = null;
+            }
+        }
+        payload.put("id", user.getId());
+        payload.put("name", user.getName());
+        payload.put("email", user.getEmail());
+        payload.put("role", normalizeRoleForClient(user.getRole()));
+        payload.put("department", department);
+        payload.put("lastModified", user.getLastModified());
+        return payload;
+    }
+
+    private static String normalizeRoleForClient(String role) {
+        if (role == null) {
+            return null;
+        }
+
+        return switch (role.trim().toUpperCase()) {
+            case "ADMIN" -> "admin";
+            case "TEACHER" -> "professor";
+            case "MONITOR" -> "class-monitor";
+            case "STUDENT", "GUEST" -> "guest";
+            default -> role.toLowerCase();
+        };
     }
 
     private static String readString(Map<?, ?> payload, String key) {

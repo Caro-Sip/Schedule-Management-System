@@ -2,6 +2,48 @@ function getRoleLabel(role) {
   return roleLabels[role] || role;
 }
 
+function normalizeSelectKey(value) {
+  return (value || "")
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function resolveSelectValue(selectEl, rawValue, fallbackValue) {
+  if (!selectEl) {
+    return fallbackValue;
+  }
+
+  const requested = (rawValue ?? "").toString().trim();
+  if (!requested) {
+    return fallbackValue;
+  }
+
+  const options = Array.from(selectEl.options || []);
+  const direct = options.find((option) => option.value === requested);
+  if (direct) {
+    return direct.value;
+  }
+
+  const requestedKey = normalizeSelectKey(requested);
+  const byValue = options.find(
+    (option) => normalizeSelectKey(option.value) === requestedKey
+  );
+  if (byValue) {
+    return byValue.value;
+  }
+
+  const byText = options.find(
+    (option) => normalizeSelectKey(option.text) === requestedKey
+  );
+  if (byText) {
+    return byText.value;
+  }
+
+  return fallbackValue;
+}
+
 function isTeacherRole(role) {
   return role === "professor";
 }

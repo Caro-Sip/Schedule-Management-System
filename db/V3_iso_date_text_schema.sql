@@ -18,7 +18,8 @@ CREATE TABLE users (
     name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
-    role TEXT NOT NULL CHECK(role IN ('ADMIN', 'TEACHER', 'MONITOR', 'STUDENT'))
+    role TEXT NOT NULL CHECK(role IN ('ADMIN', 'TEACHER', 'MONITOR', 'STUDENT')),
+    last_modified TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE classes (
@@ -101,22 +102,31 @@ CREATE TABLE schedule_history (
     note TEXT
 );
 
-INSERT INTO users (id, name, email, password_hash, role) VALUES
-    (1, 'Amina Rahman', 'admin@school.local', 'hash_admin_001', 'ADMIN'),
-    (2, 'Hok Tin', 'hok.tin@school.local', 'hash_teacher_001', 'TEACHER'),
-    (3, 'Seak Leng', 'seak.leng@school.local', 'hash_teacher_002', 'TEACHER'),
-    (4, 'Phauk Sokkhey', 'phauk.sokkhey@school.local', 'hash_teacher_003', 'TEACHER'),
-    (5, 'Nop Phearum', 'nop.phearum@school.local', 'hash_teacher_004', 'TEACHER'),
-    (6, 'Hen Rathpisey', 'hen.rathpisey@school.local', 'hash_teacher_005', 'TEACHER'),
-    (7, 'Srang Sarot', 'srang.sarot@school.local', 'hash_teacher_006', 'TEACHER'),
-    (8, 'Has Sothea', 'has.sothea@school.local', 'hash_teacher_007', 'TEACHER'),
-    (9, 'Omar Idris', 'omar.idris@school.local', 'hash_monitor_001', 'MONITOR'),
-    (10, 'Sara Khan', 'sara.khan@school.local', 'hash_student_001', 'STUDENT'),
-    (11, 'Noah Williams', 'noah.williams@school.local', 'hash_student_002', 'STUDENT'),
-    (12, 'Lina Gomez', 'lina.gomez@school.local', 'hash_student_003', 'STUDENT'),
-    (13, 'Ethan Brown', 'ethan.brown@school.local', 'hash_student_004', 'STUDENT'),
-    (14, 'Priya Patel', 'priya.patel@school.local', 'hash_student_005', 'STUDENT'),
-    (15, 'Daniel Nguyen', 'daniel.nguyen@school.local', 'hash_student_006', 'STUDENT');
+INSERT INTO users (id, name, email, password_hash, role, last_modified) VALUES
+    (1, 'Amina Rahman', 'admin@school.local', 'hash_admin_001', 'ADMIN', '2026-05-15T10:22:00'),
+    (2, 'Hok Tin', 'hok.tin@school.local', 'hash_teacher_001', 'TEACHER', '2026-05-16T08:40:00'),
+    (3, 'Seak Leng', 'seak.leng@school.local', 'hash_teacher_002', 'TEACHER', '2026-05-14T14:05:00'),
+    (4, 'Phauk Sokkhey', 'phauk.sokkhey@school.local', 'hash_teacher_003', 'TEACHER', '2026-05-13T11:10:00'),
+    (5, 'Nop Phearum', 'nop.phearum@school.local', 'hash_teacher_004', 'TEACHER', '2026-05-12T09:30:00'),
+    (6, 'Hen Rathpisey', 'hen.rathpisey@school.local', 'hash_teacher_005', 'TEACHER', '2026-05-11T16:50:00'),
+    (7, 'Srang Sarot', 'srang.sarot@school.local', 'hash_teacher_006', 'TEACHER', '2026-05-10T11:15:00'),
+    (8, 'Has Sothea', 'has.sothea@school.local', 'hash_teacher_007', 'TEACHER', '2026-05-09T17:45:00'),
+    (9, 'Omar Idris', 'omar.idris@school.local', 'hash_monitor_001', 'MONITOR', '2026-05-08T13:20:00'),
+    (10, 'Sara Khan', 'sara.khan@school.local', 'hash_student_001', 'STUDENT', '2026-05-07T09:30:00'),
+    (11, 'Noah Williams', 'noah.williams@school.local', 'hash_student_002', 'STUDENT', '2026-05-06T10:30:00'),
+    (12, 'Lina Gomez', 'lina.gomez@school.local', 'hash_student_003', 'STUDENT', '2026-05-05T12:00:00'),
+    (13, 'Ethan Brown', 'ethan.brown@school.local', 'hash_student_004', 'STUDENT', '2026-05-04T14:15:00'),
+    (14, 'Priya Patel', 'priya.patel@school.local', 'hash_student_005', 'STUDENT', '2026-05-03T15:45:00'),
+    (15, 'Daniel Nguyen', 'daniel.nguyen@school.local', 'hash_student_006', 'STUDENT', '2026-05-02T17:10:00');
+
+INSERT INTO teachers (id, user_id, department) VALUES
+    (1, 2, 'GIC'),
+    (2, 3, 'GIC'),
+    (3, 4, 'AMS'),
+    (4, 5, 'GIC'),
+    (5, 6, 'GIC'),
+    (6, 7, 'GIM'),
+    (7, 8, 'AMS');
 
 INSERT INTO classes (id, name, year, semester, start_date, end_date, created_by) VALUES
     (1, 'CS-Y2-A', 2, 2, '2026-02-01', '2026-06-30', 1),
@@ -141,15 +151,6 @@ INSERT INTO classrooms (name, building) VALUES
     ('J602', 'Building J'),
     ('J603', 'Building J'),
     ('J604', 'Building J');
-
-INSERT INTO teachers (id, user_id, department) VALUES
-    (1, 2, 'GIC'),
-    (2, 3, 'GIC'),
-    (3, 4, 'AMS'),
-    (4, 5, 'GIC'),
-    (5, 6, 'GIC'),
-    (6, 7, 'GIM'),
-    (7, 8, 'AMS');
 
 INSERT INTO courses (id, name, code, total_hours) VALUES
     (1, 'Database Systems', 'CS201', 45),

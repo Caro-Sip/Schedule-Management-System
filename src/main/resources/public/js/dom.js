@@ -39,6 +39,9 @@ function openUserModal(mode, user) {
   if (userNameInput) {
     userNameInput.value = user?.name || "";
   }
+  if (userEmailInput) {
+    userEmailInput.value = user?.email || "";
+  }
   if (userPasswordInput) {
     userPasswordInput.value = "";
     if (mode === "edit") {
@@ -50,10 +53,18 @@ function openUserModal(mode, user) {
     }
   }
   if (userRoleInput) {
-    userRoleInput.value = user?.role || "admin";
+    userRoleInput.value = resolveSelectValue(
+      userRoleInput,
+      user?.role,
+      "admin"
+    );
   }
   if (userDepartmentInput) {
-    userDepartmentInput.value = user?.department || "Registrar";
+    userDepartmentInput.value = resolveSelectValue(
+      userDepartmentInput,
+      user?.department,
+      "Registrar"
+    );
   }
 
   if (userDeleteBtn) {
@@ -207,7 +218,8 @@ function getFilteredUsers() {
       const matchesTerm =
         !term ||
         user.name.toLowerCase().includes(term) ||
-        user.id.toLowerCase().includes(term);
+        String(user.id).toLowerCase().includes(term) ||
+        (user.email || "").toLowerCase().includes(term);
       const matchesRole = !roleFilter || user.role === roleFilter;
       const matchesDepartment =
         !departmentFilter || user.department === departmentFilter;
@@ -247,7 +259,7 @@ function renderUserList() {
 
     const id = document.createElement("div");
     id.className = "user-id";
-    id.textContent = `ID: ${user.id}`;
+    id.textContent = `ID: ${user.id}${user.email ? ` · ${user.email}` : ""}`;
 
     main.appendChild(name);
     main.appendChild(id);
@@ -261,7 +273,7 @@ function renderUserList() {
 
     const departmentTag = document.createElement("span");
     departmentTag.className = "tag department";
-    departmentTag.textContent = user.department;
+    departmentTag.textContent = user.department || "No department";
 
     tags.appendChild(roleTag);
     tags.appendChild(departmentTag);
@@ -617,7 +629,7 @@ function upsertRoom({ id, name, building, floor }) {
 function upsertUser({ id, name, role, department, password }) {
   const timestamp = new Date().toISOString();
   if (editingUserId) {
-    const target = userDirectory.find((user) => user.id === editingUserId);
+    const target = userDirectory.find((user) => String(user.id) === String(editingUserId));
     if (!target) {
       return;
     }

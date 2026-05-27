@@ -681,16 +681,30 @@ function bindEvents() {
         return;
       }
 
-      const subject = bookingSubject ? bookingSubject.value.trim() : "";
-      const professor = bookingProfessor ? bookingProfessor.value.trim() : "";
+      const subjectInput = bookingSubject ? bookingSubject.value.trim() : "";
+      const professorInput = bookingProfessor ? bookingProfessor.value.trim() : "";
+      const selectedTeacherId = bookingProfessor?.dataset.teacherId || pendingBooking.teacherId || "";
+      const teacherCatalog = getBookingTeachers();
+      const selectedTeacher =
+        teacherCatalog.find((teacher) => String(teacher.id) === String(selectedTeacherId)) ||
+        resolveTeacherFromInput(professorInput, teacherCatalog);
+      const teacherId = selectedTeacher ? selectedTeacher.id : null;
+      const professorLabel = selectedTeacher ? selectedTeacher.name || professorInput : professorInput;
+      const selectedCourseId = bookingSubject?.dataset.courseId || pendingBooking.courseId || "";
+      const courseCatalog = courseDirectory || [];
+      const selectedCourse =
+        courseCatalog.find((course) => String(course.id) === String(selectedCourseId)) ||
+        resolveCourseFromInput(subjectInput, courseCatalog);
+      const subjectLabel =
+        selectedCourse?.name || selectedCourse?.code || subjectInput || "Untitled class";
       const typeValue = bookingType ? bookingType.value : "";
       const typeLabel = bookingType
         ? bookingType.options[bookingType.selectedIndex]?.text || typeValue
         : "";
 
       const metaParts = [];
-      if (professor) {
-        metaParts.push(professor);
+      if (professorLabel) {
+        metaParts.push(professorLabel);
       }
       if (typeLabel) {
         metaParts.push(typeLabel);
@@ -703,7 +717,6 @@ function bindEvents() {
         eventsByView[targetView] = [];
       }
 
-      const subjectLabel = subject || "Untitled class";
       const objectLabel = subjectLabel;
       const bookingTime = formatBookingTimeRange(startValue, endValue);
       const actor = state.userName || "User";
@@ -714,16 +727,21 @@ function bindEvents() {
             ? { scopeType: "room", scopeId: classroomId }
             : { scopeType: "general", scopeId: null };
 
-      const courseId = await resolveCourseIdFromSubject(subjectLabel);
+      const courseId = selectedCourse?.id || (await resolveCourseIdFromSubject(subjectLabel));
       if (!courseId) {
         alert("Select or enter a course name first.");
         return;
       }
 
+      if (pendingBooking) {
+        pendingBooking.teacherId = teacherId;
+        pendingBooking.courseId = courseId;
+      }
+
       if (pendingBooking.eventId) {
         const payload = {
           classroomId,
-          teacherId: pendingBooking.teacherId || null,
+          teacherId,
           courseId,
           date: pendingBooking.date,
           startTime: startValue,
@@ -760,7 +778,7 @@ function bindEvents() {
 
           const payload = {
             classroomId,
-            teacherId: pendingBooking.teacherId || null,
+            teacherId,
             courseId,
             date: pendingBooking.date || dateStr,
             startTime: startValue,
@@ -812,6 +830,28 @@ function bindEvents() {
       renderBookingClassOptions();
     });
     bookingClassInput.addEventListener("focus", renderBookingClassOptions);
+  }
+
+  if (bookingProfessor) {
+    bookingProfessor.addEventListener("input", () => {
+      if (pendingBooking) {
+        pendingBooking.teacherId = null;
+      }
+      bookingProfessor.dataset.teacherId = "";
+      renderBookingProfessorOptions();
+    });
+    bookingProfessor.addEventListener("focus", renderBookingProfessorOptions);
+  }
+
+  if (bookingSubject) {
+    bookingSubject.addEventListener("input", () => {
+      if (pendingBooking) {
+        pendingBooking.courseId = null;
+      }
+      bookingSubject.dataset.courseId = "";
+      renderBookingSubjectOptions();
+    });
+    bookingSubject.addEventListener("focus", renderBookingSubjectOptions);
   }
 
   if (bookingStart) {

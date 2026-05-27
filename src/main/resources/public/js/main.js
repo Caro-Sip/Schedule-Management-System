@@ -47,6 +47,14 @@ function bindEvents() {
 
   if (backToListBtn) {
     backToListBtn.addEventListener("click", () => {
+      if (state.userScheduleOrigin === "user") {
+        state.selectedClassId = null;
+        state.selectedRoomId = null;
+        state.selectedTeacherId = null;
+        state.userScheduleOrigin = null;
+        setView("user");
+        return;
+      }
       if (state.view === "class") {
         state.selectedClassId = null;
       }
@@ -144,17 +152,33 @@ function bindEvents() {
   }
 
   if (userList) {
-    userList.addEventListener("click", (event) => {
+    userList.addEventListener("click", async (event) => {
       const editButton = event.target.closest(".user-edit");
-      if (!editButton) {
+      if (editButton) {
+        const userId = editButton.dataset.userId;
+        const user = userDirectory.find((item) => String(item.id) === String(userId));
+        if (!user) {
+          return;
+        }
+        openUserModal("edit", user);
         return;
       }
-      const userId = editButton.dataset.userId;
+
+      const row = event.target.closest(".user-row");
+      if (!row) {
+        return;
+      }
+      const userId = row.dataset.userId;
       const user = userDirectory.find((item) => String(item.id) === String(userId));
       if (!user) {
         return;
       }
-      openUserModal("edit", user);
+      if (!isAdminRole(state.role)) {
+        return;
+      }
+      if (typeof showUserSchedule === "function") {
+        await showUserSchedule(user);
+      }
     });
   }
 

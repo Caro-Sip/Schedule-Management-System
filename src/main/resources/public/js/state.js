@@ -9,6 +9,8 @@ const state = {
   userName: "Guest",
   selectedClassId: null,
   selectedRoomId: null,
+  selectedTeacherId: null,
+  userScheduleOrigin: null,
 };
 
 const eventsByView = {

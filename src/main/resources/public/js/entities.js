@@ -168,6 +168,7 @@ function normalizeUserPayload(payload) {
 		email: payload.email || "",
 		role: payload.role || "guest",
 		department: payload.department || "",
+		classId: payload.classId ?? payload.class_id ?? payload.classID ?? null,
 		lastModified: payload.lastModified || payload.last_modified || new Date().toISOString(),
 	};
 }

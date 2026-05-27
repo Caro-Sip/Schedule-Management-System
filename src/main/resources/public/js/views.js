@@ -7,6 +7,8 @@ function resetSessionState() {
   state.userName = "Guest";
   state.selectedClassId = null;
   state.selectedRoomId = null;
+  state.selectedTeacherId = null;
+  state.userScheduleOrigin = null;
 }
 
 function saveSession(role, userName) {
@@ -59,6 +61,10 @@ function setView(view) {
     return;
   }
 
+  if (view !== "user") {
+    state.userScheduleOrigin = null;
+  }
+
   state.view = view;
   tabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.view === view));
   updateFilterGroup();
@@ -76,13 +82,16 @@ function updateViewVisibility() {
   const isUserView = state.view === "user";
   const isClassView = state.view === "class";
   const isRoomView = state.view === "room";
+  const isTeacherView = state.view === "teacher";
   const isAuditView = state.view === "audit";
 
   const showClassList = isAdmin && isClassView && !state.selectedClassId;
   const showRoomList = isAdmin && isRoomView && !state.selectedRoomId;
   const showBackToList =
     isAdmin &&
-    ((isClassView && state.selectedClassId) || (isRoomView && state.selectedRoomId));
+    ((isClassView && state.selectedClassId) ||
+      (isRoomView && state.selectedRoomId) ||
+      (isTeacherView && state.selectedTeacherId && state.userScheduleOrigin === "user"));
   const showSchedule =
     !isUserView &&
     !isAuditView &&
@@ -176,6 +185,8 @@ function showSchedule(role, label) {
   if (!isAdminRole(role)) {
     state.selectedClassId = null;
     state.selectedRoomId = null;
+    state.selectedTeacherId = null;
+    state.userScheduleOrigin = null;
   }
   loginView.classList.add("hidden");
   scheduleView.classList.remove("hidden");

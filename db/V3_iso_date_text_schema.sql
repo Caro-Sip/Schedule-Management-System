@@ -117,7 +117,9 @@ INSERT INTO users (id, name, email, password_hash, role, last_modified) VALUES
     (12, 'Lina Gomez', 'lina.gomez@school.local', 'hash_student_003', 'STUDENT', '2026-05-05T12:00:00'),
     (13, 'Ethan Brown', 'ethan.brown@school.local', 'hash_student_004', 'STUDENT', '2026-05-04T14:15:00'),
     (14, 'Priya Patel', 'priya.patel@school.local', 'hash_student_005', 'STUDENT', '2026-05-03T15:45:00'),
-    (15, 'Daniel Nguyen', 'daniel.nguyen@school.local', 'hash_student_006', 'STUDENT', '2026-05-02T17:10:00');
+    (15, 'Daniel Nguyen', 'daniel.nguyen@school.local', 'hash_student_006', 'STUDENT', '2026-05-02T17:10:00'),
+    (16, 'Mei Lin', 'mei.lin@school.local', 'hash_monitor_002', 'MONITOR', '2026-05-01T09:10:00'),
+    (17, 'Alex Jordan', 'alex.jordan@school.local', 'hash_monitor_003', 'MONITOR', '2026-05-01T09:15:00');
 
 INSERT INTO teachers (id, user_id, department) VALUES
     (1, 2, 'GIC'),
@@ -131,7 +133,9 @@ INSERT INTO teachers (id, user_id, department) VALUES
 INSERT INTO classes (id, name, year, semester, start_date, end_date, created_by) VALUES
     (1, 'CS-Y2-A', 2, 2, '2026-02-01', '2026-06-30', 1),
     (2, 'CS-Y2-B', 2, 2, '2026-02-01', '2026-06-30', 1),
-    (3, 'IT-Y1-A', 1, 2, '2026-02-01', '2026-06-30', 1);
+    (3, 'IT-Y1-A', 1, 2, '2026-02-01', '2026-06-30', 1),
+    (4, 'SE-Y3-A', 3, 2, '2026-02-01', '2026-06-30', 1),
+    (5, 'DS-Y1-B', 1, 2, '2026-02-01', '2026-06-30', 1);
 
 INSERT INTO class_students (class_id, user_id) VALUES
     (1, 5),
@@ -141,7 +145,9 @@ INSERT INTO class_students (class_id, user_id) VALUES
     (2, 9),
     (2, 10),
     (3, 5),
-    (3, 8);
+    (3, 8),
+    (4, 16),
+    (5, 17);
 
 INSERT INTO classrooms (name, building) VALUES
     ('A401', 'Building A'),

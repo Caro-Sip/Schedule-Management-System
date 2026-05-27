@@ -210,6 +210,57 @@ function selectRoom(roomId) {
   renderEvents();
 }
 
+function selectTeacher(teacherId) {
+  const numericTeacherId = Number(teacherId);
+  state.selectedTeacherId = Number.isNaN(numericTeacherId) ? teacherId : numericTeacherId;
+  updateViewVisibility();
+  renderEvents();
+}
+
+function resolveClassIdForUser(user) {
+  if (!user) {
+    return null;
+  }
+  if (Number.isFinite(Number(user.classId))) {
+    return Number(user.classId);
+  }
+  const byId = classDirectory.find((item) => String(item.id) === String(user.id));
+  return byId ? Number(byId.id) : null;
+}
+
+async function showUserSchedule(user) {
+  if (!user) {
+    return;
+  }
+
+  if (user.role === "class-monitor") {
+    if (classDirectory.length === 0) {
+      await loadClasses();
+    }
+    const classId = resolveClassIdForUser(user);
+    if (!classId) {
+      alert("No class is linked to this class monitor.");
+      return;
+    }
+    state.selectedTeacherId = null;
+    setView("class");
+    state.userScheduleOrigin = "user";
+    selectClass(classId);
+    return;
+  }
+
+  if (isTeacherRole(user.role)) {
+    state.selectedClassId = null;
+    state.selectedRoomId = null;
+    setView("teacher");
+    state.userScheduleOrigin = "user";
+    selectTeacher(user.id);
+    return;
+  }
+
+  alert("Schedule view is available for class monitors and professors only.");
+}
+
 function getFilteredUsers() {
   const term = userSearch ? userSearch.value.trim().toLowerCase() : "";
   const roleFilter = userFilterRole ? userFilterRole.value : "";
@@ -251,6 +302,7 @@ function renderUserList() {
   users.forEach((user) => {
     const row = document.createElement("div");
     row.className = "user-row";
+    row.dataset.userId = user.id;
 
     const main = document.createElement("div");
     main.className = "user-main";

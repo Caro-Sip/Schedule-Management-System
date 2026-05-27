@@ -6,22 +6,33 @@ public class User {
     private String email;
     private String passwordHash;
     private String role;
+    private String lastModified;
 
     public User() {}
 
     public User(int id, String name, String email, String passwordHash, String role) {
+        this(id, name, email, passwordHash, role, null);
+    }
+
+    public User(int id, String name, String email, String passwordHash, String role, String lastModified) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.passwordHash = passwordHash;
         this.role = role;
+        this.lastModified = lastModified;
     }
 
     public User(String name, String email, String passwordHash, String role) {
+        this(name, email, passwordHash, role, null);
+    }
+
+    public User(String name, String email, String passwordHash, String role, String lastModified) {
         this.name = name;
         this.email = email;
         this.passwordHash = passwordHash;
         this.role = role;
+        this.lastModified = lastModified;
     }
 
     public int getId() { return id; }
@@ -38,6 +49,9 @@ public class User {
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+
+    public String getLastModified() { return lastModified; }
+    public void setLastModified(String lastModified) { this.lastModified = lastModified; }
 
     @Override
     public String toString() {

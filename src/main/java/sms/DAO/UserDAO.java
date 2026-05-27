@@ -35,9 +35,20 @@ public class UserDAO {
         return DatabaseConfig.getConnection();
     }
 
+    private User mapUser(ResultSet rs) throws SQLException {
+        return new User(
+            rs.getInt("id"),
+            rs.getString("name"),
+            rs.getString("email"),
+            rs.getString("password_hash"),
+            rs.getString("role"),
+            rs.getString("last_modified")
+        );
+    }
+
     // CREATE - Insert a new user
     public boolean createUser(User user) {
-        String sql = "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO users (name, email, password_hash, role, last_modified) VALUES (?, ?, ?, ?, ?)";
         
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -46,6 +57,7 @@ public class UserDAO {
             pstmt.setString(2, user.getEmail());
             pstmt.setString(3, user.getPasswordHash());
             pstmt.setString(4, user.getRole());
+            pstmt.setString(5, user.getLastModified());
             
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
@@ -57,7 +69,7 @@ public class UserDAO {
 
     // READ - Get user by ID
     public User getUserById(int id) {
-        String sql = "SELECT id, name, email, password_hash, role FROM users WHERE id = ?";
+        String sql = "SELECT id, name, email, password_hash, role, last_modified FROM users WHERE id = ?";
         
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -66,13 +78,7 @@ public class UserDAO {
             ResultSet rs = pstmt.executeQuery();
             
             if (rs.next()) {
-                return new User(
-                    rs.getInt("id"),
-                    rs.getString("name"),
-                    rs.getString("email"),
-                    rs.getString("password_hash"),
-                    rs.getString("role")
-                );
+                return mapUser(rs);
             }
         } catch (SQLException e) {
             System.err.println("Error retrieving user: " + e.getMessage());
@@ -82,7 +88,7 @@ public class UserDAO {
 
     // READ - Get user by email
     public User getUserByEmail(String email) {
-        String sql = "SELECT id, name, email, password_hash, role FROM users WHERE email = ?";
+        String sql = "SELECT id, name, email, password_hash, role, last_modified FROM users WHERE email = ?";
         
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -91,13 +97,7 @@ public class UserDAO {
             ResultSet rs = pstmt.executeQuery();
             
             if (rs.next()) {
-                return new User(
-                    rs.getInt("id"),
-                    rs.getString("name"),
-                    rs.getString("email"),
-                    rs.getString("password_hash"),
-                    rs.getString("role")
-                );
+                return mapUser(rs);
             }
         } catch (SQLException e) {
             System.err.println("Error retrieving user by email: " + e.getMessage());
@@ -107,7 +107,7 @@ public class UserDAO {
 
     // READ - Get all users
     public List<User> getAllUsers() {
-        String sql = "SELECT id, name, email, password_hash, role FROM users";
+        String sql = "SELECT id, name, email, password_hash, role, last_modified FROM users";
         List<User> users = new ArrayList<>();
         
         try (Connection conn = getConnection();
@@ -115,14 +115,7 @@ public class UserDAO {
              ResultSet rs = stmt.executeQuery(sql)) {
             
             while (rs.next()) {
-                User user = new User(
-                    rs.getInt("id"),
-                    rs.getString("name"),
-                    rs.getString("email"),
-                    rs.getString("password_hash"),
-                    rs.getString("role")
-                );
-                users.add(user);
+                users.add(mapUser(rs));
             }
         } catch (SQLException e) {
             System.err.println("Error retrieving all users: " + e.getMessage());
@@ -132,7 +125,7 @@ public class UserDAO {
 
     // READ - Get all users by role
     public List<User> getUsersByRole(String role) {
-        String sql = "SELECT id, name, email, password_hash, role FROM users WHERE role = ?";
+        String sql = "SELECT id, name, email, password_hash, role, last_modified FROM users WHERE role = ?";
         List<User> users = new ArrayList<>();
         
         try (Connection conn = getConnection();
@@ -142,14 +135,7 @@ public class UserDAO {
             ResultSet rs = pstmt.executeQuery();
             
             while (rs.next()) {
-                User user = new User(
-                    rs.getInt("id"),
-                    rs.getString("name"),
-                    rs.getString("email"),
-                    rs.getString("password_hash"),
-                    rs.getString("role")
-                );
-                users.add(user);
+                users.add(mapUser(rs));
             }
         } catch (SQLException e) {
             System.err.println("Error retrieving users by role: " + e.getMessage());
@@ -159,7 +145,7 @@ public class UserDAO {
 
     // UPDATE - Update user information
     public boolean updateUser(User user) {
-        String sql = "UPDATE users SET name = ?, email = ?, password_hash = ?, role = ? WHERE id = ?";
+        String sql = "UPDATE users SET name = ?, email = ?, password_hash = ?, role = ?, last_modified = ? WHERE id = ?";
         
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -168,7 +154,8 @@ public class UserDAO {
             pstmt.setString(2, user.getEmail());
             pstmt.setString(3, user.getPasswordHash());
             pstmt.setString(4, user.getRole());
-            pstmt.setInt(5, user.getId());
+            pstmt.setString(5, user.getLastModified());
+            pstmt.setInt(6, user.getId());
             
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;

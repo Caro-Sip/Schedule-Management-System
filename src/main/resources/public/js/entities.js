@@ -29,6 +29,7 @@ const userModal = document.getElementById("user-modal");
 const userModalTitle = document.getElementById("user-modal-title");
 const userForm = document.getElementById("user-form");
 const userNameInput = document.getElementById("user-name");
+const userEmailInput = document.getElementById("user-email");
 const userPasswordInput = document.getElementById("user-password");
 const userRoleInput = document.getElementById("user-role");
 const userDepartmentInput = document.getElementById("user-department");
@@ -156,6 +157,17 @@ function normalizeClassPayload(payload) {
 	};
 }
 
+function normalizeUserPayload(payload) {
+	return {
+		id: Number(payload.id),
+		name: payload.name || "",
+		email: payload.email || "",
+		role: payload.role || "guest",
+		department: payload.department || "",
+		lastModified: payload.lastModified || payload.last_modified || new Date().toISOString(),
+	};
+}
+
 async function loadClasses() {
 	try {
 		const classes = await requestJson(`${API_BASE}/classes`);
@@ -183,6 +195,41 @@ async function createClassApi(payload) {
 	return requestJson(`${API_BASE}/classes`, {
 		method: "POST",
 		body: JSON.stringify(payload),
+	});
+}
+
+async function loadUsers() {
+	try {
+		const users = await requestJson(`${API_BASE}/users`);
+		userDirectory.length = 0;
+		users.forEach((item) => {
+			userDirectory.push(normalizeUserPayload(item));
+		});
+		if (state.view === "user") {
+			renderUserList();
+		}
+	} catch (error) {
+		console.error("Failed to load users", error);
+	}
+}
+
+async function createUserApi(payload) {
+	return requestJson(`${API_BASE}/users`, {
+		method: "POST",
+		body: JSON.stringify(payload),
+	});
+}
+
+async function updateUserApi(id, payload) {
+	return requestJson(`${API_BASE}/users/${id}`, {
+		method: "PUT",
+		body: JSON.stringify(payload),
+	});
+}
+
+async function deleteUserApi(id) {
+	return requestJson(`${API_BASE}/users/${id}`, {
+		method: "DELETE",
 	});
 }
 
@@ -371,4 +418,10 @@ async function deleteClassApi(id) {
 	return requestJson(`${API_BASE}/classes/${id}`, {
 		method: "DELETE",
 	});
+}
+
+async function loadUsersIfNeeded() {
+	if (userDirectory.length === 0) {
+		await loadUsers();
+	}
 }

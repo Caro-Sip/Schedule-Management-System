@@ -10,6 +10,7 @@ function updateFilterGroup() {
 
 function updateActiveScopeLabel() {
   let label = "";
+  let placeholder = "Search class or room";
   if (state.view === "class" && state.selectedClassId) {
     const classItem = (classDirectory || []).find(
       (item) => String(item.id) === String(state.selectedClassId)
@@ -20,10 +21,16 @@ function updateActiveScopeLabel() {
       (item) => String(item.id) === String(state.selectedRoomId)
     );
     label = roomItem?.name || getRoomShortLabel(roomItem) || `Room ${state.selectedRoomId}`;
+  } else if (state.view === "teacher" && state.selectedTeacherId) {
+    const teacherItem = (userDirectory || []).find(
+      (user) => String(user.id) === String(state.selectedTeacherId)
+    );
+    label = teacherItem?.name || `Teacher ${state.selectedTeacherId}`;
+    placeholder = "Search teacher";
   }
 
   if (scheduleSearch) {
-    scheduleSearch.placeholder = "Search class or room";
+    scheduleSearch.placeholder = placeholder;
     scheduleSearch.value = label;
   }
 }
@@ -382,6 +389,14 @@ function renderEvents() {
     }
     filteredItems = items.filter(
       (item) => String(item.roomId) === String(state.selectedRoomId)
+    );
+  }
+
+  if (state.view === "teacher" && state.selectedTeacherId) {
+    filteredItems = items.filter(
+      (item) =>
+        String(item.teacherId) === String(state.selectedTeacherId) ||
+        String(item.professor) === String(state.selectedTeacherId)
     );
   }
 

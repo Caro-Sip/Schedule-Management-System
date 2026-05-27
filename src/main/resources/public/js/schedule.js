@@ -222,10 +222,16 @@ function startOfWeek(date) {
   return copy;
 }
 
-function updateWeek() {
+function getVisibleWeekStart() {
   const today = new Date();
   const base = startOfWeek(today);
   base.setDate(base.getDate() + state.weekOffset * 7);
+  return base;
+}
+
+function updateWeek() {
+  const today = new Date();
+  const base = getVisibleWeekStart();
 
   renderHeader(base, today);
   renderTimes();
@@ -292,6 +298,10 @@ function renderEvents() {
   eventsEl.style.setProperty("--hour-height", `${HOUR_HEIGHT}px`);
   eventsEl.innerHTML = "";
 
+  const weekStart = getVisibleWeekStart();
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 7);
+
   for (let i = 0; i < 7; i += 1) {
     const column = document.createElement("div");
     column.className = "day-column";
@@ -301,7 +311,18 @@ function renderEvents() {
 
   ensureEventIds(state.view);
   const items = eventsByView[state.view] || [];
-  let filteredItems = items;
+  let filteredItems = items.filter((eventItem) => {
+    if (!eventItem.date) {
+      return true;
+    }
+
+    const eventDate = new Date(eventItem.date);
+    if (Number.isNaN(eventDate.getTime())) {
+      return true;
+    }
+
+    return eventDate >= weekStart && eventDate < weekEnd;
+  });
 
   if (state.view === "class" && isAdminRole(state.role)) {
     if (!state.selectedClassId) {
@@ -325,7 +346,11 @@ function renderEvents() {
   }
 
   filteredItems.forEach((eventItem) => {
-    const column = eventsEl.querySelector(`.day-column[data-day="${eventItem.day}"]`);
+    const eventDate = eventItem.date ? new Date(eventItem.date) : null;
+    const dayOffset = eventDate && !Number.isNaN(eventDate.getTime())
+      ? Math.floor((new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate()).getTime() - weekStart.getTime()) / (24 * 60 * 60 * 1000))
+      : eventItem.day;
+    const column = eventsEl.querySelector(`.day-column[data-day="${dayOffset}"]`);
     if (!column) {
       return;
     }

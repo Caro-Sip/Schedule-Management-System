@@ -26,9 +26,7 @@ import sms.Service.ClassService;
 import sms.Service.TeacherService;
 import sms.Service.ScheduleService;
 import sms.Service.UserService;
-import sms.DAO.ClassroomDAO;
-import sms.DAO.CourseDAO;
-import sms.DAO.TeacherDAO;
+import sms.Service.CourseService;
 import sms.exception.ClassNotFoundException;
 import sms.exception.InvalidClassException;
 import sms.exception.InvalidRoomException;
@@ -45,9 +43,7 @@ public class ApiServer {
     private static ScheduleService scheduleService;
     private static RoomService roomService;
     private static UserService userService;
-    private static TeacherDAO teacherDAO;
-    private static ClassroomDAO classroomDAO;
-    private static CourseDAO courseDAO;
+    private static CourseService courseService;
     
     public static void main(String[] args) {
         ensureDatabase();
@@ -55,10 +51,8 @@ public class ApiServer {
         classService = new ClassService();
         scheduleService = new ScheduleService();
         userService = new UserService();
-        teacherDAO = new TeacherDAO();
-        classroomDAO = new ClassroomDAO();
-        roomService = new RoomService(classroomDAO);
-        courseDAO = new CourseDAO();
+        roomService = new RoomService();
+        courseService = new CourseService();
 
         @SuppressWarnings("unused")
         Javalin app = Javalin.create(config -> {
@@ -244,8 +238,7 @@ public class ApiServer {
         } catch (NumberFormatException e) {
             // Not a plain integer, try lookup by classroom name
             try {
-                ClassroomDAO dao = new ClassroomDAO();
-                var classroom = dao.getClassroomByName(text);
+                Classroom classroom = roomService.getRoomByName(text);
                 if (classroom != null) {
                     return classroom.getId();
                 }
@@ -397,7 +390,7 @@ public class ApiServer {
 
     private static void getAllCourses(Context ctx) {
         try {
-            List<Course> courses = courseDAO.getAllCourses();
+            List<Course> courses = courseService.getAllCourses();
             ctx.json(courses);
         } catch (Exception e) {
             e.printStackTrace();
@@ -412,16 +405,14 @@ public class ApiServer {
             String code = readString(payload, "code");
             int totalHours = readOptionalInt(payload, "totalHours", 45);
 
-            Course existing = courseDAO.getByCode(code);
+            Course existing = courseService.getByCode(code);
             if (existing != null) {
                 ctx.status(200).json(existing);
                 return;
             }
 
             Course course = new Course(name, code, totalHours);
-            if (!courseDAO.createCourse(course)) {
-                throw new RuntimeException("Course was not created");
-            }
+            courseService.createCourse(course);
             ctx.status(201).json(course);
         } catch (IllegalArgumentException e) {
             ctx.status(400).json(errorResponse(e, "Invalid course data"));
@@ -634,7 +625,7 @@ public class ApiServer {
         String department = null;
         if (user != null && "TEACHER".equalsIgnoreCase(user.getRole())) {
             try {
-                Teacher teacher = teacherDAO.getByUserId(user.getId());
+                Teacher teacher = teacherService.getTeacherByUserId(user.getId());
                 department = teacher != null ? teacher.getDepartment() : null;
             } catch (Exception e) {
                 department = null;

@@ -10,6 +10,10 @@ import sms.exception.RoomNotFoundException;
 public class RoomService {
     private final ClassroomDAO classroomDAO;
 
+    public RoomService() {
+        this(new ClassroomDAO());
+    }
+
     public RoomService(ClassroomDAO classroomDAO) {
         this.classroomDAO = classroomDAO;
     }
@@ -58,6 +62,18 @@ public class RoomService {
             return classroomDAO.getAllClassrooms();
         } catch (java.sql.SQLException e) {
             throw new RuntimeException("Failed to retrieve rooms", e);
+        }
+    }
+
+    public Classroom getRoomByName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Room name cannot be empty");
+        }
+
+        try {
+            return classroomDAO.getClassroomByName(name.trim());
+        } catch (java.sql.SQLException e) {
+            throw new RuntimeException("Failed to retrieve room by name", e);
         }
     }
 

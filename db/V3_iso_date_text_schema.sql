@@ -103,15 +103,20 @@ CREATE TABLE schedule_history (
 
 INSERT INTO users (id, name, email, password_hash, role) VALUES
     (1, 'Amina Rahman', 'admin@school.local', 'hash_admin_001', 'ADMIN'),
-    (2, 'Dr. Leon Parker', 'leon.parker@school.local', 'hash_teacher_001', 'TEACHER'),
-    (3, 'Maya Chen', 'maya.chen@school.local', 'hash_teacher_002', 'TEACHER'),
-    (4, 'Omar Idris', 'omar.idris@school.local', 'hash_monitor_001', 'MONITOR'),
-    (5, 'Sara Khan', 'sara.khan@school.local', 'hash_student_001', 'STUDENT'),
-    (6, 'Noah Williams', 'noah.williams@school.local', 'hash_student_002', 'STUDENT'),
-    (7, 'Lina Gomez', 'lina.gomez@school.local', 'hash_student_003', 'STUDENT'),
-    (8, 'Ethan Brown', 'ethan.brown@school.local', 'hash_student_004', 'STUDENT'),
-    (9, 'Priya Patel', 'priya.patel@school.local', 'hash_student_005', 'STUDENT'),
-    (10, 'Daniel Nguyen', 'daniel.nguyen@school.local', 'hash_student_006', 'STUDENT');
+    (2, 'Hok Tin', 'hok.tin@school.local', 'hash_teacher_001', 'TEACHER'),
+    (3, 'Seak Leng', 'seak.leng@school.local', 'hash_teacher_002', 'TEACHER'),
+    (4, 'Phauk Sokkhey', 'phauk.sokkhey@school.local', 'hash_teacher_003', 'TEACHER'),
+    (5, 'Nop Phearum', 'nop.phearum@school.local', 'hash_teacher_004', 'TEACHER'),
+    (6, 'Hen Rathpisey', 'hen.rathpisey@school.local', 'hash_teacher_005', 'TEACHER'),
+    (7, 'Srang Sarot', 'srang.sarot@school.local', 'hash_teacher_006', 'TEACHER'),
+    (8, 'Has Sothea', 'has.sothea@school.local', 'hash_teacher_007', 'TEACHER'),
+    (9, 'Omar Idris', 'omar.idris@school.local', 'hash_monitor_001', 'MONITOR'),
+    (10, 'Sara Khan', 'sara.khan@school.local', 'hash_student_001', 'STUDENT'),
+    (11, 'Noah Williams', 'noah.williams@school.local', 'hash_student_002', 'STUDENT'),
+    (12, 'Lina Gomez', 'lina.gomez@school.local', 'hash_student_003', 'STUDENT'),
+    (13, 'Ethan Brown', 'ethan.brown@school.local', 'hash_student_004', 'STUDENT'),
+    (14, 'Priya Patel', 'priya.patel@school.local', 'hash_student_005', 'STUDENT'),
+    (15, 'Daniel Nguyen', 'daniel.nguyen@school.local', 'hash_student_006', 'STUDENT');
 
 INSERT INTO classes (id, name, year, semester, start_date, end_date, created_by) VALUES
     (1, 'CS-Y2-A', 2, 2, '2026-02-01', '2026-06-30', 1),
@@ -128,22 +133,23 @@ INSERT INTO class_students (class_id, user_id) VALUES
     (3, 5),
     (3, 8);
 
-INSERT INTO classrooms (id, name, building) VALUES
-    (1, 'Room 101', 'Main Block'),
-    (2, 'Room 202', 'Main Block'),
-    (3, 'Lab A', 'Science Wing'),
-    (4, 'Auditorium', 'Central Hall'),
-    (5, 'A401', 'Building A'),
-    (6, 'A402', 'Building A'),
-    (7, 'A417', 'Building A'),
-    (8, 'A420', 'Building A'),
-    (9, 'J602', 'Building J'),
-    (10, 'J603', 'Building J'),
-    (11, 'J604', 'Building J');
+INSERT INTO classrooms (name, building) VALUES
+    ('A401', 'Building A'),
+    ('A402', 'Building A'),
+    ('A417', 'Building A'),
+    ('A420', 'Building A'),
+    ('J602', 'Building J'),
+    ('J603', 'Building J'),
+    ('J604', 'Building J');
 
 INSERT INTO teachers (id, user_id, department) VALUES
-    (1, 2, 'Computer Science'),
-    (2, 3, 'Information Technology');
+    (1, 2, 'GIC'),
+    (2, 3, 'GIC'),
+    (3, 4, 'AMS'),
+    (4, 5, 'GIC'),
+    (5, 6, 'GIC'),
+    (6, 7, 'GIM'),
+    (7, 8, 'AMS');
 
 INSERT INTO courses (id, name, code, total_hours) VALUES
     (1, 'Database Systems', 'CS201', 45),
@@ -155,11 +161,11 @@ INSERT INTO schedule (
     id, classroom_id, teacher_id, course_id, date, start_time, end_time,
     status, visibility, type, priority, created_by, created_at, greyed_at, linked_schedule_id
 ) VALUES
-    (1, 1, 1, 1, '2026-05-04', '09:00', '10:30', 'BOOKED', 'VISIBLE', 'LECTURE', 1, 1, '2026-05-01 08:00:00', NULL, NULL),
-    (2, 3, 1, 2, '2026-05-04', '11:00', '12:30', 'BOOKED', 'VISIBLE', 'DEFAULT', 1, 1, '2026-05-01 08:05:00', NULL, NULL),
-    (3, 2, 2, 4, '2026-05-05', '13:00', '14:30', 'BOOKED', 'VISIBLE', 'LECTURE', 1, 1, '2026-05-01 08:10:00', NULL, NULL),
-    (4, 1, 1, 1, '2026-05-06', '09:00', '10:30', 'MAKEUP', 'VISIBLE', 'MAKEUP', 2, 1, '2026-05-01 08:20:00', NULL, 1),
-    (5, 4, 2, 3, '2026-05-07', '08:30', '10:00', 'GREYED', 'INVISIBLE', 'OVERRIDE', 3, 1, '2026-05-01 08:30:00', '2026-05-01 08:30:00', NULL);
+    (1, 1, 1, 1, '2026-05-04', '09:00', '11:00', 'BOOKED', 'VISIBLE', 'LECTURE', 1, 1, '2026-05-01 08:00:00', NULL, NULL),
+    (2, 2, 2, 2, '2026-05-04', '11:00', '13:00', 'BOOKED', 'VISIBLE', 'DEFAULT', 1, 1, '2026-05-01 08:05:00', NULL, NULL),
+    (3, 3, 3, 4, '2026-05-05', '13:00', '15:00', 'BOOKED', 'VISIBLE', 'LECTURE', 1, 1, '2026-05-01 08:10:00', NULL, NULL),
+    (4, 1, 1, 1, '2026-05-06', '09:00', '11:00', 'MAKEUP', 'VISIBLE', 'MAKEUP', 2, 1, '2026-05-01 08:20:00', NULL, 1),
+    (5, 4, 4, 3, '2026-05-07', '08:00', '10:00', 'GREYED', 'INVISIBLE', 'OVERRIDE', 3, 1, '2026-05-01 08:30:00', '2026-05-01 08:30:00', NULL);
 
 INSERT INTO schedule_classes (schedule_id, class_id) VALUES
     (1, 1),
@@ -174,9 +180,9 @@ INSERT INTO recurring_schedule (
     id, teacher_id, classroom_id, course_id, day_of_week,
     start_time, end_time, effective_from, effective_until
 ) VALUES
-    (1, 1, 1, 1, 1, '09:00', '10:30', '2026-05-04', '2026-08-31'),
-    (2, 1, 3, 2, 1, '11:00', '12:30', '2026-05-04', '2026-08-31'),
-    (3, 2, 2, 4, 2, '13:00', '14:30', '2026-05-05', '2026-08-31');
+    (1, 1, 1, 1, 1, '09:00', '11:00', '2026-05-04', '2026-08-31'),
+    (2, 2, 2, 2, 1, '11:00', '13:00', '2026-05-04', '2026-08-31'),
+    (3, 3, 3, 4, 2, '13:00', '15:00', '2026-05-05', '2026-08-31');
 
 INSERT INTO schedule_history (
     id, schedule_id, action, changed_by, timestamp, note

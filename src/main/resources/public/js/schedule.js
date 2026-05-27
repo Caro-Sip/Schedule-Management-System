@@ -167,10 +167,30 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
     }
   }
   if (bookingProfessor) {
-    bookingProfessor.value = isEdit ? eventData.professor || "" : "";
+    const teacherCatalog = getBookingTeachers();
+    const teacherItem = teacherCatalog.find(
+      (teacher) => String(teacher.id) === String(pendingBooking.teacherId)
+    );
+    bookingProfessor.value = teacherItem
+      ? getTeacherDisplayLabel(teacherItem)
+      : isEdit
+        ? String(eventData.professor || "")
+        : "";
+    bookingProfessor.dataset.teacherId = teacherItem ? String(teacherItem.id) : "";
+    renderBookingProfessorOptions();
   }
   if (bookingSubject) {
-    bookingSubject.value = isEdit ? eventData.title || "" : "";
+    const courseCatalog = courseDirectory || [];
+    const courseItem = courseCatalog.find(
+      (course) => String(course.id) === String(pendingBooking.courseId)
+    );
+    bookingSubject.value = courseItem
+      ? courseItem.name || courseItem.code || ""
+      : isEdit
+        ? String(eventData.title || "")
+        : "";
+    bookingSubject.dataset.courseId = courseItem ? String(courseItem.id) : "";
+    renderBookingSubjectOptions();
   }
   if (bookingType) {
     bookingType.value = resolveSelectValue(
@@ -213,6 +233,22 @@ function closeBookingModal() {
   if (bookingRoomResults) {
     bookingRoomResults.setAttribute("hidden", "");
     bookingRoomResults.innerHTML = "";
+  }
+  if (bookingProfessor) {
+    bookingProfessor.value = "";
+    bookingProfessor.dataset.teacherId = "";
+  }
+  if (bookingProfessorResults) {
+    bookingProfessorResults.setAttribute("hidden", "");
+    bookingProfessorResults.innerHTML = "";
+  }
+  if (bookingSubject) {
+    bookingSubject.value = "";
+    bookingSubject.dataset.courseId = "";
+  }
+  if (bookingSubjectResults) {
+    bookingSubjectResults.setAttribute("hidden", "");
+    bookingSubjectResults.innerHTML = "";
   }
   pendingBooking = null;
 }
@@ -591,6 +627,194 @@ function renderBookingClassOptions() {
   });
 
   bookingClassResults.removeAttribute("hidden");
+}
+
+function getBookingTeachers() {
+  return (userDirectory || []).filter((user) => isTeacherRole(user.role));
+}
+
+function getTeacherDisplayLabel(teacher) {
+  if (!teacher) {
+    return "";
+  }
+
+  return `${teacher.name || "Professor"} · ID ${teacher.id}`;
+}
+
+function resolveTeacherFromInput(value, availableTeachers) {
+  const normalizedInput = normalizeRoomText(value);
+  if (!normalizedInput) {
+    return null;
+  }
+
+  const teachers = availableTeachers || getBookingTeachers();
+  return (
+    teachers.find((teacher) => {
+      const candidates = [teacher.id, teacher.name, getTeacherDisplayLabel(teacher)]
+        .filter(Boolean)
+        .map((candidate) => normalizeRoomText(candidate));
+
+      return candidates.some(
+        (candidate) =>
+          candidate === normalizedInput ||
+          candidate.includes(normalizedInput) ||
+          normalizedInput.includes(candidate)
+      );
+    }) || null
+  );
+}
+
+function getCourseDisplayLabel(course) {
+  if (!course) {
+    return "";
+  }
+
+  if (course.name && course.code) {
+    return `${course.name} · ${course.code}`;
+  }
+
+  return course.name || course.code || `Course ${course.id}`;
+}
+
+function resolveCourseFromInput(value, availableCourses) {
+  const normalizedInput = normalizeRoomText(value);
+  if (!normalizedInput) {
+    return null;
+  }
+
+  const courses = availableCourses || courseDirectory || [];
+  return (
+    courses.find((course) => {
+      const candidates = [course.id, course.name, course.code, getCourseDisplayLabel(course)]
+        .filter(Boolean)
+        .map((candidate) => normalizeRoomText(candidate));
+
+      return candidates.some(
+        (candidate) =>
+          candidate === normalizedInput ||
+          candidate.includes(normalizedInput) ||
+          normalizedInput.includes(candidate)
+      );
+    }) || null
+  );
+}
+
+function renderBookingProfessorOptions() {
+  if (!bookingProfessor || !bookingProfessorResults || !pendingBooking) {
+    return;
+  }
+
+  const query = normalizeRoomText(bookingProfessor.value);
+  const teachers = getBookingTeachers();
+  const filteredTeachers = teachers.filter((teacher) => {
+    if (!query) {
+      return true;
+    }
+    const searchText = normalizeRoomText(
+      [teacher.id, teacher.name, getTeacherDisplayLabel(teacher)]
+        .filter(Boolean)
+        .join(" ")
+    );
+    return searchText.includes(query);
+  });
+
+  bookingProfessorResults.innerHTML = "";
+
+  if (filteredTeachers.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "room-picker-empty";
+    empty.textContent = query ? "No professors match." : "No professors available.";
+    bookingProfessorResults.appendChild(empty);
+    bookingProfessorResults.removeAttribute("hidden");
+    return;
+  }
+
+  filteredTeachers.forEach((teacher) => {
+    const option = document.createElement("button");
+    option.type = "button";
+    option.className = "room-picker-option";
+    option.dataset.teacherId = String(teacher.id);
+
+    const label = document.createElement("span");
+    label.className = "room-picker-label";
+    label.textContent = teacher.name || `Professor ${teacher.id}`;
+
+    const subtext = document.createElement("span");
+    subtext.className = "room-picker-subtext";
+    subtext.textContent = `ID ${teacher.id}`;
+
+    option.appendChild(label);
+    option.appendChild(subtext);
+    option.addEventListener("click", () => {
+      bookingProfessor.value = getTeacherDisplayLabel(teacher);
+      bookingProfessor.dataset.teacherId = String(teacher.id);
+      pendingBooking.teacherId = teacher.id;
+      bookingProfessorResults.setAttribute("hidden", "");
+    });
+
+    bookingProfessorResults.appendChild(option);
+  });
+
+  bookingProfessorResults.removeAttribute("hidden");
+}
+
+function renderBookingSubjectOptions() {
+  if (!bookingSubject || !bookingSubjectResults || !pendingBooking) {
+    return;
+  }
+
+  const query = normalizeRoomText(bookingSubject.value);
+  const courses = courseDirectory || [];
+  const filteredCourses = courses.filter((course) => {
+    if (!query) {
+      return true;
+    }
+    const searchText = normalizeRoomText(
+      [course.id, course.name, course.code, getCourseDisplayLabel(course)]
+        .filter(Boolean)
+        .join(" ")
+    );
+    return searchText.includes(query);
+  });
+
+  bookingSubjectResults.innerHTML = "";
+
+  if (filteredCourses.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "room-picker-empty";
+    empty.textContent = query ? "No subjects match." : "No subjects available.";
+    bookingSubjectResults.appendChild(empty);
+    bookingSubjectResults.removeAttribute("hidden");
+    return;
+  }
+
+  filteredCourses.forEach((course) => {
+    const option = document.createElement("button");
+    option.type = "button";
+    option.className = "room-picker-option";
+    option.dataset.courseId = String(course.id);
+
+    const label = document.createElement("span");
+    label.className = "room-picker-label";
+    label.textContent = getCourseDisplayLabel(course);
+
+    const subtext = document.createElement("span");
+    subtext.className = "room-picker-subtext";
+    subtext.textContent = `ID ${course.id}`;
+
+    option.appendChild(label);
+    option.appendChild(subtext);
+    option.addEventListener("click", () => {
+      bookingSubject.value = course.name || course.code || getCourseDisplayLabel(course);
+      bookingSubject.dataset.courseId = String(course.id);
+      pendingBooking.courseId = course.id;
+      bookingSubjectResults.setAttribute("hidden", "");
+    });
+
+    bookingSubjectResults.appendChild(option);
+  });
+
+  bookingSubjectResults.removeAttribute("hidden");
 }
 
 function resolveRoomFromInput(roomInputValue, availableRooms) {

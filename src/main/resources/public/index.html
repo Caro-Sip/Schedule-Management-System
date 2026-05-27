@@ -615,14 +615,34 @@
             <div class="room-picker-results" id="booking-room-results" hidden></div>
             <p class="room-picker-help">Available rooms update as you type.</p>
           </div>
-          <label>
-            Professor name
-            <input type="text" id="booking-professor" required placeholder="Dr. Smith" />
-          </label>
-          <label>
-            Subject
-            <input type="text" id="booking-subject" required placeholder="Data Structures" />
-          </label>
+          <div class="room-picker" id="booking-professor-group">
+            <label>
+              Professor name
+              <input
+                type="text"
+                id="booking-professor"
+                required
+                placeholder="Dr. Smith"
+                autocomplete="off"
+              />
+            </label>
+            <div class="room-picker-results" id="booking-professor-results" hidden></div>
+            <p class="room-picker-help">Available professors update as you type.</p>
+          </div>
+          <div class="room-picker" id="booking-subject-group">
+            <label>
+              Subject
+              <input
+                type="text"
+                id="booking-subject"
+                required
+                placeholder="Data Structures"
+                autocomplete="off"
+              />
+            </label>
+            <div class="room-picker-results" id="booking-subject-results" hidden></div>
+            <p class="room-picker-help">Available subjects update as you type.</p>
+          </div>
           <label>
             Type of class
             <select id="booking-type" required>

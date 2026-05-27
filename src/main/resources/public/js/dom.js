@@ -63,7 +63,9 @@ function openUserModal(mode, user) {
     userDepartmentInput.value = resolveSelectValue(
       userDepartmentInput,
       user?.department,
-      "Registrar"
+      teacherDepartmentDirectory && teacherDepartmentDirectory.length > 0
+        ? teacherDepartmentDirectory[0]
+        : "Registrar"
     );
   }
 

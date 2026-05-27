@@ -210,6 +210,7 @@ function bindEvents() {
           await createUserApi(payload);
         }
         await loadUsers();
+        await loadTeacherDepartments();
         closeUserModal();
       } catch (error) {
         alert(error?.message || "Failed to save user.");
@@ -230,6 +231,7 @@ function bindEvents() {
       try {
         await deleteUserApi(editingUserId);
         await loadUsers();
+        await loadTeacherDepartments();
         closeUserModal();
       } catch (error) {
         alert(error?.message || "Failed to delete user.");
@@ -931,3 +933,4 @@ loadCourses();
 loadClasses();
 loadSchedules();
 loadUsers();
+loadTeacherDepartments();

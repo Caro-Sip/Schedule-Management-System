@@ -213,6 +213,72 @@ async function loadUsers() {
 	}
 }
 
+function updateDepartmentSelectOptions(selectEl, departments, includeAllOption = false) {
+	if (!selectEl) {
+		return;
+	}
+
+	const previousValue = selectEl.value;
+	selectEl.innerHTML = "";
+
+	if (includeAllOption) {
+		const option = document.createElement("option");
+		option.value = "";
+		option.textContent = "All departments";
+		selectEl.appendChild(option);
+	}
+
+	departments.forEach((department) => {
+		const option = document.createElement("option");
+		option.value = department;
+		option.textContent = department;
+		selectEl.appendChild(option);
+	});
+
+	const fallbackValue = includeAllOption ? "" : departments[0] || "";
+	selectEl.value = resolveSelectValue(selectEl, previousValue, fallbackValue);
+}
+
+function applyDepartmentOptions() {
+	if (!teacherDepartmentDirectory || teacherDepartmentDirectory.length === 0) {
+		return;
+	}
+
+	const uniqueDepartments = Array.from(
+		new Set(
+			teacherDepartmentDirectory
+				.map((department) => (department || "").toString().trim())
+				.filter(Boolean)
+		)
+	).sort((a, b) => a.localeCompare(b));
+
+	if (uniqueDepartments.length === 0) {
+		return;
+	}
+
+	updateDepartmentSelectOptions(userDepartmentInput, uniqueDepartments);
+	updateDepartmentSelectOptions(userFilterDepartment, uniqueDepartments, true);
+}
+
+async function loadTeacherDepartments() {
+	try {
+		const departments = await requestJson(`${API_BASE}/teachers/departments`);
+		if (!Array.isArray(departments)) {
+			return;
+		}
+		teacherDepartmentDirectory.length = 0;
+		departments.forEach((department) => {
+			const trimmed = (department || "").toString().trim();
+			if (trimmed) {
+				teacherDepartmentDirectory.push(trimmed);
+			}
+		});
+		applyDepartmentOptions();
+	} catch (error) {
+		console.error("Failed to load teacher departments", error);
+	}
+}
+
 async function createUserApi(payload) {
 	return requestJson(`${API_BASE}/users`, {
 		method: "POST",

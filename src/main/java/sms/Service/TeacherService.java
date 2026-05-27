@@ -121,6 +121,14 @@ public class TeacherService {
         }
     }
 
+    public List<String> getTeacherDepartments() {
+        try {
+            return teacherDAO.getDistinctDepartments();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to retrieve teacher departments", e);
+        }
+    }
+
     // TODO isTeacherAvailable function
     // public boolean isTeacherAvailable(int teacherId, TimeSlot slot) {
     //     if (teacherId < 0) {

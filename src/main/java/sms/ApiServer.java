@@ -71,6 +71,7 @@ public class ApiServer {
                 path("/api/teachers", () -> {
                     get(ApiServer::getAllTeachers);
                     post(ApiServer::createTeacher);
+                    get("/departments", ApiServer::getTeacherDepartments);
                     get("/department/{department}", ApiServer::getTeachersByDepartment);
                     get("/{id}", ApiServer::getTeacherById);
                     put("/{id}", ApiServer::updateTeacher);
@@ -467,6 +468,15 @@ public class ApiServer {
             ctx.status(400).json(errorResponse(e, "Invalid department"));
         } catch (Exception e) {
             ctx.status(500).json(errorResponse(e, "Failed to load teachers"));
+        }
+    }
+
+    private static void getTeacherDepartments(Context ctx) {
+        try {
+            List<String> departments = teacherService.getTeacherDepartments();
+            ctx.json(departments);
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to load departments"));
         }
     }
 

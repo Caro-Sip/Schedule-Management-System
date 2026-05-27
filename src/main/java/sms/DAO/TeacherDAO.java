@@ -123,6 +123,25 @@ public class TeacherDAO {
         return teachers;
     }
 
+    // READ - Get distinct department names
+    public List<String> getDistinctDepartments() throws SQLException {
+        String sql = "SELECT DISTINCT department FROM teachers WHERE department IS NOT NULL AND TRIM(department) <> '' ORDER BY department";
+        List<String> departments = new ArrayList<>();
+
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                String department = rs.getString("department");
+                if (department != null && !department.trim().isEmpty()) {
+                    departments.add(department);
+                }
+            }
+        }
+        return departments;
+    }
+
     // UPDATE - Update teacher information
     public boolean updateTeacher(Teacher teacher) throws SQLException {
         String sql = "UPDATE teachers SET user_id = ?, department = ? WHERE id = ?";

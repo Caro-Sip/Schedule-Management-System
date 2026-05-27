@@ -129,6 +129,18 @@ public class TeacherService {
         }
     }
 
+    public Teacher getTeacherByUserId(int userId) {
+        if (userId <= 0) {
+            throw new IllegalArgumentException("Invalid user id");
+        }
+
+        try {
+            return teacherDAO.getByUserId(userId);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to retrieve teacher by user id", e);
+        }
+    }
+
     // TODO isTeacherAvailable function
     // public boolean isTeacherAvailable(int teacherId, TimeSlot slot) {
     //     if (teacherId < 0) {

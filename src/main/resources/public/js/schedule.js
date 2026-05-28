@@ -65,6 +65,90 @@ function toggleFilterPanel() {
   }
 }
 
+function syncPendingBookingClassSelection() {
+  if (!pendingBooking) {
+    return [];
+  }
+
+  const uniqueClassIds = [];
+  const seenClassIds = new Set();
+
+  (Array.isArray(pendingBooking.classIds) ? pendingBooking.classIds : []).forEach((classId) => {
+    const normalizedClassId = String(classId);
+    if (!normalizedClassId || seenClassIds.has(normalizedClassId)) {
+      return;
+    }
+    seenClassIds.add(normalizedClassId);
+    uniqueClassIds.push(classId);
+  });
+
+  pendingBooking.classIds = uniqueClassIds;
+  pendingBooking.classId = uniqueClassIds.length > 0 ? uniqueClassIds[0] : null;
+
+  return uniqueClassIds;
+}
+
+function renderBookingClassSelection() {
+  if (!bookingClassSelection || !bookingClassInput || !pendingBooking || state.view !== "room") {
+    return;
+  }
+
+  const classIds = syncPendingBookingClassSelection();
+  const classCatalog = getBookingClasses();
+
+  bookingClassSelection.innerHTML = "";
+  bookingClassInput.required = classIds.length === 0;
+  if (classIds.length > 0) {
+    bookingClassInput.dataset.classId = String(classIds[0]);
+  } else {
+    bookingClassInput.dataset.classId = "";
+  }
+
+  if (classIds.length === 0) {
+    bookingClassSelection.setAttribute("hidden", "");
+    return;
+  }
+
+  classIds.forEach((classId) => {
+    const classItem = classCatalog.find((item) => String(item.id) === String(classId)) || null;
+    const classLabel = getClassDisplayLabel(classItem);
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "booking-class-chip";
+    chip.setAttribute("aria-label", `Remove ${classLabel}`);
+
+    const label = document.createElement("span");
+    label.textContent = classLabel;
+
+    const remove = document.createElement("span");
+    remove.className = "booking-class-chip-remove";
+    remove.setAttribute("aria-hidden", "true");
+    remove.textContent = "×";
+
+    chip.appendChild(label);
+    chip.appendChild(remove);
+    chip.addEventListener("click", () => {
+      if (!pendingBooking) {
+        return;
+      }
+
+      pendingBooking.classIds = (Array.isArray(pendingBooking.classIds) ? pendingBooking.classIds : []).filter(
+        (selectedClassId) => String(selectedClassId) !== String(classId)
+      );
+      syncPendingBookingClassSelection();
+      if (bookingClassInput && bookingClassInput.value === classLabel) {
+        bookingClassInput.value = "";
+      }
+      renderBookingClassSelection();
+      renderBookingClassOptions();
+    });
+
+    bookingClassSelection.appendChild(chip);
+  });
+
+  bookingClassSelection.removeAttribute("hidden");
+}
+
 function openBookingModal(dayIndex, startMinutes, eventData = null) {
   if (!bookingModal || !bookingForm) {
     return;
@@ -167,7 +251,6 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
   if (bookingClassGroup && bookingClassInput) {
     const showClassPicker = state.view === "room";
     bookingClassGroup.toggleAttribute("hidden", !showClassPicker);
-    bookingClassInput.required = showClassPicker;
     if (showClassPicker) {
       const classCatalog = getBookingClasses();
       const classItem = classCatalog.find((item) => String(item.id) === String(resolvedClassId)) || null;
@@ -177,12 +260,17 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
         bookingClassResults.setAttribute("hidden", "");
         bookingClassResults.innerHTML = "";
       }
+      renderBookingClassSelection();
     } else {
       bookingClassInput.value = "";
       bookingClassInput.dataset.classId = "";
       if (bookingClassResults) {
         bookingClassResults.setAttribute("hidden", "");
         bookingClassResults.innerHTML = "";
+      }
+      if (bookingClassSelection) {
+        bookingClassSelection.setAttribute("hidden", "");
+        bookingClassSelection.innerHTML = "";
       }
     }
   }
@@ -251,6 +339,10 @@ function closeBookingModal() {
   if (bookingClassResults) {
     bookingClassResults.setAttribute("hidden", "");
     bookingClassResults.innerHTML = "";
+  }
+  if (bookingClassSelection) {
+    bookingClassSelection.setAttribute("hidden", "");
+    bookingClassSelection.innerHTML = "";
   }
   if (bookingRoomInput) {
     bookingRoomInput.value = "";
@@ -645,6 +737,11 @@ function renderBookingClassOptions() {
     option.type = "button";
     option.className = "room-picker-option";
     option.dataset.classId = String(classItem.id);
+    const isSelected = Array.isArray(pendingBooking.classIds)
+      ? pendingBooking.classIds.some((selectedClassId) => String(selectedClassId) === String(classItem.id))
+      : false;
+    option.classList.toggle("is-selected", isSelected);
+    option.setAttribute("aria-pressed", isSelected ? "true" : "false");
 
     const label = document.createElement("span");
     label.className = "room-picker-label";
@@ -657,10 +754,24 @@ function renderBookingClassOptions() {
     option.appendChild(label);
     option.appendChild(subtext);
     option.addEventListener("click", () => {
-      bookingClassInput.value = getClassDisplayLabel(classItem);
-      bookingClassInput.dataset.classId = String(classItem.id);
-      pendingBooking.classId = classItem.id;
-      pendingBooking.classIds = [classItem.id];
+      const currentClassIds = Array.isArray(pendingBooking.classIds) ? pendingBooking.classIds.slice() : [];
+      const selectedClassIndex = currentClassIds.findIndex(
+        (selectedClassId) => String(selectedClassId) === String(classItem.id)
+      );
+
+      if (selectedClassIndex === -1) {
+        currentClassIds.push(classItem.id);
+      } else {
+        currentClassIds.splice(selectedClassIndex, 1);
+      }
+
+      pendingBooking.classIds = currentClassIds;
+      syncPendingBookingClassSelection();
+      bookingClassInput.value = pendingBooking.classId
+        ? getClassDisplayLabel(classCatalog.find((item) => String(item.id) === String(pendingBooking.classId)))
+        : "";
+      bookingClassInput.dataset.classId = pendingBooking.classId ? String(pendingBooking.classId) : "";
+      renderBookingClassSelection();
       bookingClassResults.setAttribute("hidden", "");
     });
 

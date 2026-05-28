@@ -1,5 +1,16 @@
 const SESSION_STORAGE_KEY = "sms.session";
 
+function getSessionStorage() {
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      return window.localStorage;
+    }
+  } catch (error) {
+    console.warn("Local storage unavailable, using session storage", error);
+  }
+  return sessionStorage;
+}
+
 function resetSessionState() {
   state.role = "guest";
   state.view = "class";
@@ -21,7 +32,7 @@ function saveSession(session) {
       clearSession();
       return;
     }
-    sessionStorage.setItem(
+    getSessionStorage().setItem(
       SESSION_STORAGE_KEY,
       JSON.stringify(session)
     );
@@ -32,7 +43,7 @@ function saveSession(session) {
 
 function restoreSession() {
   try {
-    const rawSession = sessionStorage.getItem(SESSION_STORAGE_KEY);
+    const rawSession = getSessionStorage().getItem(SESSION_STORAGE_KEY);
     if (!rawSession) {
       return null;
     }
@@ -52,7 +63,7 @@ function restoreSession() {
 
 function clearSession() {
   try {
-    sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    getSessionStorage().removeItem(SESSION_STORAGE_KEY);
   } catch (error) {
     console.warn("Failed to clear session state", error);
   }

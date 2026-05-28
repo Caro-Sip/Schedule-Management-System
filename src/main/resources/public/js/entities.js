@@ -169,6 +169,10 @@ async function loginApi(email, password) {
 	});
 }
 
+async function getCurrentUserApi() {
+	return requestJson(`${API_BASE}/auth/me`);
+}
+
 function normalizeClassPayload(payload) {
 	const timestamp = new Date().toISOString();
 	return {

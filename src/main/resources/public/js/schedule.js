@@ -908,19 +908,18 @@ function renderBookingRoomOptions() {
 
   const startMinutes = parseTimeInput(bookingStart?.value || "");
   const endMinutes = parseTimeInput(bookingEnd?.value || "");
-  if (startMinutes === null || endMinutes === null || endMinutes <= startMinutes) {
-    bookingRoomResults.setAttribute("hidden", "");
-    bookingRoomResults.innerHTML = "";
-    return;
-  }
+  const hasValidTimes =
+    startMinutes !== null && endMinutes !== null && endMinutes > startMinutes;
 
   const query = normalizeRoomText(bookingRoomInput.value);
-  const availableRooms = getAvailableRoomsForBooking(
-    pendingBooking.day,
-    startMinutes,
-    endMinutes,
-    pendingBooking.eventId
-  );
+  const availableRooms = hasValidTimes
+    ? getAvailableRoomsForBooking(
+        pendingBooking.day,
+        startMinutes,
+        endMinutes,
+        pendingBooking.eventId
+      )
+    : getBookingClassrooms();
   const filteredRooms = availableRooms.filter((roomItem) => {
     if (!query) {
       return true;

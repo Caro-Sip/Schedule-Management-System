@@ -15,6 +15,27 @@ function handleTabClick(event) {
   setView(view);
 }
 
+function closePickerResults(resultsEl) {
+  if (!resultsEl) {
+    return;
+  }
+  resultsEl.setAttribute("hidden", "");
+}
+
+function bindPickerAutoClose(groupEl, resultsEl) {
+  if (!groupEl || !resultsEl) {
+    return;
+  }
+
+  groupEl.addEventListener("focusout", () => {
+    window.setTimeout(() => {
+      if (!groupEl.contains(document.activeElement)) {
+        closePickerResults(resultsEl);
+      }
+    }, 0);
+  });
+}
+
 function bindEvents() {
   guestLoginBtn.addEventListener("click", () => showSchedule("guest", "Guest"));
 
@@ -878,6 +899,17 @@ function bindEvents() {
     bookingSubject.addEventListener("focus", renderBookingSubjectOptions);
   }
 
+  const bookingPickers = [
+    { group: bookingClassGroup, results: bookingClassResults },
+    { group: bookingRoomGroup, results: bookingRoomResults },
+    { group: bookingProfessorGroup, results: bookingProfessorResults },
+    { group: bookingSubjectGroup, results: bookingSubjectResults },
+  ].filter(({ group, results }) => group && results);
+
+  bookingPickers.forEach(({ group, results }) => {
+    bindPickerAutoClose(group, results);
+  });
+
   if (bookingStart) {
     bookingStart.addEventListener("input", () => {
       if (pendingBooking) {
@@ -966,6 +998,12 @@ function bindEvents() {
         closeUserFilterPanel();
       }
     }
+
+    bookingPickers.forEach(({ group, results }) => {
+      if (!group.contains(event.target)) {
+        closePickerResults(results);
+      }
+    });
   });
 
   document.addEventListener("keydown", (event) => {

@@ -34,7 +34,9 @@ public class UserService {
 			throw new IllegalArgumentException("Password cannot be empty");
 		}
 
-		User user = userDAO.getUserByEmail(email.trim());
+		String normalizedEmail = normalizeEmail(email);
+		String inputPassword = password.trim();
+		User user = userDAO.getUserByEmail(normalizedEmail);
 		if (user == null) {
 			throw new IllegalArgumentException("Invalid email or password");
 		}
@@ -42,11 +44,11 @@ public class UserService {
 		String storedHash = user.getPasswordHash();
 		String inputHash;
 		try {
-			inputHash = PasswordUtils.hashPassword(password);
+			inputHash = PasswordUtils.hashPassword(inputPassword);
 		} catch (java.security.NoSuchAlgorithmException e) {
 			throw new RuntimeException("Password hashing failed", e);
 		}
-		if (!inputHash.equals(storedHash) && !password.equals(storedHash)) {
+		if (!inputHash.equals(storedHash) && !inputPassword.equals(storedHash)) {
 			throw new IllegalArgumentException("Invalid email or password");
 		}
 

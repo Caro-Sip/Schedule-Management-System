@@ -5,20 +5,25 @@ function resetSessionState() {
   state.view = "class";
   state.weekOffset = 0;
   state.userName = "Guest";
+  state.authToken = null;
+  state.currentUser = null;
+  state.currentTeacherId = null;
+  state.defaultCourseId = null;
   state.selectedClassId = null;
   state.selectedRoomId = null;
   state.selectedTeacherId = null;
   state.userScheduleOrigin = null;
 }
 
-function saveSession(role, userName) {
+function saveSession(session) {
   try {
+    if (!session || !session.token || !session.user) {
+      clearSession();
+      return;
+    }
     sessionStorage.setItem(
       SESSION_STORAGE_KEY,
-      JSON.stringify({
-        role,
-        userName,
-      })
+      JSON.stringify(session)
     );
   } catch (error) {
     console.warn("Failed to save session state", error);
@@ -33,14 +38,11 @@ function restoreSession() {
     }
 
     const session = JSON.parse(rawSession);
-    if (!session || !session.role) {
+    if (!session || !session.token || !session.user) {
       return null;
     }
 
-    return {
-      role: session.role,
-      userName: session.userName || "User",
-    };
+    return session;
   } catch (error) {
     console.warn("Failed to restore session state", error);
     clearSession();
@@ -53,6 +55,27 @@ function clearSession() {
     sessionStorage.removeItem(SESSION_STORAGE_KEY);
   } catch (error) {
     console.warn("Failed to clear session state", error);
+  }
+}
+
+function getAuthToken() {
+  return state.authToken;
+}
+
+function applyAuthenticatedSession(token, user, persist = true) {
+  if (!token || !user) {
+    throw new Error("Invalid authenticated session");
+  }
+
+  state.authToken = token;
+  state.currentUser = user;
+  state.role = user.role || "guest";
+  state.userName = user.name || "User";
+  state.currentTeacherId = null;
+  state.defaultCourseId = null;
+
+  if (persist) {
+    saveSession({ token, user });
   }
 }
 
@@ -179,7 +202,7 @@ function renderCurrentView() {
   renderEvents();
 }
 
-function showSchedule(role, label) {
+function showSchedule(role, label, persistSession = true) {
   state.role = role;
   state.userName = label || "User";
   if (!isAdminRole(role)) {
@@ -229,7 +252,9 @@ function showSchedule(role, label) {
     }
   }
 
-  saveSession(role, state.userName);
+  if (persistSession && state.authToken && state.currentUser) {
+    saveSession({ token: state.authToken, user: state.currentUser });
+  }
 
   // Default view: teacher for professors, otherwise class
   if (isTeacherRole(role)) {
@@ -246,4 +271,7 @@ function showLogin() {
   scheduleView.classList.add("hidden");
   loginView.classList.remove("hidden");
   welcomeLine.textContent = "Welcome, Guest";
+  if (loginForm) {
+    loginForm.reset();
+  }
 }

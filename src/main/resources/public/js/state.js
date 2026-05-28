@@ -7,6 +7,10 @@ const state = {
   view: "class",
   weekOffset: 0,
   userName: "Guest",
+  authToken: null,
+  currentUser: null,
+  currentTeacherId: null,
+  defaultCourseId: null,
   selectedClassId: null,
   selectedRoomId: null,
   selectedTeacherId: null,
@@ -24,6 +28,7 @@ const userDirectory = [];
 const classDirectory = [];
 const classroomDirectory = [];
 const courseDirectory = [];
+const teacherDirectory = [];
 const teacherDepartmentDirectory = [];
 
 const roomDirectory = [

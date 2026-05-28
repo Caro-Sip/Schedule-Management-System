@@ -118,13 +118,20 @@ const nextWeekBtn = document.getElementById("next-week");
 const todayBtn = document.getElementById("today-btn");
 
 const API_BASE = "/api";
+const ADMIN_API_BASE = `${API_BASE}/admin`;
 
 async function requestJson(path, options = {}) {
+	const token = typeof getAuthToken === "function" ? getAuthToken() : null;
+	const headers = {
+		"Content-Type": "application/json",
+		...(options.headers || {}),
+	};
+	if (token) {
+		headers.Authorization = `Bearer ${token}`;
+	}
+
 	const response = await fetch(path, {
-		headers: {
-			"Content-Type": "application/json",
-			...(options.headers || {}),
-		},
+		headers,
 		...options,
 	});
 
@@ -137,6 +144,14 @@ async function requestJson(path, options = {}) {
 	const payload = isJson ? await response.json() : await response.text();
 
 	if (!response.ok) {
+		if (response.status === 401 && !String(path).includes("/auth/login")) {
+			if (typeof showLogin === "function") {
+				showLogin();
+			}
+		}
+		if (response.status === 403) {
+			throw new Error("Not authorized for this action");
+		}
 		const message =
 			typeof payload === "object" && payload && payload.error
 				? payload.error
@@ -218,6 +233,22 @@ async function loadUsers() {
 	}
 }
 
+async function loadTeachers() {
+	try {
+		const teachers = await requestJson(`${API_BASE}/teachers`);
+		teacherDirectory.length = 0;
+		(teachers || []).forEach((teacher) => {
+			teacherDirectory.push({
+				id: Number(teacher.id),
+				userId: Number(teacher.userId ?? teacher.user_id),
+				department: teacher.department || "",
+			});
+		});
+	} catch (error) {
+		console.error("Failed to load teachers", error);
+	}
+}
+
 function updateDepartmentSelectOptions(selectEl, departments, includeAllOption = false) {
 	if (!selectEl) {
 		return;
@@ -285,21 +316,21 @@ async function loadTeacherDepartments() {
 }
 
 async function createUserApi(payload) {
-	return requestJson(`${API_BASE}/users`, {
+	return requestJson(`${ADMIN_API_BASE}/users`, {
 		method: "POST",
 		body: JSON.stringify(payload),
 	});
 }
 
 async function updateUserApi(id, payload) {
-	return requestJson(`${API_BASE}/users/${id}`, {
+	return requestJson(`${ADMIN_API_BASE}/users/${id}`, {
 		method: "PUT",
 		body: JSON.stringify(payload),
 	});
 }
 
 async function deleteUserApi(id) {
-	return requestJson(`${API_BASE}/users/${id}`, {
+	return requestJson(`${ADMIN_API_BASE}/users/${id}`, {
 		method: "DELETE",
 	});
 }

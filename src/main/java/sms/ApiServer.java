@@ -2,7 +2,15 @@ package sms;
 
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+
 import static io.javalin.apibuilder.ApiBuilder.*;
+
+
+import com.auth0.jwt.interfaces.DecodedJWT;
+import io.javalin.http.UnauthorizedResponse;
+import io.javalin.http.ForbiddenResponse;
+import org.jetbrains.annotations.NotNull;
+import sms.Service.JwtUtils;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,6 +23,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 import sms.Config.DatabaseConfig;
 import sms.Objects.ClassEntity;
 import sms.Objects.Classroom;
@@ -44,7 +53,7 @@ public class ApiServer {
     private static RoomService roomService;
     private static UserService userService;
     private static CourseService courseService;
-    
+
     public static void main(String[] args) {
         ensureDatabase();
         teacherService = new TeacherService();
@@ -54,7 +63,6 @@ public class ApiServer {
         roomService = new RoomService();
         courseService = new CourseService();
 
-        @SuppressWarnings("unused")
         Javalin app = Javalin.create(config -> {
             config.staticFiles.add(staticFiles -> {
                 staticFiles.hostedPath = "/";
@@ -71,13 +79,7 @@ public class ApiServer {
                     put("/{id}", ApiServer::updateTeacher);
                     delete("/{id}", ApiServer::deleteTeacher);
                 });
-                path("/api/users", () -> {
-                    get(ApiServer::getAllUsers);
-                    post(ApiServer::createUser);
-                    get("/{id}", ApiServer::getUserById);
-                    put("/{id}", ApiServer::updateUser);
-                    delete("/{id}", ApiServer::deleteUser);
-                });
+
                 path("/api/classes", () -> {
                     get(ApiServer::getAllClasses);
                     post(ApiServer::createClass);
@@ -105,13 +107,160 @@ public class ApiServer {
                     get("/room/{roomId}", ApiServer::getSchedulesForRoom);
                     get("/{id}", ApiServer::getScheduleById);
                 });
+                //TODO : what is this public route do?
+                path("/api/auth", () -> {
+
+                    post("/login", ApiServer::login);
+
+                    post("/register", ApiServer::createUser);
+
+                    before("/me", ApiServer::authenticate);
+
+                    get("/me", ApiServer::getCurrentAuthenticatedUser);
+                });
+                path("/api/admin", () -> {
+
+                    before(ApiServer::authenticate);
+
+                    before(ApiServer::requireAdmin);
+
+                    get("/users", ApiServer::getAllUsers);
+
+                    post("/users", ApiServer::createUser);
+
+                    put("/users/{id}", ApiServer::updateUser);
+
+                    delete("/users/{id}", ApiServer::deleteUser);
+
+                    post("/teachers", ApiServer::createTeacher);
+
+                    post("/classrooms", ApiServer::createClassroom);
+                });
+
+
             });
-        })
-        .start(8080);
+        }).start(8080);
+
 
         System.out.println("Access at http://localhost:8080");
     }
-    
+
+    private static void authenticate(Context ctx) {
+
+        User user = getAuthenticatedUser(ctx);
+
+        if (user == null) {
+
+            throw new UnauthorizedResponse("Authentication required");
+        }
+
+        ctx.attributeMap().put("currentUser", user);
+    }
+
+    private static void requireAdmin(Context ctx) {
+
+        User user = (User) ctx.attributeMap().get("currentUser");
+
+        if (user == null || !"ADMIN".equalsIgnoreCase(user.getRole())) {
+
+            throw new ForbiddenResponse("Admin access required");
+        }
+    }
+
+    private static void requireTeacherOrAdmin(Context ctx) {
+
+        User user = (User) ctx.attributeMap().get("currentUser");
+
+        if (user == null) {
+
+            throw new UnauthorizedResponse();
+        }
+
+        String role = user.getRole();
+
+        if (!"ADMIN".equalsIgnoreCase(role) && !"TEACHER".equalsIgnoreCase(role)) {
+
+            throw new ForbiddenResponse("Teacher/Admin required");
+        }
+    }
+
+    private static User requireAuthenticated(Context ctx) {
+
+        User user = ctx.attribute("currentUser");
+
+        if (user == null) {
+            throw new UnauthorizedResponse("Authentication required");
+        }
+
+        return user;
+    }  //TODO : understand this code
+
+    private static User getAuthenticatedUser(Context ctx) {
+
+        try {
+
+            String auth = ctx.header("Authorization");
+
+            if (auth == null || !auth.startsWith("Bearer ")) {
+                return null;
+            }
+
+            String token = auth.substring("Bearer ".length()).trim();
+
+            DecodedJWT jwt = JwtUtils.verifyToken(token);
+
+            Integer userId = JwtUtils.getUserIdFromToken(jwt);
+
+            if (userId == null) {
+                return null;
+            }
+
+            return userService.getUser(userId);
+
+        } catch (Exception e) {
+
+            return null;
+        }
+    }
+
+
+    //TODO: undestand the code
+    private static void login(Context ctx) {
+
+        try {
+
+            Map<?, ?> payload = ctx.bodyAsClass(Map.class);
+
+            String email = readString(payload, "email");
+
+            String password = readString(payload, "password");
+
+            User user = userService.login(email, password);
+
+            String token = JwtUtils.generateToken(user);
+
+            Map<String, Object> response = new LinkedHashMap<>();
+
+            response.put("token", token);
+
+            response.put("user", toPublicUser(user));
+
+            ctx.status(200).json(response);
+
+        } catch (Exception e) {
+
+            ctx.status(401).json(Collections.singletonMap("error", "Invalid credentials"));
+        }
+    }
+
+    //TODO: add logic function
+    private static void getCurrentAuthenticatedUser(Context ctx) {
+
+        User user = requireAuthenticated(ctx);
+
+        ctx.json(toPublicUser(user));
+    }
+
     private static void ensureDatabase() {
         Path dbPath = Paths.get(DatabaseConfig.getDatabaseName());
         if (!Files.exists(dbPath)) {
@@ -562,8 +711,11 @@ public class ApiServer {
         }
     }
 
+    // only admin can creat user
     private static void createUser(Context ctx) {
+
         try {
+
             Map<?, ?> payload = ctx.bodyAsClass(Map.class);
             User created = userService.createUser(
                 readString(payload, "name"),
@@ -572,10 +724,24 @@ public class ApiServer {
                 readString(payload, "role"),
                 readString(payload, "department")
             );
+
+            String role = readString(payload, "role");
+
+
+            if (!role.equalsIgnoreCase("STUDENT") && !role.equalsIgnoreCase("GUEST")) {
+
+                requireAdmin(ctx);
+            }
+
+
             ctx.status(201).json(toPublicUser(created));
+
         } catch (IllegalArgumentException e) {
+
             ctx.status(400).json(errorResponse(e, "Invalid user data"));
+
         } catch (Exception e) {
+
             ctx.status(500).json(errorResponse(e, "Failed to create user"));
         }
     }
@@ -620,6 +786,20 @@ public class ApiServer {
         return Collections.singletonMap("error", message);
     }
 
+    private static String normalizeRoleForClient(String role) {
+        if (role == null) {
+            return null;
+        }
+
+        return switch (role.trim().toUpperCase()) {
+            case "ADMIN" -> "admin";
+            case "TEACHER" -> "professor";
+            case "MONITOR" -> "class-monitor";
+            case "STUDENT", "GUEST" -> "guest";
+            default -> role.toLowerCase();
+        };
+    }
+
     private static Map<String, Object> toPublicUser(User user) {
         Map<String, Object> payload = new LinkedHashMap<>();
         String department = null;
@@ -638,20 +818,6 @@ public class ApiServer {
         payload.put("department", department);
         payload.put("lastModified", user.getLastModified());
         return payload;
-    }
-
-    private static String normalizeRoleForClient(String role) {
-        if (role == null) {
-            return null;
-        }
-
-        return switch (role.trim().toUpperCase()) {
-            case "ADMIN" -> "admin";
-            case "TEACHER" -> "professor";
-            case "MONITOR" -> "class-monitor";
-            case "STUDENT", "GUEST" -> "guest";
-            default -> role.toLowerCase();
-        };
     }
 
     private static String readString(Map<?, ?> payload, String key) {

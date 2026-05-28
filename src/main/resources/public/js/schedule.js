@@ -82,6 +82,10 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
   const resolvedClassId = isEdit
     ? eventData.classId || attachedClassIds[0] || activeClassId || null
     : activeClassId || null;
+  const defaultTeacherId =
+    !isEdit && isTeacherRole(state.role) ? state.currentTeacherId || null : null;
+  const defaultCourseId =
+    !isEdit && isTeacherRole(state.role) ? state.defaultCourseId || null : null;
 
   pendingBooking = {
     day: bookingDay,
@@ -91,9 +95,9 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
     classIds: attachedClassIds,
     roomId: isEdit ? eventData.roomId || null : state.selectedRoomId || null,
     classroomId: isEdit ? eventData.roomId || null : state.selectedRoomId || null,
-    teacherId: isEdit ? eventData.teacherId || null : null,
-    courseId: isEdit ? eventData.courseId || null : null,
-    createdBy: isEdit ? eventData.createdBy || null : null,
+    teacherId: isEdit ? eventData.teacherId || null : defaultTeacherId,
+    courseId: isEdit ? eventData.courseId || null : defaultCourseId,
+    createdBy: isEdit ? eventData.createdBy || null : state.currentUser?.id || null,
     status: isEdit ? eventData.status || "BOOKED" : "BOOKED",
     visibility: isEdit ? eventData.visibility || "VISIBLE" : "VISIBLE",
     priority: isEdit ? eventData.priority || 0 : 0,
@@ -509,10 +513,17 @@ function resolveEventTeacherLabel(eventItem) {
   if (!teacherValue) {
     return "";
   }
-  const teacherMatch = (userDirectory || []).find(
-    (user) => String(user.id) === String(teacherValue)
+  const teacher = (teacherDirectory || []).find(
+    (item) => String(item.id) === String(teacherValue)
   );
-  return teacherMatch ? teacherMatch.name : String(teacherValue);
+  if (!teacher) {
+    return String(teacherValue);
+  }
+
+  const teacherUser = (userDirectory || []).find(
+    (user) => String(user.id) === String(teacher.userId)
+  );
+  return teacherUser?.name || `Teacher ${teacher.id}`;
 }
 
 function formatEventType(value) {
@@ -657,7 +668,18 @@ function renderBookingClassOptions() {
 }
 
 function getBookingTeachers() {
-  return (userDirectory || []).filter((user) => isTeacherRole(user.role));
+  return (teacherDirectory || []).map((teacher) => {
+    const teacherUser = (userDirectory || []).find(
+      (user) => String(user.id) === String(teacher.userId)
+    );
+    return {
+      id: teacher.id,
+      userId: teacher.userId,
+      name: teacherUser?.name || `Teacher ${teacher.id}`,
+      role: "professor",
+      department: teacher.department || "",
+    };
+  });
 }
 
 function getTeacherDisplayLabel(teacher) {

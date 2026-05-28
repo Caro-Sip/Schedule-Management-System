@@ -226,6 +226,15 @@ function showSchedule(role, label, persistSession = true) {
   scheduleView.classList.remove("hidden");
   welcomeLine.textContent = `Welcome, ${label}`;
 
+  if (auditToggle) {
+    auditToggle.classList.remove("hidden");
+    auditToggle.removeAttribute("hidden");
+  }
+  if (auditPanel) {
+    auditPanel.classList.remove("hidden");
+    auditPanel.removeAttribute("hidden");
+  }
+
   if (userTab) {
     userTab.classList.toggle("hidden", !isAdminRole(role));
   }
@@ -286,11 +295,17 @@ function showLogin() {
   scheduleView.classList.add("hidden");
   loginView.classList.remove("hidden");
   welcomeLine.textContent = "Welcome, Guest";
-  if (auditToggle) {
-    auditToggle.setAttribute("hidden", "");
-  }
   if (typeof closeAuditPanel === "function") {
-    closeAuditPanel();
+  closeAuditPanel();
+  }
+  // visually hide both elements after closing
+  if (auditPanel) {
+    auditPanel.classList.add("hidden");
+    auditPanel.setAttribute("hidden", "");
+  }
+  if (auditToggle) {
+    auditToggle.classList.add("hidden");
+    auditToggle.setAttribute("hidden", "");
   }
   if (loginForm) {
     loginForm.reset();

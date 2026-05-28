@@ -97,6 +97,9 @@ public class ApiServer {
                 path("/api/courses", () -> {
                     get(ApiServer::getAllCourses);
                     post(ApiServer::createCourse);
+                    get("/{id}", ApiServer::getCourseById);
+                    put("/{id}", ApiServer::updateCourse);
+                    delete("/{id}", ApiServer::deleteCourse);
                 });
                 path("/api/schedules", () -> {
                     get(ApiServer::getAllSchedules);
@@ -551,6 +554,56 @@ public class ApiServer {
         } catch (Exception e) {
             e.printStackTrace();
             ctx.status(500).json(errorResponse(e, "Failed to create course"));
+        }
+    }
+
+    private static void getCourseById(Context ctx) {
+        try {
+            int id = Integer.parseInt(ctx.pathParam("id"));
+            Course course = courseService.getById(id);
+            if (course == null) {
+                ctx.status(404).json(errorResponse(new RuntimeException("Not found"), "Course not found"));
+                return;
+            }
+            ctx.json(course);
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid course id"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            ctx.status(500).json(errorResponse(e, "Failed to load course"));
+        }
+    }
+
+    private static void updateCourse(Context ctx) {
+        try {
+            int id = Integer.parseInt(ctx.pathParam("id"));
+            Map<?, ?> payload = ctx.bodyAsClass(Map.class);
+            Course course = new Course(
+                id,
+                readString(payload, "name"),
+                readString(payload, "code"),
+                readOptionalInt(payload, "totalHours", 45)
+            );
+            courseService.updateCourse(course);
+            ctx.json(course);
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid course data"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            ctx.status(500).json(errorResponse(e, "Failed to update course"));
+        }
+    }
+
+    private static void deleteCourse(Context ctx) {
+        try {
+            int id = Integer.parseInt(ctx.pathParam("id"));
+            courseService.deleteCourse(id);
+            ctx.status(204);
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid course id"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            ctx.status(500).json(errorResponse(e, "Failed to delete course"));
         }
     }
 

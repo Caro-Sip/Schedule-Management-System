@@ -541,6 +541,57 @@
     </div>
 </div>
 
+<div class="modal" id="course-modal" hidden>
+    <div
+            class="modal-card course-modal-card"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="course-modal-title"
+    >
+        <div class="modal-header">
+            <div>
+                <h2 class="modal-title" id="course-modal-title">Class courses</h2>
+                <p class="course-modal-subtitle" id="course-modal-class-label"></p>
+            </div>
+            <button class="modal-close" id="course-close" type="button" aria-label="Close">
+                x
+            </button>
+        </div>
+        <div class="course-modal-body">
+            <section class="course-modal-list-panel">
+                <div class="course-modal-panel-header">
+                    <h3>Courses in this class</h3>
+                    <button class="btn btn-ghost course-new-btn" id="course-new" type="button">
+                        New course
+                    </button>
+                </div>
+                <div class="course-modal-list" id="course-list"></div>
+            </section>
+            <form class="modal-form course-modal-form" id="course-form">
+                <label>
+                    Course name
+                    <input type="text" id="course-name" required placeholder="Introduction to Programming"/>
+                </label>
+                <label>
+                    Course code
+                    <input type="text" id="course-code" required placeholder="CS101"/>
+                </label>
+                <label>
+                    Total hours
+                    <input type="number" id="course-hours" required min="1" placeholder="45"/>
+                </label>
+                <div class="modal-actions split">
+                    <button class="btn" id="course-delete" type="button" hidden>Delete</button>
+                    <div class="modal-actions-right">
+                        <button class="btn" id="course-cancel" type="button">Cancel</button>
+                        <button class="btn btn-primary" type="submit">Save</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <div class="modal" id="room-modal" hidden>
     <div
             class="modal-card"

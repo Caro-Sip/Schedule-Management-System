@@ -52,6 +52,18 @@ const classEndDateInput = document.getElementById("class-end-date");
 const classDeleteBtn = document.getElementById("class-delete");
 const classCancelBtn = document.getElementById("class-cancel");
 const classCloseBtn = document.getElementById("class-close");
+const courseModal = document.getElementById("course-modal");
+const courseModalTitle = document.getElementById("course-modal-title");
+const courseModalClassLabel = document.getElementById("course-modal-class-label");
+const courseList = document.getElementById("course-list");
+const courseForm = document.getElementById("course-form");
+const courseNameInput = document.getElementById("course-name");
+const courseCodeInput = document.getElementById("course-code");
+const courseHoursInput = document.getElementById("course-hours");
+const courseDeleteBtn = document.getElementById("course-delete");
+const courseCancelBtn = document.getElementById("course-cancel");
+const courseCloseBtn = document.getElementById("course-close");
+const courseNewBtn = document.getElementById("course-new");
 const roomControls = document.getElementById("room-controls");
 const roomView = document.getElementById("room-view");
 const roomList = document.getElementById("room-list");
@@ -416,6 +428,9 @@ async function loadCourses() {
 		courses.forEach((item) => {
 			courseDirectory.push(normalizeCoursePayload(item));
 		});
+		if (typeof refreshCourseModal === "function") {
+			refreshCourseModal();
+		}
 	} catch (error) {
 		console.error("Failed to load courses", error);
 	}
@@ -425,6 +440,19 @@ async function createCourseApi(payload) {
 	return requestJson(`${API_BASE}/courses`, {
 		method: "POST",
 		body: JSON.stringify(payload),
+	});
+}
+
+async function updateCourseApi(id, payload) {
+	return requestJson(`${API_BASE}/courses/${id}`, {
+		method: "PUT",
+		body: JSON.stringify(payload),
+	});
+}
+
+async function deleteCourseApi(id) {
+	return requestJson(`${API_BASE}/courses/${id}`, {
+		method: "DELETE",
 	});
 }
 

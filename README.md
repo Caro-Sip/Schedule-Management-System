@@ -10,3 +10,5 @@ Project Structure:
 - Service is .java that verify user input
 - Javascript also verify user input but for security reason we have another one in java
 
+admin@school.local
+hash_admin_001

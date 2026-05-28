@@ -564,6 +564,113 @@ function bindEvents() {
         });
     }
 
+    if (courseNewBtn) {
+        courseNewBtn.addEventListener("click", () => {
+            clearCourseForm();
+            renderCourseModalList();
+            if (courseNameInput) {
+                courseNameInput.focus();
+            }
+        });
+    }
+
+    if (courseForm) {
+        courseForm.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            if (!courseNameInput || !courseCodeInput || !courseHoursInput) {
+                return;
+            }
+
+            const name = courseNameInput.value.trim();
+            const code = courseCodeInput.value.trim();
+            const totalHours = Number(courseHoursInput.value);
+
+            if (!name || !code || !Number.isFinite(totalHours) || totalHours <= 0) {
+                alert("Course name, code, and a valid number of hours are required.");
+                return;
+            }
+
+            if (!courseModalClassId) {
+                alert("Select a class before managing courses.");
+                return;
+            }
+
+            try {
+                let savedCourse = null;
+                if (editingCourseId) {
+                    savedCourse = await updateCourseApi(editingCourseId, {
+                        name,
+                        code,
+                        totalHours,
+                    });
+                } else {
+                    savedCourse = await createCourseApi({
+                        name,
+                        code,
+                        totalHours,
+                    });
+                }
+
+                await loadCourses();
+                if (savedCourse?.id) {
+                    const matchedCourse = courseDirectory.find(
+                        (course) => String(course.id) === String(savedCourse.id)
+                    );
+                    if (matchedCourse) {
+                        selectCourseForEdit(matchedCourse);
+                        return;
+                    }
+                }
+                renderCourseModalList();
+            } catch (error) {
+                alert(error?.message || "Failed to save course.");
+            }
+        });
+    }
+
+    if (courseDeleteBtn) {
+        courseDeleteBtn.addEventListener("click", async () => {
+            if (!editingCourseId) {
+                return;
+            }
+
+            const confirmed = confirm("Delete this course?");
+            if (!confirmed) {
+                return;
+            }
+
+            try {
+                await deleteCourseApi(editingCourseId);
+                clearCourseForm();
+                await loadCourses();
+                renderCourseModalList();
+            } catch (error) {
+                alert(error?.message || "Failed to delete course.");
+            }
+        });
+    }
+
+    if (courseCancelBtn) {
+        courseCancelBtn.addEventListener("click", () => {
+            closeCourseModal();
+        });
+    }
+
+    if (courseCloseBtn) {
+        courseCloseBtn.addEventListener("click", () => {
+            closeCourseModal();
+        });
+    }
+
+    if (courseModal) {
+        courseModal.addEventListener("click", (event) => {
+            if (event.target === courseModal) {
+                closeCourseModal();
+            }
+        });
+    }
+
     if (roomAddBtn) {
         roomAddBtn.addEventListener("click", () => {
             openRoomModal("add");

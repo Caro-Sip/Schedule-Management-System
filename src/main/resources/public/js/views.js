@@ -239,6 +239,15 @@ function showSchedule(role, label, persistSession = true) {
     auditPanel.removeAttribute("hidden");
   }
 
+  if (auditToggle) {
+    auditToggle.classList.remove("hidden");
+    auditToggle.removeAttribute("hidden");
+  }
+  if (auditPanel) {
+    auditPanel.classList.remove("hidden");
+    auditPanel.removeAttribute("hidden");
+  }
+
   if (userTab) {
     userTab.classList.toggle("hidden", !isAdminRole(role));
   }

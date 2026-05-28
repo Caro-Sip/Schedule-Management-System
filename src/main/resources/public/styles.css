@@ -445,7 +445,15 @@ a.tab {
   gap: 8px;
 }
 
+.room-picker-field {
+  position: relative;
+}
+
 .room-picker-results {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
@@ -453,6 +461,7 @@ a.tab {
   overflow: hidden;
   max-height: 220px;
   overflow-y: auto;
+  z-index: 5;
 }
 
 .room-picker-option,

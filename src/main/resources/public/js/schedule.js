@@ -144,7 +144,10 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
       const roomItem = roomCatalog.find((item) => item.id === pendingBooking.roomId) || null;
       bookingRoomInput.value = roomItem ? getRoomDisplayLabel(roomItem) : "";
       bookingRoomInput.dataset.roomId = roomItem ? roomItem.id : "";
-      renderBookingRoomOptions();
+      if (bookingRoomResults) {
+        bookingRoomResults.setAttribute("hidden", "");
+        bookingRoomResults.innerHTML = "";
+      }
     } else {
       bookingRoomInput.value = "";
       bookingRoomInput.dataset.roomId = "";
@@ -163,7 +166,10 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
       const classItem = classCatalog.find((item) => String(item.id) === String(resolvedClassId)) || null;
       bookingClassInput.value = classItem ? getClassDisplayLabel(classItem) : "";
       bookingClassInput.dataset.classId = classItem ? String(classItem.id) : "";
-      renderBookingClassOptions();
+      if (bookingClassResults) {
+        bookingClassResults.setAttribute("hidden", "");
+        bookingClassResults.innerHTML = "";
+      }
     } else {
       bookingClassInput.value = "";
       bookingClassInput.dataset.classId = "";
@@ -184,7 +190,10 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
         ? String(eventData.professor || "")
         : "";
     bookingProfessor.dataset.teacherId = teacherItem ? String(teacherItem.id) : "";
-    renderBookingProfessorOptions();
+    if (bookingProfessorResults) {
+      bookingProfessorResults.setAttribute("hidden", "");
+      bookingProfessorResults.innerHTML = "";
+    }
   }
   if (bookingSubject) {
     const courseCatalog = courseDirectory || [];
@@ -197,7 +206,10 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
         ? String(eventData.title || "")
         : "";
     bookingSubject.dataset.courseId = courseItem ? String(courseItem.id) : "";
-    renderBookingSubjectOptions();
+    if (bookingSubjectResults) {
+      bookingSubjectResults.setAttribute("hidden", "");
+      bookingSubjectResults.innerHTML = "";
+    }
   }
   if (bookingType) {
     bookingType.value = resolveSelectValue(

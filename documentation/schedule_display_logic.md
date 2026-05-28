@@ -108,9 +108,32 @@ The app uses a global `state` object to track the current view, selected entitie
   }
   ```
 
+## 7. User Tab Click Flow
+
+The User tab is only exposed to admins in the UI ([src/main/resources/public/index.html](src/main/resources/public/index.html#L98-L104)) and the tab handler prevents non-admin access in [src/main/resources/public/js/main.js](src/main/resources/public/js/main.js#L1-L12). When a user row is clicked, the frontend does not render the schedule directly from the row data. It first resolves the clicked row to a full user object in [src/main/resources/public/js/main.js](src/main/resources/public/js/main.js#L253-L279), then passes that user into `showUserSchedule(user)` in [src/main/resources/public/js/dom.js](src/main/resources/public/js/dom.js#L241-L271).
+
+The user list itself is rendered with the raw user id stored on each row at [src/main/resources/public/js/dom.js](src/main/resources/public/js/dom.js#L319-L321). The click handler reads that id, looks up the matching record in `userDirectory`, and decides what schedule to open based on the user role.
+
+- For a class monitor, `showUserSchedule(user)` resolves a class id using `resolveClassIdForUser(user)` in [src/main/resources/public/js/dom.js](src/main/resources/public/js/dom.js#L219-L226). It then clears any teacher selection, switches to the class view, marks the origin as `"user"`, and calls `selectClass(classId)`.
+- For a professor or teacher role, `showUserSchedule(user)` resolves the linked teacher profile id using `resolveTeacherIdForUser(user)` in [src/main/resources/public/js/dom.js](src/main/resources/public/js/dom.js#L228-L238). That lookup matches `teacher.userId` against `user.id`, which means the schedule is filtered by the teacher profile id, not the user id itself.
+
+Once the teacher id is selected, `selectTeacher(teacherId)` stores it in `state.selectedTeacherId` and triggers a rerender ([src/main/resources/public/js/dom.js](src/main/resources/public/js/dom.js#L204-L217)). The visible schedule is then filtered in [src/main/resources/public/js/schedule.js](src/main/resources/public/js/schedule.js#L414-L420):
+
+```js
+if (state.view === "teacher" && state.selectedTeacherId) {
+  filteredItems = items.filter(
+    (item) =>
+      String(item.teacherId) === String(state.selectedTeacherId) ||
+      String(item.professor) === String(state.selectedTeacherId)
+  );
+}
+```
+
+That means the frontend can display a teacher schedule from either `eventItem.teacherId` or `eventItem.professor`, as long as one of those fields matches the resolved teacher profile id. If no teacher profile is linked to the user, `showUserSchedule(user)` alerts the user and stops.
+
 ---
 
-## 7. Summary of Flow
+## 8. Summary of Flow
 
 1. **User selects a tab** (class, teacher, room, user).
 2. **State is updated** (`state.view`, selected entity IDs).
@@ -120,7 +143,7 @@ The app uses a global `state` object to track the current view, selected entitie
 
 ---
 
-## 8. Key Functions
+## 9. Key Functions
 
 - `setView(view)`: Switches the current view ([js/views.js](src/main/resources/public/js/views.js#L101-L109)).
 - `updateViewVisibility()`: Shows/hides UI panels ([js/views.js](src/main/resources/public/js/views.js#L110-L180)).
@@ -129,7 +152,7 @@ The app uses a global `state` object to track the current view, selected entitie
 
 ---
 
-## 9. Implementation Notes
+## 10. Implementation Notes
 
 - The schedule grid is generic and reused for all views; only the filtering logic changes.
 - The system uses a directory of events, classes, teachers, and rooms, loaded at startup or via API.

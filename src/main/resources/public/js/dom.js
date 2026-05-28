@@ -228,6 +228,16 @@ function resolveClassIdForUser(user) {
   return byId ? Number(byId.id) : null;
 }
 
+function resolveTeacherIdForUser(user) {
+  if (!user) {
+    return null;
+  }
+  const teacher = (teacherDirectory || []).find(
+    (item) => String(item.userId) === String(user.id)
+  );
+  return teacher ? teacher.id : null;
+}
+
 async function showUserSchedule(user) {
   if (!user) {
     return;
@@ -254,7 +264,12 @@ async function showUserSchedule(user) {
     state.selectedRoomId = null;
     setView("teacher");
     state.userScheduleOrigin = "user";
-    selectTeacher(user.id);
+    const teacherId = resolveTeacherIdForUser(user);
+    if (!teacherId) {
+      alert("No teacher profile is linked to this user.");
+      return;
+    }
+    selectTeacher(teacherId);
     return;
   }
 

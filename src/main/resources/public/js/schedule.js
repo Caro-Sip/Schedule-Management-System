@@ -22,10 +22,13 @@ function updateActiveScopeLabel() {
     );
     label = roomItem?.name || getRoomShortLabel(roomItem) || `Room ${state.selectedRoomId}`;
   } else if (state.view === "teacher" && state.selectedTeacherId) {
-    const teacherItem = (userDirectory || []).find(
-      (user) => String(user.id) === String(state.selectedTeacherId)
+    const teacherItem = (teacherDirectory || []).find(
+      (teacher) => String(teacher.id) === String(state.selectedTeacherId)
     );
-    label = teacherItem?.name || `Teacher ${state.selectedTeacherId}`;
+    const teacherUser = (userDirectory || []).find(
+      (user) => String(user.id) === String(teacherItem?.userId)
+    );
+    label = teacherUser?.name || `Teacher ${state.selectedTeacherId}`;
     placeholder = "Search teacher";
   }
 

@@ -154,33 +154,16 @@ public class ApiServer {
             throw new UnauthorizedResponse("Authentication required");
         }
 
-        ctx.attributeMap().put("currentUser", user);
+        ctx.attribute("currentUser", user);
     }
 
     private static void requireAdmin(Context ctx) {
 
-        User user = (User) ctx.attributeMap().get("currentUser");
+        User user = requireAuthenticated(ctx);
 
-        if (user == null || !"ADMIN".equalsIgnoreCase(user.getRole())) {
+        if (!"ADMIN".equalsIgnoreCase(user.getRole())) {
 
             throw new ForbiddenResponse("Admin access required");
-        }
-    }
-
-    private static void requireTeacherOrAdmin(Context ctx) {
-
-        User user = (User) ctx.attributeMap().get("currentUser");
-
-        if (user == null) {
-
-            throw new UnauthorizedResponse();
-        }
-
-        String role = user.getRole();
-
-        if (!"ADMIN".equalsIgnoreCase(role) && !"TEACHER".equalsIgnoreCase(role)) {
-
-            throw new ForbiddenResponse("Teacher/Admin required");
         }
     }
 

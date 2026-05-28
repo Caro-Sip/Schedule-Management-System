@@ -162,6 +162,13 @@ async function requestJson(path, options = {}) {
 	return payload;
 }
 
+async function loginApi(email, password) {
+	return requestJson(`${API_BASE}/auth/login`, {
+		method: "POST",
+		body: JSON.stringify({ email, password }),
+	});
+}
+
 function normalizeClassPayload(payload) {
 	const timestamp = new Date().toISOString();
 	return {
@@ -220,7 +227,7 @@ async function createClassApi(payload) {
 
 async function loadUsers() {
 	try {
-		const users = await requestJson(`${API_BASE}/users`);
+		const users = await requestJson(`${ADMIN_API_BASE}/users`);
 		userDirectory.length = 0;
 		users.forEach((item) => {
 			userDirectory.push(normalizeUserPayload(item));

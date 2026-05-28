@@ -35,6 +35,14 @@ public class CourseService {
         }
     }
 
+    public Course getById(int id) {
+        try {
+            return courseDAO.getById(id);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to retrieve course by id", e);
+        }
+    }
+
     public void createCourse(Course course) {
         if (course == null) {
             throw new IllegalArgumentException("Course cannot be empty");
@@ -56,6 +64,44 @@ public class CourseService {
             }
         } catch (SQLException e) {
             throw new RuntimeException("Failed to create course", e);
+        }
+    }
+
+    public void updateCourse(Course course) {
+        if (course == null || course.getId() <= 0) {
+            throw new IllegalArgumentException("Course cannot be empty");
+        }
+
+        String normalizedName = normalizeName(course.getName());
+        String normalizedCode = normalizeCode(course.getCode());
+
+        course.setName(normalizedName);
+        course.setCode(normalizedCode);
+
+        if (course.getTotalHours() <= 0) {
+            throw new IllegalArgumentException("Total hours must be positive");
+        }
+
+        try {
+            if (!courseDAO.updateCourse(course)) {
+                throw new RuntimeException("Course was not updated");
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to update course", e);
+        }
+    }
+
+    public void deleteCourse(int id) {
+        if (id <= 0) {
+            throw new IllegalArgumentException("Course id must be positive");
+        }
+
+        try {
+            if (!courseDAO.deleteCourse(id)) {
+                throw new RuntimeException("Course was not deleted");
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to delete course", e);
         }
     }
 

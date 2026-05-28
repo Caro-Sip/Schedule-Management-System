@@ -66,5 +66,7 @@ let pendingBooking = null;
 let editingUserId = null;
 let editingClassId = null;
 let editingRoomId = null;
+let editingCourseId = null;
+let courseModalClassId = null;
 
 const auditLog = [];

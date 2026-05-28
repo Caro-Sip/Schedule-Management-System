@@ -144,6 +144,197 @@ function closeClassModal() {
   editingClassId = null;
 }
 
+function getClassCourses(classId) {
+  const targetClassId = Number(classId);
+  if (!Number.isFinite(targetClassId)) {
+    return [];
+  }
+
+  const seenCourseIds = new Set();
+  const courseIds = [];
+
+  (eventsByView.class || []).forEach((eventItem) => {
+    const eventClassIds = Array.isArray(eventItem.classIds) && eventItem.classIds.length > 0
+      ? eventItem.classIds.map((value) => Number(value)).filter((value) => Number.isFinite(value))
+      : Number.isFinite(Number(eventItem.classId))
+        ? [Number(eventItem.classId)]
+        : [];
+
+    if (!eventClassIds.includes(targetClassId)) {
+      return;
+    }
+
+    const courseId = Number(eventItem.courseId);
+    if (!Number.isFinite(courseId) || seenCourseIds.has(courseId)) {
+      return;
+    }
+
+    seenCourseIds.add(courseId);
+    courseIds.push(courseId);
+  });
+
+  return courseIds
+    .map((courseId) => (courseDirectory || []).find((course) => Number(course.id) === courseId))
+    .filter(Boolean)
+    .sort((a, b) => {
+      const nameCompare = (a.name || a.code || String(a.id)).localeCompare(
+        b.name || b.code || String(b.id)
+      );
+      if (nameCompare !== 0) {
+        return nameCompare;
+      }
+      return String(a.id).localeCompare(String(b.id));
+    });
+}
+
+function clearCourseForm() {
+  editingCourseId = null;
+  if (courseNameInput) {
+    courseNameInput.value = "";
+  }
+  if (courseCodeInput) {
+    courseCodeInput.value = "";
+  }
+  if (courseHoursInput) {
+    courseHoursInput.value = "45";
+  }
+  if (courseDeleteBtn) {
+    courseDeleteBtn.toggleAttribute("hidden", true);
+  }
+}
+
+function selectCourseForEdit(course) {
+  if (!course) {
+    return;
+  }
+
+  editingCourseId = course.id;
+  if (courseNameInput) {
+    courseNameInput.value = course.name || "";
+  }
+  if (courseCodeInput) {
+    courseCodeInput.value = course.code || "";
+  }
+  if (courseHoursInput) {
+    courseHoursInput.value = course.totalHours || 45;
+  }
+  if (courseDeleteBtn) {
+    courseDeleteBtn.toggleAttribute("hidden", false);
+  }
+
+  renderCourseModalList();
+  if (courseNameInput) {
+    courseNameInput.focus();
+  }
+}
+
+function renderCourseModalList() {
+  if (!courseList) {
+    return;
+  }
+
+  courseList.innerHTML = "";
+
+  const classItem = (classDirectory || []).find(
+    (item) => String(item.id) === String(courseModalClassId)
+  );
+
+  if (courseModalClassLabel) {
+    courseModalClassLabel.textContent = classItem
+      ? `${classItem.name || `Class ${classItem.id}`} · ID ${classItem.id}`
+      : "";
+  }
+
+  const linkedCourseIds = new Set(
+    getClassCourses(courseModalClassId).map((course) => Number(course.id))
+  );
+  const courses = (courseDirectory || [])
+    .slice()
+    .sort((a, b) => {
+      const aLinked = linkedCourseIds.has(Number(a.id));
+      const bLinked = linkedCourseIds.has(Number(b.id));
+      if (aLinked !== bLinked) {
+        return aLinked ? -1 : 1;
+      }
+      const nameCompare = (a.name || a.code || String(a.id)).localeCompare(
+        b.name || b.code || String(b.id)
+      );
+      if (nameCompare !== 0) {
+        return nameCompare;
+      }
+      return String(a.id).localeCompare(String(b.id));
+    });
+
+  if (courses.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.textContent = "No courses are available yet.";
+    courseList.appendChild(empty);
+    return;
+  }
+
+  courses.forEach((course) => {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "course-modal-item";
+    item.dataset.courseId = String(course.id);
+    if (String(editingCourseId) === String(course.id)) {
+      item.classList.add("selected");
+    }
+
+    const title = document.createElement("strong");
+    title.textContent = getCourseDisplayLabel(course);
+
+    const meta = document.createElement("span");
+    meta.textContent = linkedCourseIds.has(Number(course.id))
+      ? `ID ${course.id} · ${course.totalHours || 0} hours · In this class`
+      : `ID ${course.id} · ${course.totalHours || 0} hours · Catalog only`;
+
+    item.appendChild(title);
+    item.appendChild(meta);
+    item.addEventListener("click", () => {
+      selectCourseForEdit(course);
+    });
+
+    courseList.appendChild(item);
+  });
+}
+
+function openCourseModal(classItem) {
+  if (!courseModal || !courseForm) {
+    return;
+  }
+
+  courseModalClassId = classItem?.id ?? state.selectedClassId ?? null;
+  if (courseModalTitle) {
+    courseModalTitle.textContent = "Class courses";
+  }
+
+  clearCourseForm();
+  renderCourseModalList();
+  courseModal.removeAttribute("hidden");
+
+  if (courseNameInput) {
+    courseNameInput.focus();
+  }
+}
+
+function closeCourseModal() {
+  if (!courseModal) {
+    return;
+  }
+
+  courseModal.setAttribute("hidden", "");
+  courseModalClassId = null;
+  clearCourseForm();
+}
+
+function refreshCourseModal() {
+  if (courseModal && !courseModal.hasAttribute("hidden")) {
+    renderCourseModalList();
+  }
+}
+
 function openRoomModal(mode, roomItem) {
   if (!roomModal || !roomForm) {
     return;
@@ -430,6 +621,9 @@ function renderClassList() {
       row.classList.add("selected");
     }
 
+    const content = document.createElement("div");
+    content.className = "class-content";
+
     const main = document.createElement("div");
     main.className = "user-main";
 
@@ -445,7 +639,7 @@ function renderClassList() {
     main.appendChild(id);
 
     const tags = document.createElement("div");
-    tags.className = "user-tags";
+    tags.className = "user-tags class-meta";
 
     const yearTag = document.createElement("span");
     yearTag.className = "tag department";
@@ -469,7 +663,7 @@ function renderClassList() {
     tags.appendChild(dateRangeTag);
 
     const modified = document.createElement("div");
-    modified.className = "user-modified";
+    modified.className = "user-modified class-meta";
 
     const label = document.createElement("span");
     label.className = "user-label";
@@ -482,8 +676,22 @@ function renderClassList() {
     modified.appendChild(label);
     modified.appendChild(value);
 
+    content.appendChild(main);
+    content.appendChild(tags);
+    content.appendChild(modified);
+
     const actions = document.createElement("div");
     actions.className = "entity-actions";
+
+    const courseButton = document.createElement("button");
+    courseButton.type = "button";
+    courseButton.className = "btn btn-ghost class-course";
+    courseButton.textContent = "Course";
+    courseButton.dataset.classId = classItem.id;
+    courseButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      openCourseModal(classItem);
+    });
 
     const editButton = document.createElement("button");
     editButton.type = "button";
@@ -499,11 +707,10 @@ function renderClassList() {
       '<path fill="currentColor" d="M3 17.25V21h3.75l11.06-11.06-3.75-3.75L3 17.25zm2.92 2.33H5v-.92l9.06-9.06.92.92-9.06 9.06zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />' +
       "</svg>";
 
+    actions.appendChild(courseButton);
     actions.appendChild(editButton);
 
-    row.appendChild(main);
-    row.appendChild(tags);
-    row.appendChild(modified);
+    row.appendChild(content);
     row.appendChild(actions);
 
     classList.appendChild(row);

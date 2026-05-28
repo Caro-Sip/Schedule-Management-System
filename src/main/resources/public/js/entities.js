@@ -101,6 +101,7 @@ const bookingEnd = document.getElementById("booking-end");
 const bookingClassGroup = document.getElementById("booking-class-group");
 const bookingClassInput = document.getElementById("booking-class");
 const bookingClassResults = document.getElementById("booking-class-results");
+const bookingClassSelection = document.getElementById("booking-class-selection");
 const bookingRoomGroup = document.getElementById("booking-room-group");
 const bookingRoomInput = document.getElementById("booking-room");
 const bookingRoomResults = document.getElementById("booking-room-results");

@@ -863,7 +863,11 @@ function bindEvents() {
             const bookingDay = pendingBooking.day;
             const ignoreId = pendingBooking.eventId || null;
             const activeClassId = getSelectedClassId();
-            const roomSelectedClassId = bookingClassInput?.dataset.classId || pendingBooking.classId || "";
+            const roomSelectedClassId =
+                bookingClassInput?.dataset.classId ||
+                pendingBooking.classId ||
+                pendingBooking.classIds?.[0] ||
+                "";
             const classId =
                 targetView === "class"
                     ? pendingBooking.classId || pendingBooking.classIds?.[0] || activeClassId || null
@@ -1087,11 +1091,6 @@ function bindEvents() {
 
     if (bookingClassInput) {
         bookingClassInput.addEventListener("input", () => {
-            if (pendingBooking) {
-                pendingBooking.classId = null;
-                pendingBooking.classIds = [];
-            }
-            bookingClassInput.dataset.classId = "";
             renderBookingClassOptions();
         });
         bookingClassInput.addEventListener("focus", renderBookingClassOptions);

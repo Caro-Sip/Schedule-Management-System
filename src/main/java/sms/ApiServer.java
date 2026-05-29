@@ -84,6 +84,10 @@ public class ApiServer {
                     get(ApiServer::getAllClasses);
                     post(ApiServer::createClass);
                     get("/{id}", ApiServer::getClassById);
+                    get("/{id}/courses", ApiServer::getClassCourses);
+                    put("/{id}/courses", ApiServer::replaceClassCourses);
+                    post("/{id}/courses/{courseId}", ApiServer::addCourseToClass);
+                    delete("/{id}/courses/{courseId}", ApiServer::removeCourseFromClass);
                     put("/{id}", ApiServer::updateClass);
                     delete("/{id}", ApiServer::deleteClass);
                 });
@@ -454,6 +458,19 @@ public class ApiServer {
         }
     }
 
+    private static void getClassCourses(Context ctx) {
+        try {
+            int classId = Integer.parseInt(ctx.pathParam("id"));
+            ctx.json(classService.getCoursesForClass(classId));
+        } catch (NumberFormatException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid class id"));
+        } catch (ClassNotFoundException e) {
+            ctx.status(404).json(errorResponse(e, "Class not found"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to load class courses"));
+        }
+    }
+
     private static void getAllClassrooms(Context ctx) {
         try {
             List<Classroom> classrooms = roomService.getAllRooms();
@@ -747,6 +764,57 @@ public class ApiServer {
         }
     }
 
+    private static void replaceClassCourses(Context ctx) {
+        try {
+            int classId = Integer.parseInt(ctx.pathParam("id"));
+            Map<?, ?> payload = ctx.bodyAsClass(Map.class);
+            classService.setCoursesForClass(classId, readIntegerList(payload, "courseIds"));
+            ctx.json(classService.getCoursesForClass(classId));
+        } catch (NumberFormatException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid class id"));
+        } catch (ClassNotFoundException e) {
+            ctx.status(404).json(errorResponse(e, "Class not found"));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid class course data"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to update class courses"));
+        }
+    }
+
+    private static void addCourseToClass(Context ctx) {
+        try {
+            int classId = Integer.parseInt(ctx.pathParam("id"));
+            int courseId = Integer.parseInt(ctx.pathParam("courseId"));
+            classService.addCourseToClass(classId, courseId);
+            ctx.status(204);
+        } catch (NumberFormatException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid class or course id"));
+        } catch (ClassNotFoundException e) {
+            ctx.status(404).json(errorResponse(e, "Class not found"));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid class course data"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to add course to class"));
+        }
+    }
+
+    private static void removeCourseFromClass(Context ctx) {
+        try {
+            int classId = Integer.parseInt(ctx.pathParam("id"));
+            int courseId = Integer.parseInt(ctx.pathParam("courseId"));
+            classService.removeCourseFromClass(classId, courseId);
+            ctx.status(204);
+        } catch (NumberFormatException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid class or course id"));
+        } catch (ClassNotFoundException e) {
+            ctx.status(404).json(errorResponse(e, "Class not found"));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid class course data"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to remove course from class"));
+        }
+    }
+
     // only admin can creat user
     private static void createUser(Context ctx) {
 
@@ -953,5 +1021,42 @@ public class ApiServer {
             }
         }
         return classIds;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Integer> readIntegerList(Map<?, ?> payload, String key) {
+        Object value = payload.get(key);
+        if (value == null) {
+            return Collections.emptyList();
+        }
+
+        if (value instanceof List<?>) {
+            List<Integer> integers = new ArrayList<>();
+            for (Object item : (List<Object>) value) {
+                if (item instanceof Number) {
+                    integers.add(((Number) item).intValue());
+                } else if (item != null) {
+                    String text = item.toString().trim();
+                    if (!text.isEmpty()) {
+                        integers.add(Integer.valueOf(text));
+                    }
+                }
+            }
+            return integers;
+        }
+
+        String text = value.toString().trim();
+        if (text.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Integer> integers = new ArrayList<>();
+        for (String part : text.split(",")) {
+            String trimmed = part.trim();
+            if (!trimmed.isEmpty()) {
+                integers.add(Integer.valueOf(trimmed));
+            }
+        }
+        return integers;
     }
 }

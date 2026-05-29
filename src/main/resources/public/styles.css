@@ -629,9 +629,11 @@ a.tab {
   border-radius: 10px;
   padding: 10px 12px;
   display: grid;
-  gap: 4px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
   text-align: left;
   cursor: pointer;
+  align-items: center;
 }
 
 .course-modal-item:hover,
@@ -643,6 +645,26 @@ a.tab {
 .course-modal-item.selected {
   border-color: #c6dafc;
   background: #f5f9ff;
+}
+
+.course-modal-item-main {
+  display: grid;
+  gap: 4px;
+}
+
+.course-modal-item-actions {
+  display: flex;
+  align-items: center;
+}
+
+.course-link-toggle {
+  min-width: 82px;
+}
+
+.tag.course-count {
+  background: #eef3fd;
+  color: var(--accent);
+  border-color: #d2e3fc;
 }
 
 .course-modal-item strong {

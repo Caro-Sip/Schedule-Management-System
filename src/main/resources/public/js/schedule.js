@@ -322,8 +322,8 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
   if (bookingType) {
     bookingType.value = resolveSelectValue(
       bookingType,
-      isEdit ? eventData.type : "lecture",
-      "lecture"
+      isEdit ? eventData.type : "LECTURE",
+      "LECTURE"
     );
   }
 

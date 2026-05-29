@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import sms.DAO.ClassEntityDAO;
 import sms.DAO.ClassCourseDAO;
@@ -25,6 +26,14 @@ import sms.exception.ClassNotFoundException;
 import sms.exception.ScheduleNotFoundException;
 
 public class ScheduleService {
+    private static final Set<String> ALLOWED_SCHEDULE_TYPES = Set.of(
+            "DEFAULT",
+            "LECTURE",
+            "TUTORIAL",
+            "PRACTICAL",
+            "MAKEUP",
+            "OVERRIDE");
+
     private final ScheduleDAO scheduleDAO;
     private final ScheduleClassDAO scheduleClassDAO;
     private final ClassEntityDAO classEntityDAO;
@@ -66,7 +75,7 @@ public class ScheduleService {
 
         String normalizedStatus = normalizeValue(status, "BOOKED");
         String normalizedVisibility = normalizeValue(visibility, "VISIBLE");
-        String normalizedType = normalizeValue(type, "DEFAULT");
+        String normalizedType = normalizeScheduleType(type);
 
         try {
             validateScheduleReferences(classroomId, teacherId, courseId, linkedScheduleId, normalizedClassIds);
@@ -134,7 +143,7 @@ public class ScheduleService {
             LocalTime resolvedEndTime = endTime != null ? endTime : existing.getEndTime();
             String resolvedStatus = normalizeValue(status, existing.getStatus());
             String resolvedVisibility = normalizeValue(visibility, existing.getVisibility());
-            String resolvedType = normalizeValue(type, existing.getType());
+            String resolvedType = normalizeScheduleType(type, existing.getType());
             int resolvedPriority = priority != null ? priority : existing.getPriority();
             int resolvedCreatedBy = createdBy != null ? createdBy : existing.getCreatedBy();
             Integer resolvedLinkedScheduleId = linkedScheduleId != null ? linkedScheduleId : existing.getLinkedScheduleId();
@@ -896,6 +905,20 @@ public class ScheduleService {
             return defaultValue;
         }
         return value.trim().toUpperCase();
+    }
+
+    private String normalizeScheduleType(String value) {
+        return normalizeScheduleType(value, "DEFAULT");
+    }
+
+    private String normalizeScheduleType(String value, String defaultValue) {
+        String normalized = value == null || value.trim().isEmpty()
+                ? defaultValue.trim().toUpperCase()
+                : value.trim().toUpperCase();
+        if (!ALLOWED_SCHEDULE_TYPES.contains(normalized)) {
+            throw new IllegalArgumentException("Invalid schedule type");
+        }
+        return normalized;
     }
 
     private void rollbackCreatedSchedule(int scheduleId, List<Integer> classIds) {

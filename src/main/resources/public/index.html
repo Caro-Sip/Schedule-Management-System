@@ -461,9 +461,10 @@
                     <option value="guest">Student</option>
                 </select>
             </label>
-            <label>
+            <label id="department-field" hidden>
                 Department
-                <select id="user-department" required>
+                <select id="user-department">
+                    <option value="" disabled selected>Select a department</option>
                     <option value="Registrar">Registrar</option>
                     <option value="Engineering">Engineering</option>
                     <option value="Science">Science</option>

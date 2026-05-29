@@ -263,6 +263,10 @@ function showSchedule(role, label, persistSession = true) {
     }
   }
 
+  if (auditToggle) {
+    auditToggle.removeAttribute("hidden");
+  }
+
   if (persistSession && state.authToken && state.currentUser) {
     saveSession({ token: state.authToken, user: state.currentUser });
   }
@@ -282,6 +286,12 @@ function showLogin() {
   scheduleView.classList.add("hidden");
   loginView.classList.remove("hidden");
   welcomeLine.textContent = "Welcome, Guest";
+  if (auditToggle) {
+    auditToggle.setAttribute("hidden", "");
+  }
+  if (typeof closeAuditPanel === "function") {
+    closeAuditPanel();
+  }
   if (loginForm) {
     loginForm.reset();
   }

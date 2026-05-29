@@ -92,7 +92,7 @@ VALUES
     (5, 2, 8,  4, '15:00', '17:00', '2026-03-05', '2026-06-27'),  -- OS Practical,   Hen Rathpisey, A402
 
     -- FRIDAY (day_of_week = 5), first Friday = 2026-03-06
-    (2, 3, 7,  5, '07:00', '09:00', '2026-03-06', '2026-06-27'),  -- DSA Practical,  Seak Leng,     A417
+    (2, 3, 7,  5, '09:00', '11:00', '2026-03-06', '2026-06-27'),  -- DSA Practical,  Seak Leng,     A417
     (3, 2, 10, 5, '13:00', '15:00', '2026-03-06', '2026-06-27'),  -- LAS Tutorial,   Phauk Sokkhey, A402
     (1, 4, 5,  5, '15:00', '17:00', '2026-03-06', '2026-06-27');  -- OOP Practical,  Hok Tin,       A420
 
@@ -130,8 +130,8 @@ WITH RECURSIVE schedule_gen AS (
         CASE 
             WHEN rs.course_id = 5 AND rs.start_time = '13:00' THEN 'LECTURE'
             WHEN rs.course_id = 6 AND rs.start_time = '15:00' THEN 'PRACTICAL'
-            WHEN rs.course_id = 7 AND rs.start_time = '09:00' THEN 'LECTURE'
-            WHEN rs.course_id = 7 AND rs.start_time = '07:00' THEN 'PRACTICAL'
+            WHEN rs.course_id = 7 AND rs.day_of_week = 2 AND rs.start_time = '09:00' THEN 'LECTURE'
+            WHEN rs.course_id = 7 AND rs.day_of_week = 5 AND rs.start_time = '09:00' THEN 'PRACTICAL'
             WHEN rs.course_id = 8 AND rs.start_time = '13:00' THEN 'LECTURE'
             WHEN rs.course_id = 8 AND rs.start_time = '15:00' THEN 'PRACTICAL'
             WHEN rs.course_id = 9 AND rs.start_time = '07:00' THEN 'LECTURE'

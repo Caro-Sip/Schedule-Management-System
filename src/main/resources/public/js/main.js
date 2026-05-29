@@ -862,6 +862,16 @@ function bindEvents() {
             const targetView = pendingBooking.view || "class";
             const bookingDay = pendingBooking.day;
             const ignoreId = pendingBooking.eventId || null;
+
+            const professorInput = bookingProfessor ? bookingProfessor.value.trim() : "";
+            const selectedTeacherId = bookingProfessor?.dataset.teacherId || pendingBooking.teacherId || "";
+            const teacherCatalog = getBookingTeachers();
+            const selectedTeacher =
+                teacherCatalog.find((teacher) => String(teacher.id) === String(selectedTeacherId)) ||
+                resolveTeacherFromInput(professorInput, teacherCatalog);
+            const teacherId = selectedTeacher ? selectedTeacher.id : null;
+            const professorLabel = selectedTeacher ? selectedTeacher.name || professorInput : professorInput;
+
             const activeClassId = getSelectedClassId();
             const roomSelectedClassId =
                 bookingClassInput?.dataset.classId ||
@@ -871,7 +881,7 @@ function bindEvents() {
             const classId =
                 targetView === "class"
                     ? pendingBooking.classId || pendingBooking.classIds?.[0] || activeClassId || null
-                    : targetView === "room"
+                    : (targetView === "room" || targetView === "teacher")
                         ? roomSelectedClassId || pendingBooking.classId || pendingBooking.classIds?.[0] || null
                         : null;
             let classroomId = targetView === "room" ? pendingBooking.roomId : null;
@@ -879,7 +889,7 @@ function bindEvents() {
 
             const roomCatalog = getBookingClassrooms();
 
-            if (targetView === "class") {
+            if (targetView === "class" || targetView === "teacher") {
                 const availableRooms = getAvailableRoomsForBooking(
                     bookingDay,
                     startMinutes,
@@ -906,11 +916,11 @@ function bindEvents() {
                 roomLabel = selectedRoom ? getRoomDisplayLabel(selectedRoom) : roomLabel;
             }
 
-            if (targetView === "class" && isAdminRole(state.role) && !classId) {
+            if ((targetView === "class" || targetView === "teacher") && isAdminRole(state.role) && !classId) {
                 alert("Select a class first.");
                 return;
             }
-            if (targetView === "class" && !classroomId) {
+            if ((targetView === "class" || targetView === "teacher") && !classroomId) {
                 alert("Select a room first.");
                 return;
             }
@@ -929,11 +939,12 @@ function bindEvents() {
                 endMinutes,
                 ignoreId,
                 classId,
-                classroomId
+                classroomId,
+                teacherId
             );
 
             const roomConflict =
-                targetView === "class" && classroomId
+                (targetView === "class" || targetView === "teacher") && classroomId
                     ? getRoomBookingConflict(bookingDay, startMinutes, endMinutes, ignoreId, classroomId)
                     : null;
 
@@ -951,14 +962,6 @@ function bindEvents() {
             }
 
             const subjectInput = bookingSubject ? bookingSubject.value.trim() : "";
-            const professorInput = bookingProfessor ? bookingProfessor.value.trim() : "";
-            const selectedTeacherId = bookingProfessor?.dataset.teacherId || pendingBooking.teacherId || "";
-            const teacherCatalog = getBookingTeachers();
-            const selectedTeacher =
-                teacherCatalog.find((teacher) => String(teacher.id) === String(selectedTeacherId)) ||
-                resolveTeacherFromInput(professorInput, teacherCatalog);
-            const teacherId = selectedTeacher ? selectedTeacher.id : null;
-            const professorLabel = selectedTeacher ? selectedTeacher.name || professorInput : professorInput;
             const selectedCourseId = bookingSubject?.dataset.courseId || pendingBooking.courseId || "";
             const courseCatalog = courseDirectory || [];
             const selectedCourse =

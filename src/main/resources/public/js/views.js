@@ -99,6 +99,10 @@ function setView(view) {
     state.userScheduleOrigin = null;
   }
 
+  if (view !== "class") {
+    state.selectedClassId = null;
+  }
+
   state.view = view;
   tabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.view === view));
   updateFilterGroup();

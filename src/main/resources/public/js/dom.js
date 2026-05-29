@@ -413,6 +413,10 @@ function selectClass(classId) {
 }
 
 function getSelectedClassId() {
+  if (state.view !== "class") {
+    return null;
+  }
+
   if (Number.isFinite(state.selectedClassId)) {
     return state.selectedClassId;
   }

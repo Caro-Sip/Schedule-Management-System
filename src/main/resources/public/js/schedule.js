@@ -941,7 +941,33 @@ function renderBookingSubjectOptions() {
   }
 
   const query = normalizeRoomText(bookingSubject.value);
-  const courses = courseDirectory || [];
+  const pendingClassIds = Array.isArray(pendingBooking.classIds) && pendingBooking.classIds.length > 0
+    ? pendingBooking.classIds
+    : state.selectedClassId
+      ? [state.selectedClassId]
+      : [];
+  const allowedCourseIds = pendingClassIds.length > 0
+    ? pendingClassIds.reduce((intersection, classId, index) => {
+        const classCourses = new Set(
+          getClassCourses(classId).map((course) => Number(course.id)).filter((value) => Number.isFinite(value))
+        );
+        if (index === 0) {
+          return classCourses;
+        }
+        return new Set(Array.from(intersection).filter((courseId) => classCourses.has(courseId)));
+      }, new Set())
+    : null;
+  const courses = (courseDirectory || []).filter((course) => {
+    if (!allowedCourseIds) {
+      return true;
+    }
+
+    if (allowedCourseIds.size === 0) {
+      return false;
+    }
+
+    return allowedCourseIds.has(Number(course.id));
+  });
   const filteredCourses = courses.filter((course) => {
     if (!query) {
       return true;

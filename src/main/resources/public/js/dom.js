@@ -150,41 +150,27 @@ function getClassCourses(classId) {
     return [];
   }
 
-  const seenCourseIds = new Set();
-  const courseIds = [];
+  const classItem = (classDirectory || []).find((item) => Number(item.id) === targetClassId);
+  const courseIds = Array.isArray(classItem?.courseIds) && classItem.courseIds.length > 0
+    ? classItem.courseIds.map((value) => Number(value)).filter((value) => Number.isFinite(value))
+    : Array.isArray(classItem?.courses)
+      ? classItem.courses.map((course) => Number(course.id)).filter((value) => Number.isFinite(value))
+      : [];
+  const courses = Array.isArray(classItem?.courses) && classItem.courses.length > 0
+    ? classItem.courses
+    : courseIds
+      .map((courseId) => (courseDirectory || []).find((course) => Number(course.id) === courseId))
+      .filter(Boolean);
 
-  (eventsByView.class || []).forEach((eventItem) => {
-    const eventClassIds = Array.isArray(eventItem.classIds) && eventItem.classIds.length > 0
-      ? eventItem.classIds.map((value) => Number(value)).filter((value) => Number.isFinite(value))
-      : Number.isFinite(Number(eventItem.classId))
-        ? [Number(eventItem.classId)]
-        : [];
-
-    if (!eventClassIds.includes(targetClassId)) {
-      return;
+  return courses.sort((a, b) => {
+    const nameCompare = (a.name || a.code || String(a.id)).localeCompare(
+      b.name || b.code || String(b.id)
+    );
+    if (nameCompare !== 0) {
+      return nameCompare;
     }
-
-    const courseId = Number(eventItem.courseId);
-    if (!Number.isFinite(courseId) || seenCourseIds.has(courseId)) {
-      return;
-    }
-
-    seenCourseIds.add(courseId);
-    courseIds.push(courseId);
+    return String(a.id).localeCompare(String(b.id));
   });
-
-  return courseIds
-    .map((courseId) => (courseDirectory || []).find((course) => Number(course.id) === courseId))
-    .filter(Boolean)
-    .sort((a, b) => {
-      const nameCompare = (a.name || a.code || String(a.id)).localeCompare(
-        b.name || b.code || String(b.id)
-      );
-      if (nameCompare !== 0) {
-        return nameCompare;
-      }
-      return String(a.id).localeCompare(String(b.id));
-    });
 }
 
 function clearCourseForm() {
@@ -240,8 +226,9 @@ function renderCourseModalList() {
   );
 
   if (courseModalClassLabel) {
+    const linkedCourseCount = getClassCourses(courseModalClassId).length;
     courseModalClassLabel.textContent = classItem
-      ? `${classItem.name || `Class ${classItem.id}`} · ID ${classItem.id}`
+      ? `${classItem.name || `Class ${classItem.id}`} · ID ${classItem.id} · ${linkedCourseCount} linked course${linkedCourseCount === 1 ? "" : "s"}`
       : "";
   }
 
@@ -274,13 +261,17 @@ function renderCourseModalList() {
   }
 
   courses.forEach((course) => {
-    const item = document.createElement("button");
-    item.type = "button";
+    const item = document.createElement("div");
     item.className = "course-modal-item";
     item.dataset.courseId = String(course.id);
+    item.setAttribute("role", "button");
+    item.tabIndex = 0;
     if (String(editingCourseId) === String(course.id)) {
       item.classList.add("selected");
     }
+
+    const itemMain = document.createElement("div");
+    itemMain.className = "course-modal-item-main";
 
     const title = document.createElement("strong");
     title.textContent = getCourseDisplayLabel(course);
@@ -290,10 +281,41 @@ function renderCourseModalList() {
       ? `ID ${course.id} · ${course.totalHours || 0} hours · In this class`
       : `ID ${course.id} · ${course.totalHours || 0} hours · Catalog only`;
 
-    item.appendChild(title);
-    item.appendChild(meta);
+    const actions = document.createElement("div");
+    actions.className = "course-modal-item-actions";
+
+    const toggleButton = document.createElement("button");
+    toggleButton.type = "button";
+    toggleButton.className = "btn btn-ghost course-link-toggle";
+    toggleButton.textContent = linkedCourseIds.has(Number(course.id)) ? "Remove" : "Add";
+    toggleButton.addEventListener("click", async (event) => {
+      event.stopPropagation();
+      try {
+        if (linkedCourseIds.has(Number(course.id))) {
+          await removeCourseFromClassApi(courseModalClassId, course.id);
+        } else {
+          await addCourseToClassApi(courseModalClassId, course.id);
+        }
+        await loadClasses();
+      } catch (error) {
+        alert(error?.message || "Failed to update class courses.");
+      }
+    });
+
+    itemMain.appendChild(title);
+    itemMain.appendChild(meta);
+    actions.appendChild(toggleButton);
+
+    item.appendChild(itemMain);
+    item.appendChild(actions);
     item.addEventListener("click", () => {
       selectCourseForEdit(course);
+    });
+    item.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        selectCourseForEdit(course);
+      }
     });
 
     courseList.appendChild(item);
@@ -662,6 +684,16 @@ function renderClassList() {
     dateRangeTag.textContent = start && end ? `${formatDate(start)} — ${formatDate(end)}` : "";
     tags.appendChild(dateRangeTag);
 
+    const courseCountTag = document.createElement("span");
+    courseCountTag.className = "tag course-count";
+    const courseCount = Array.isArray(classItem.courseIds)
+      ? classItem.courseIds.length
+      : Number(classItem.courseCount || 0);
+    courseCountTag.textContent = courseCount === 0
+      ? "No courses"
+      : `${courseCount} course${courseCount === 1 ? "" : "s"}`;
+    tags.appendChild(courseCountTag);
+
     const modified = document.createElement("div");
     modified.className = "user-modified class-meta";
 
@@ -686,7 +718,7 @@ function renderClassList() {
     const courseButton = document.createElement("button");
     courseButton.type = "button";
     courseButton.className = "btn btn-ghost class-course";
-    courseButton.textContent = "Course";
+    courseButton.textContent = "Courses";
     courseButton.dataset.classId = classItem.id;
     courseButton.addEventListener("click", (event) => {
       event.stopPropagation();

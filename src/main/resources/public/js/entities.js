@@ -188,6 +188,12 @@ async function getCurrentUserApi() {
 
 function normalizeClassPayload(payload) {
 	const timestamp = new Date().toISOString();
+	const rawCourses = Array.isArray(payload.courses) ? payload.courses : [];
+	const courses = rawCourses.map((course) => normalizeCoursePayload(course)).filter(Boolean);
+	const rawCourseIds = payload.courseIds || payload.course_ids;
+	const courseIds = Array.isArray(rawCourseIds)
+		? rawCourseIds.map((value) => Number(value)).filter((value) => Number.isFinite(value))
+		: courses.map((course) => Number(course.id)).filter((value) => Number.isFinite(value));
 	return {
 		id: Number(payload.id),
 		name: payload.name || "",
@@ -196,6 +202,11 @@ function normalizeClassPayload(payload) {
 		startDate: payload.startDate || payload.start_date || null,
 		endDate: payload.endDate || payload.end_date || null,
 		createdBy: Number(payload.createdBy),
+		courseIds,
+		courses,
+		courseCount: Number.isFinite(Number(payload.courseCount || payload.course_count))
+			? Number(payload.courseCount || payload.course_count)
+			: courseIds.length,
 		lastModified: timestamp,
 	};
 }
@@ -220,6 +231,26 @@ async function loadClasses() {
 			classDirectory.push(normalizeClassPayload(item));
 		});
 
+		await Promise.all(
+			classDirectory.map(async (classItem) => {
+				try {
+					const courses = await requestJson(`${API_BASE}/classes/${classItem.id}/courses`);
+					const normalizedCourses = Array.isArray(courses)
+						? courses.map((course) => normalizeCoursePayload(course)).filter(Boolean)
+						: [];
+					classItem.courses = normalizedCourses;
+					classItem.courseIds = normalizedCourses
+						.map((course) => Number(course.id))
+						.filter((value) => Number.isFinite(value));
+					classItem.courseCount = classItem.courseIds.length;
+				} catch (error) {
+					classItem.courses = Array.isArray(classItem.courses) ? classItem.courses : [];
+					classItem.courseIds = Array.isArray(classItem.courseIds) ? classItem.courseIds : [];
+					classItem.courseCount = classItem.courseIds.length;
+				}
+			})
+		);
+
 		if (
 			state.selectedClassId &&
 			!classDirectory.some((item) => item.id === state.selectedClassId)
@@ -230,6 +261,9 @@ async function loadClasses() {
 
 		renderClassList();
 		renderEvents();
+		if (typeof refreshCourseModal === "function") {
+			refreshCourseModal();
+		}
 	} catch (error) {
 		console.error("Failed to load classes", error);
 	}
@@ -441,6 +475,25 @@ async function createCourseApi(payload) {
 	return requestJson(`${API_BASE}/courses`, {
 		method: "POST",
 		body: JSON.stringify(payload),
+	});
+}
+
+async function addCourseToClassApi(classId, courseId) {
+	return requestJson(`${API_BASE}/classes/${classId}/courses/${courseId}`, {
+		method: "POST",
+	});
+}
+
+async function removeCourseFromClassApi(classId, courseId) {
+	return requestJson(`${API_BASE}/classes/${classId}/courses/${courseId}`, {
+		method: "DELETE",
+	});
+}
+
+async function replaceClassCoursesApi(classId, courseIds) {
+	return requestJson(`${API_BASE}/classes/${classId}/courses`, {
+		method: "PUT",
+		body: JSON.stringify({ courseIds }),
 	});
 }
 

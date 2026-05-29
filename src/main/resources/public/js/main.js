@@ -598,6 +598,7 @@ function bindEvents() {
 
             try {
                 let savedCourse = null;
+                let shouldReloadClasses = false;
                 if (editingCourseId) {
                     savedCourse = await updateCourseApi(editingCourseId, {
                         name,
@@ -610,9 +611,16 @@ function bindEvents() {
                         code,
                         totalHours,
                     });
+                    if (savedCourse?.id && typeof addCourseToClassApi === "function") {
+                        await addCourseToClassApi(courseModalClassId, savedCourse.id);
+                        shouldReloadClasses = true;
+                    }
                 }
 
                 await loadCourses();
+                if (shouldReloadClasses) {
+                    await loadClasses();
+                }
                 if (savedCourse?.id) {
                     const matchedCourse = courseDirectory.find(
                         (course) => String(course.id) === String(savedCourse.id)

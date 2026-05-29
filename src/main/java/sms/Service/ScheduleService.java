@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import sms.DAO.ClassEntityDAO;
+import sms.DAO.ClassCourseDAO;
 import sms.DAO.ClassroomDAO;
 import sms.DAO.CourseDAO;
 import sms.DAO.ScheduleClassDAO;
@@ -27,24 +28,27 @@ public class ScheduleService {
     private final ScheduleDAO scheduleDAO;
     private final ScheduleClassDAO scheduleClassDAO;
     private final ClassEntityDAO classEntityDAO;
+    private final ClassCourseDAO classCourseDAO;
     private final ClassroomDAO classroomDAO;
     private final CourseDAO courseDAO;
     private final TeacherDAO teacherDAO;
 
     public ScheduleService() {
-        this(new ScheduleDAO(), new ScheduleClassDAO(), new ClassEntityDAO(), new ClassroomDAO(), new CourseDAO(), new TeacherDAO());
+        this(new ScheduleDAO(), new ScheduleClassDAO(), new ClassEntityDAO(), new ClassCourseDAO(), new ClassroomDAO(), new CourseDAO(), new TeacherDAO());
     }
 
     public ScheduleService(ScheduleDAO scheduleDAO, ScheduleClassDAO scheduleClassDAO,
             ClassEntityDAO classEntityDAO) {
-        this(scheduleDAO, scheduleClassDAO, classEntityDAO, new ClassroomDAO(), new CourseDAO(), new TeacherDAO());
+        this(scheduleDAO, scheduleClassDAO, classEntityDAO, new ClassCourseDAO(), new ClassroomDAO(), new CourseDAO(), new TeacherDAO());
     }
 
     public ScheduleService(ScheduleDAO scheduleDAO, ScheduleClassDAO scheduleClassDAO,
-            ClassEntityDAO classEntityDAO, ClassroomDAO classroomDAO, CourseDAO courseDAO, TeacherDAO teacherDAO) {
+            ClassEntityDAO classEntityDAO, ClassCourseDAO classCourseDAO, ClassroomDAO classroomDAO, CourseDAO courseDAO,
+            TeacherDAO teacherDAO) {
         this.scheduleDAO = scheduleDAO;
         this.scheduleClassDAO = scheduleClassDAO;
         this.classEntityDAO = classEntityDAO;
+        this.classCourseDAO = classCourseDAO;
         this.classroomDAO = classroomDAO;
         this.courseDAO = courseDAO;
         this.teacherDAO = teacherDAO;
@@ -863,6 +867,10 @@ public class ScheduleService {
         for (int classId : classIds) {
             if (!classEntityDAO.classExists(classId)) {
                 throw new IllegalArgumentException("Class not found with id: " + classId);
+            }
+
+            if (!classCourseDAO.classHasCourse(classId, courseId)) {
+                throw new IllegalArgumentException("Course not assigned to class with id: " + classId);
             }
         }
     }

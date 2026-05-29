@@ -2,24 +2,37 @@ package sms.Service;
 
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 
 import sms.DAO.ClassEntityDAO;
+import sms.DAO.ClassCourseDAO;
+import sms.DAO.CourseDAO;
 import sms.Objects.ClassEntity;
+import sms.Objects.Course;
 import sms.Objects.TimeSlot;
 import sms.exception.ClassNotFoundException;
 import sms.exception.InvalidClassException;
 
 public class ClassService {
     private final ClassEntityDAO classEntityDAO;
+    private final ClassCourseDAO classCourseDAO;
+    private final CourseDAO courseDAO;
 
     public ClassService() {
-        this(new ClassEntityDAO());
+        this(new ClassEntityDAO(), new ClassCourseDAO(), new CourseDAO());
     }
 
     public ClassService(ClassEntityDAO classEntityDAO){
+        this(classEntityDAO, new ClassCourseDAO(), new CourseDAO());
+    }
+
+    public ClassService(ClassEntityDAO classEntityDAO, ClassCourseDAO classCourseDAO, CourseDAO courseDAO){
         this.classEntityDAO = classEntityDAO;
+        this.classCourseDAO = classCourseDAO;
+        this.courseDAO = courseDAO;
     }
 
     public ClassEntity createClass(String name, int year, int semester,
@@ -90,6 +103,100 @@ public class ClassService {
             return classes;
         } catch (SQLException e){
             throw new RuntimeException("Failed to get data from class table");
+        }
+    }
+
+    public List<Course> getCoursesForClass(int classId) throws ClassNotFoundException {
+        if (classId <= 0) {
+            throw new IllegalArgumentException("Invalid class id");
+        }
+
+        try {
+            if (!classEntityDAO.classExists(classId)) {
+                throw new ClassNotFoundException("Class not found with id:" + classId);
+            }
+
+            return classCourseDAO.getCoursesByClassId(classId);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to get courses for class", e);
+        }
+    }
+
+    public List<Integer> getCourseIdsForClass(int classId) throws ClassNotFoundException {
+        if (classId <= 0) {
+            throw new IllegalArgumentException("Invalid class id");
+        }
+
+        try {
+            if (!classEntityDAO.classExists(classId)) {
+                throw new ClassNotFoundException("Class not found with id:" + classId);
+            }
+
+            return classCourseDAO.getCourseIdsByClassId(classId);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to get course ids for class", e);
+        }
+    }
+
+    public void setCoursesForClass(int classId, List<Integer> courseIds) throws ClassNotFoundException {
+        if (classId <= 0) {
+            throw new IllegalArgumentException("Invalid class id");
+        }
+
+        try {
+            if (!classEntityDAO.classExists(classId)) {
+                throw new ClassNotFoundException("Class not found with id:" + classId);
+            }
+
+            List<Integer> normalizedCourseIds = normalizeCourseIds(courseIds);
+            validateCoursesExist(normalizedCourseIds);
+            classCourseDAO.replaceCoursesForClass(classId, normalizedCourseIds);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to set courses for class", e);
+        }
+    }
+
+    public void addCourseToClass(int classId, int courseId) throws ClassNotFoundException {
+        if (classId <= 0) {
+            throw new IllegalArgumentException("Invalid class id");
+        }
+
+        if (courseId <= 0) {
+            throw new IllegalArgumentException("Invalid course id");
+        }
+
+        try {
+            if (!classEntityDAO.classExists(classId)) {
+                throw new ClassNotFoundException("Class not found with id:" + classId);
+            }
+
+            if (!courseDAO.courseExists(courseId)) {
+                throw new IllegalArgumentException("Course not found with id: " + courseId);
+            }
+
+            classCourseDAO.addCourseToClass(classId, courseId);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to add course to class", e);
+        }
+    }
+
+    public void removeCourseFromClass(int classId, int courseId) throws ClassNotFoundException {
+        if (classId <= 0) {
+            throw new IllegalArgumentException("Invalid class id");
+        }
+
+        if (courseId <= 0) {
+            throw new IllegalArgumentException("Invalid course id");
+        }
+
+        try {
+            if (!classEntityDAO.classExists(classId)) {
+                throw new ClassNotFoundException("Class not found with id:" + classId);
+            }
+
+            classCourseDAO.removeCourseFromClass(classId, courseId);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to remove course from class", e);
         }
     }
 
@@ -194,6 +301,42 @@ public class ClassService {
             classEntityDAO.cancelSchedulesForClass(classId);
         } catch (SQLException e) {
             throw new RuntimeException("Failed to cancel class", e);
+        }
+    }
+
+    public boolean classHasCourse(int classId, int courseId) {
+        if (classId <= 0 || courseId <= 0) {
+            return false;
+        }
+
+        try {
+            return classCourseDAO.classHasCourse(classId, courseId);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to verify class course relationship", e);
+        }
+    }
+
+    private List<Integer> normalizeCourseIds(List<Integer> courseIds) {
+        List<Integer> normalized = new ArrayList<>();
+        if (courseIds == null) {
+            return normalized;
+        }
+
+        for (Integer courseId : new LinkedHashSet<>(courseIds)) {
+            if (courseId == null || courseId <= 0) {
+                throw new IllegalArgumentException("Invalid course id");
+            }
+            normalized.add(courseId);
+        }
+
+        return normalized;
+    }
+
+    private void validateCoursesExist(List<Integer> courseIds) throws SQLException {
+        for (int courseId : courseIds) {
+            if (!courseDAO.courseExists(courseId)) {
+                throw new IllegalArgumentException("Course not found with id: " + courseId);
+            }
         }
     }
 }

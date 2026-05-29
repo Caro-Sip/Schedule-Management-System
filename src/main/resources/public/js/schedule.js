@@ -89,7 +89,7 @@ function syncPendingBookingClassSelection() {
 }
 
 function renderBookingClassSelection() {
-  if (!bookingClassSelection || !bookingClassInput || !pendingBooking || state.view !== "room") {
+  if (!bookingClassSelection || !bookingClassInput || !pendingBooking || (state.view !== "room" && state.view !== "teacher")) {
     return;
   }
 
@@ -170,7 +170,13 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
     ? eventData.classId || attachedClassIds[0] || activeClassId || null
     : activeClassId || null;
   const defaultTeacherId =
-    !isEdit && isTeacherRole(state.role) ? state.currentTeacherId || null : null;
+    !isEdit
+      ? state.view === "teacher" && state.selectedTeacherId
+        ? state.selectedTeacherId
+        : isTeacherRole(state.role)
+          ? state.currentTeacherId || null
+          : null
+      : null;
   const defaultCourseId =
     !isEdit && isTeacherRole(state.role) ? state.defaultCourseId || null : null;
 
@@ -227,7 +233,7 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
     }
   }
   if (bookingRoomGroup && bookingRoomInput) {
-    const showRoomPicker = state.view === "class";
+    const showRoomPicker = state.view === "class" || state.view === "teacher";
     bookingRoomGroup.toggleAttribute("hidden", !showRoomPicker);
     bookingRoomInput.required = showRoomPicker;
     if (showRoomPicker) {
@@ -249,7 +255,7 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
     }
   }
   if (bookingClassGroup && bookingClassInput) {
-    const showClassPicker = state.view === "room";
+    const showClassPicker = state.view === "room" || state.view === "teacher";
     bookingClassGroup.toggleAttribute("hidden", !showClassPicker);
     if (showClassPicker) {
       const classCatalog = getBookingClasses();
@@ -262,6 +268,7 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
       }
       renderBookingClassSelection();
     } else {
+      bookingClassInput.required = false;
       bookingClassInput.value = "";
       bookingClassInput.dataset.classId = "";
       if (bookingClassResults) {
@@ -275,6 +282,12 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
     }
   }
   if (bookingProfessor) {
+    const showProfessorPicker = state.view !== "teacher";
+    if (bookingProfessorGroup) {
+      bookingProfessorGroup.toggleAttribute("hidden", !showProfessorPicker);
+    }
+    bookingProfessor.required = showProfessorPicker;
+
     const teacherCatalog = getBookingTeachers();
     const teacherItem = teacherCatalog.find(
       (teacher) => String(teacher.id) === String(pendingBooking.teacherId)
@@ -642,7 +655,7 @@ function ensureEventIds(view) {
   });
 }
 
-function getBookingConflict(view, day, startMinutes, endMinutes, ignoreId, classId, roomId) {
+function getBookingConflict(view, day, startMinutes, endMinutes, ignoreId, classId, roomId, teacherId) {
   const items = eventsByView[view] || [];
   return (
     items.find((eventItem) => {
@@ -656,6 +669,9 @@ function getBookingConflict(view, day, startMinutes, endMinutes, ignoreId, class
         return false;
       }
       if (view === "room" && roomId && eventItem.roomId !== roomId) {
+        return false;
+      }
+      if (view === "teacher" && teacherId && String(eventItem.teacherId) !== String(teacherId)) {
         return false;
       }
       const eventStart = parseTimeInput(eventItem.start);
@@ -704,7 +720,7 @@ function renderBookingClassOptions() {
     !bookingClassInput ||
     !bookingClassResults ||
     !pendingBooking ||
-    state.view !== "room"
+    (state.view !== "room" && state.view !== "teacher")
   ) {
     return;
   }
@@ -767,9 +783,7 @@ function renderBookingClassOptions() {
 
       pendingBooking.classIds = currentClassIds;
       syncPendingBookingClassSelection();
-      bookingClassInput.value = pendingBooking.classId
-        ? getClassDisplayLabel(classCatalog.find((item) => String(item.id) === String(pendingBooking.classId)))
-        : "";
+      bookingClassInput.value = "";
       bookingClassInput.dataset.classId = pendingBooking.classId ? String(pendingBooking.classId) : "";
       renderBookingClassSelection();
       bookingClassResults.setAttribute("hidden", "");
@@ -1015,7 +1029,7 @@ function renderBookingRoomOptions() {
     !bookingRoomInput ||
     !bookingRoomResults ||
     !pendingBooking ||
-    state.view !== "class"
+    (state.view !== "class" && state.view !== "teacher")
   ) {
     return;
   }

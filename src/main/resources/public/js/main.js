@@ -1113,6 +1113,7 @@ function bindEvents() {
     if (bookingClassInput) {
         bookingClassInput.addEventListener("input", () => {
             renderBookingClassOptions();
+            renderBookingSubjectOptions();
         });
         bookingClassInput.addEventListener("focus", renderBookingClassOptions);
     }
@@ -1156,6 +1157,7 @@ function bindEvents() {
                 pendingBooking.startMinutes = parseTimeInput(bookingStart.value);
             }
             renderBookingRoomOptions();
+            renderBookingClassOptions();
         });
     }
 
@@ -1165,6 +1167,7 @@ function bindEvents() {
                 pendingBooking.endMinutes = parseTimeInput(bookingEnd.value);
             }
             renderBookingRoomOptions();
+            renderBookingClassOptions();
         });
     }
 

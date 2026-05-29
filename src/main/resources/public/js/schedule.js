@@ -318,6 +318,7 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
       bookingSubjectResults.setAttribute("hidden", "");
       bookingSubjectResults.innerHTML = "";
     }
+    renderBookingSubjectOptions();
   }
   if (bookingType) {
     bookingType.value = resolveSelectValue(
@@ -743,6 +744,51 @@ function getAvailableRoomsForBooking(day, bookingDate, startMinutes, endMinutes,
   );
 }
 
+function getEventClassIds(eventItem) {
+  if (Array.isArray(eventItem?.classIds) && eventItem.classIds.length > 0) {
+    return eventItem.classIds;
+  }
+
+  return eventItem?.classId != null ? [eventItem.classId] : [];
+}
+
+function getClassBookingConflict(day, bookingDate, startMinutes, endMinutes, ignoreId, classId) {
+  const items = eventsByView.class || [];
+  return (
+    items.find((eventItem) => {
+      if (!classId) {
+        return false;
+      }
+      if (ignoreId && eventItem.id === ignoreId) {
+        return false;
+      }
+      if (eventItem.day !== day) {
+        return false;
+      }
+      if (bookingDate && normalizeBookingDateKey(eventItem.date) !== normalizeBookingDateKey(bookingDate)) {
+        return false;
+      }
+      const eventClassIds = getEventClassIds(eventItem);
+      if (!eventClassIds.some((eventClassId) => String(eventClassId) === String(classId))) {
+        return false;
+      }
+      const eventStart = parseTimeInput(eventItem.start);
+      const eventEnd = parseTimeInput(eventItem.end);
+      if (eventStart === null || eventEnd === null) {
+        return false;
+      }
+      return startMinutes < eventEnd && endMinutes > eventStart;
+    }) || null
+  );
+}
+
+function getAvailableClassesForBooking(day, bookingDate, startMinutes, endMinutes, ignoreId) {
+  const classCatalog = getBookingClasses();
+  return classCatalog.filter(
+    (classItem) => !getClassBookingConflict(day, bookingDate, startMinutes, endMinutes, ignoreId, classItem.id)
+  );
+}
+
 function renderBookingClassOptions() {
   if (
     !bookingClassGroup ||
@@ -755,7 +801,18 @@ function renderBookingClassOptions() {
   }
 
   const query = normalizeClassText(bookingClassInput.value);
-  const classCatalog = getBookingClasses();
+  const startMinutes = parseTimeInput(bookingStart?.value || "");
+  const endMinutes = parseTimeInput(bookingEnd?.value || "");
+  const hasValidTimes =
+    startMinutes !== null && endMinutes !== null && endMinutes > startMinutes;
+  const bookingDate = pendingBooking.date || (() => {
+    const base = startOfWeek(new Date());
+    base.setDate(base.getDate() + state.weekOffset * 7 + pendingBooking.day);
+    return `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, "0")}-${String(base.getDate()).padStart(2, "0")}`;
+  })();
+  const classCatalog = hasValidTimes
+    ? getAvailableClassesForBooking(pendingBooking.day, bookingDate, startMinutes, endMinutes, pendingBooking.eventId)
+    : getBookingClasses();
   const filteredClasses = classCatalog.filter((classItem) => {
     if (!query) {
       return true;
@@ -771,7 +828,7 @@ function renderBookingClassOptions() {
   if (filteredClasses.length === 0) {
     const empty = document.createElement("div");
     empty.className = "room-picker-empty";
-    empty.textContent = query ? "No classes match." : "No classes available.";
+    empty.textContent = query ? "No classes match." : hasValidTimes ? "No classes available at this time." : "No classes available.";
     bookingClassResults.appendChild(empty);
     bookingClassResults.removeAttribute("hidden");
     return;
@@ -815,6 +872,7 @@ function renderBookingClassOptions() {
       bookingClassInput.value = "";
       bookingClassInput.dataset.classId = pendingBooking.classId ? String(pendingBooking.classId) : "";
       renderBookingClassSelection();
+      renderBookingSubjectOptions();
       bookingClassResults.setAttribute("hidden", "");
     });
 
@@ -975,6 +1033,7 @@ function renderBookingSubjectOptions() {
     : state.selectedClassId
       ? [state.selectedClassId]
       : [];
+  const requiresClassSelection = state.view === "room" || state.view === "teacher";
   const allowedCourseIds = pendingClassIds.length > 0
     ? pendingClassIds.reduce((intersection, classId, index) => {
         const classCourses = new Set(
@@ -985,7 +1044,9 @@ function renderBookingSubjectOptions() {
         }
         return new Set(Array.from(intersection).filter((courseId) => classCourses.has(courseId)));
       }, new Set())
-    : null;
+    : requiresClassSelection
+      ? new Set()
+      : null;
   const courses = (courseDirectory || []).filter((course) => {
     if (!allowedCourseIds) {
       return true;

@@ -281,6 +281,25 @@ function bindEvents() {
     });
   }
 
+    // Toggle department field visibility when role changes
+    if (userRoleInput) {
+        userRoleInput.addEventListener("change", () => {
+            const departmentField = document.getElementById("department-field");
+            const isProfessor = userRoleInput.value === "professor";
+            if (departmentField) {
+                departmentField.toggleAttribute("hidden", !isProfessor);
+            }
+            if (userDepartmentInput) {
+                if (isProfessor) {
+                    userDepartmentInput.setAttribute("required", "");
+                } else {
+                    userDepartmentInput.removeAttribute("required");
+                    userDepartmentInput.value = "";
+                }
+            }
+        });
+    }
+
     if (userForm) {
         userForm.addEventListener("submit", async (event) => {
             event.preventDefault();
@@ -288,8 +307,7 @@ function bindEvents() {
                 !userNameInput ||
                 !userEmailInput ||
                 !userPasswordInput ||
-                !userRoleInput ||
-                !userDepartmentInput
+                !userRoleInput
             ) {
                 return;
             }
@@ -298,7 +316,6 @@ function bindEvents() {
             const email = userEmailInput.value.trim();
             const password = userPasswordInput.value.trim();
             const role = userRoleInput.value;
-            const department = userDepartmentInput.value;
 
             if (!name) {
                 alert("Name is required.");
@@ -319,8 +336,12 @@ function bindEvents() {
                 name,
                 email,
                 role,
-                department,
             };
+
+            // Only include department for professors
+            if (role === "professor" && userDepartmentInput) {
+                payload.department = userDepartmentInput.value;
+            }
 
             if (password) {
                 payload.password = password;

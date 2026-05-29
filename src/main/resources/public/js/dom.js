@@ -59,14 +59,26 @@ function openUserModal(mode, user) {
       "admin"
     );
   }
+
+  const departmentField = document.getElementById("department-field");
+  const isProfessor = userRoleInput && userRoleInput.value === "professor";
+  if (departmentField) {
+    departmentField.toggleAttribute("hidden", !isProfessor);
+  }
   if (userDepartmentInput) {
-    userDepartmentInput.value = resolveSelectValue(
-      userDepartmentInput,
-      user?.department,
-      teacherDepartmentDirectory && teacherDepartmentDirectory.length > 0
-        ? teacherDepartmentDirectory[0]
-        : "Registrar"
-    );
+    if (isProfessor) {
+      userDepartmentInput.setAttribute("required", "");
+      userDepartmentInput.value = resolveSelectValue(
+        userDepartmentInput,
+        user?.department,
+        teacherDepartmentDirectory && teacherDepartmentDirectory.length > 0
+          ? teacherDepartmentDirectory[0]
+          : "Registrar"
+      );
+    } else {
+      userDepartmentInput.removeAttribute("required");
+      userDepartmentInput.value = "";
+    }
   }
 
   if (userDeleteBtn) {

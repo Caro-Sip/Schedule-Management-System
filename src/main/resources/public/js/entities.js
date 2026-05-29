@@ -273,6 +273,13 @@ function updateDepartmentSelectOptions(selectEl, departments, includeAllOption =
 		option.value = "";
 		option.textContent = "All departments";
 		selectEl.appendChild(option);
+	} else {
+		const placeholder = document.createElement("option");
+		placeholder.value = "";
+		placeholder.textContent = "Select a department";
+		placeholder.disabled = true;
+		placeholder.selected = true;
+		selectEl.appendChild(placeholder);
 	}
 
 	departments.forEach((department) => {
@@ -282,7 +289,7 @@ function updateDepartmentSelectOptions(selectEl, departments, includeAllOption =
 		selectEl.appendChild(option);
 	});
 
-	const fallbackValue = includeAllOption ? "" : departments[0] || "";
+	const fallbackValue = "";
 	selectEl.value = resolveSelectValue(selectEl, previousValue, fallbackValue);
 }
 

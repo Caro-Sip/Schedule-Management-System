@@ -327,6 +327,12 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
     );
   }
 
+  if (bookingRecurringGroup && bookingRecurring) {
+    const showRecurring = state.view === "class" && isAdminRole(state.role) && !isEdit;
+    bookingRecurringGroup.toggleAttribute("hidden", !showRecurring);
+    bookingRecurring.checked = false;
+  }
+
   if (bookingDelete) {
     bookingDelete.toggleAttribute("hidden", !isEdit);
   }
@@ -380,6 +386,10 @@ function closeBookingModal() {
   if (bookingSubjectResults) {
     bookingSubjectResults.setAttribute("hidden", "");
     bookingSubjectResults.innerHTML = "";
+  }
+  if (bookingRecurringGroup && bookingRecurring) {
+    bookingRecurringGroup.setAttribute("hidden", "");
+    bookingRecurring.checked = false;
   }
   pendingBooking = null;
 }
@@ -655,7 +665,20 @@ function ensureEventIds(view) {
   });
 }
 
-function getBookingConflict(view, day, startMinutes, endMinutes, ignoreId, classId, roomId, teacherId) {
+function normalizeBookingDateKey(value) {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return String(value).trim();
+  }
+
+  return date.toISOString().slice(0, 10);
+}
+
+function getBookingConflict(view, day, bookingDate, startMinutes, endMinutes, ignoreId, classId, roomId, teacherId) {
   const items = eventsByView[view] || [];
   return (
     items.find((eventItem) => {
@@ -663,6 +686,9 @@ function getBookingConflict(view, day, startMinutes, endMinutes, ignoreId, class
         return false;
       }
       if (eventItem.day !== day) {
+        return false;
+      }
+      if (bookingDate && normalizeBookingDateKey(eventItem.date) !== normalizeBookingDateKey(bookingDate)) {
         return false;
       }
       if (view === "class" && classId && eventItem.classId !== classId) {
@@ -684,7 +710,7 @@ function getBookingConflict(view, day, startMinutes, endMinutes, ignoreId, class
   );
 }
 
-function getRoomBookingConflict(day, startMinutes, endMinutes, ignoreId, roomId) {
+function getRoomBookingConflict(day, bookingDate, startMinutes, endMinutes, ignoreId, roomId) {
   const items = [...(eventsByView.class || []), ...(eventsByView.room || [])];
   return (
     items.find((eventItem) => {
@@ -697,6 +723,9 @@ function getRoomBookingConflict(day, startMinutes, endMinutes, ignoreId, roomId)
       if (eventItem.day !== day) {
         return false;
       }
+      if (bookingDate && normalizeBookingDateKey(eventItem.date) !== normalizeBookingDateKey(bookingDate)) {
+        return false;
+      }
       const eventStart = parseTimeInput(eventItem.start);
       const eventEnd = parseTimeInput(eventItem.end);
       if (eventStart === null || eventEnd === null) {
@@ -707,10 +736,10 @@ function getRoomBookingConflict(day, startMinutes, endMinutes, ignoreId, roomId)
   );
 }
 
-function getAvailableRoomsForBooking(day, startMinutes, endMinutes, ignoreId) {
+function getAvailableRoomsForBooking(day, bookingDate, startMinutes, endMinutes, ignoreId) {
   const roomCatalog = getBookingClassrooms();
   return roomCatalog.filter(
-    (roomItem) => !getRoomBookingConflict(day, startMinutes, endMinutes, ignoreId, roomItem.id)
+    (roomItem) => !getRoomBookingConflict(day, bookingDate, startMinutes, endMinutes, ignoreId, roomItem.id)
   );
 }
 

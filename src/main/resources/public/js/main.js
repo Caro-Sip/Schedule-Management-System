@@ -870,6 +870,11 @@ function bindEvents() {
             const targetView = pendingBooking.view || "class";
             const bookingDay = pendingBooking.day;
             const ignoreId = pendingBooking.eventId || null;
+            const bookingDate = pendingBooking.date || (() => {
+                const base = startOfWeek(new Date());
+                base.setDate(base.getDate() + state.weekOffset * 7 + bookingDay);
+                return `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, "0")}-${String(base.getDate()).padStart(2, "0")}`;
+            })();
 
             const professorInput = bookingProfessor ? bookingProfessor.value.trim() : "";
             const selectedTeacherId = bookingProfessor?.dataset.teacherId || pendingBooking.teacherId || "";
@@ -900,6 +905,7 @@ function bindEvents() {
             if (targetView === "class" || targetView === "teacher") {
                 const availableRooms = getAvailableRoomsForBooking(
                     bookingDay,
+                    bookingDate,
                     startMinutes,
                     endMinutes,
                     ignoreId
@@ -943,6 +949,7 @@ function bindEvents() {
             const conflict = getBookingConflict(
                 targetView,
                 bookingDay,
+                bookingDate,
                 startMinutes,
                 endMinutes,
                 ignoreId,
@@ -953,7 +960,7 @@ function bindEvents() {
 
             const roomConflict =
                 (targetView === "class" || targetView === "teacher") && classroomId
-                    ? getRoomBookingConflict(bookingDay, startMinutes, endMinutes, ignoreId, classroomId)
+                    ? getRoomBookingConflict(bookingDay, bookingDate, startMinutes, endMinutes, ignoreId, classroomId)
                     : null;
 
             if (conflict) {
@@ -981,6 +988,11 @@ function bindEvents() {
             const typeLabel = bookingType
                 ? bookingType.options[bookingType.selectedIndex]?.text || typeValue
                 : "";
+            const recurringEnabled =
+                Boolean(bookingRecurring && bookingRecurring.checked) &&
+                targetView === "class" &&
+                isAdminRole(state.role) &&
+                !pendingBooking.eventId;
 
             const metaParts = [];
             if (professorLabel) {
@@ -1037,6 +1049,7 @@ function bindEvents() {
                             ? [classId]
                             : [],
                     linkedScheduleId: pendingBooking.linkedScheduleId || null,
+                    recurring: recurringEnabled,
                 };
 
                 saveScheduleApi(pendingBooking.eventId, payload)
@@ -1052,15 +1065,11 @@ function bindEvents() {
                 return;
             } else {
                 try {
-                    const base = startOfWeek(new Date());
-                    base.setDate(base.getDate() + state.weekOffset * 7 + bookingDay);
-                    const dateStr = `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, "0")}-${String(base.getDate()).padStart(2, "0")}`;
-
                     const payload = {
                         classroomId,
                         teacherId,
                         courseId,
-                        date: pendingBooking.date || dateStr,
+                        date: bookingDate,
                         startTime: startValue,
                         endTime: endValue,
                         status: pendingBooking.status || "BOOKED",
@@ -1075,6 +1084,7 @@ function bindEvents() {
                                     ? [classId]
                                     : [],
                         linkedScheduleId: pendingBooking.linkedScheduleId || null,
+                        recurring: recurringEnabled,
                     };
 
                     await saveScheduleApi(null, payload);

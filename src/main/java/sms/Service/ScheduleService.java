@@ -16,10 +16,12 @@ import sms.DAO.ClassEntityDAO;
 import sms.DAO.ClassCourseDAO;
 import sms.DAO.ClassroomDAO;
 import sms.DAO.CourseDAO;
+import sms.DAO.RecurringScheduleDAO;
 import sms.DAO.ScheduleClassDAO;
 import sms.DAO.ScheduleDAO;
 import sms.DAO.TeacherDAO;
 import sms.Objects.ClassEntity;
+import sms.Objects.RecurringSchedule;
 import sms.Objects.Schedule;
 import sms.Objects.TimeSlot;
 import sms.exception.ClassNotFoundException;
@@ -41,19 +43,26 @@ public class ScheduleService {
     private final ClassroomDAO classroomDAO;
     private final CourseDAO courseDAO;
     private final TeacherDAO teacherDAO;
+    private final RecurringScheduleDAO recurringScheduleDAO;
 
     public ScheduleService() {
-        this(new ScheduleDAO(), new ScheduleClassDAO(), new ClassEntityDAO(), new ClassCourseDAO(), new ClassroomDAO(), new CourseDAO(), new TeacherDAO());
+        this(new ScheduleDAO(), new ScheduleClassDAO(), new ClassEntityDAO(), new ClassCourseDAO(), new ClassroomDAO(), new CourseDAO(), new TeacherDAO(), new RecurringScheduleDAO());
     }
 
     public ScheduleService(ScheduleDAO scheduleDAO, ScheduleClassDAO scheduleClassDAO,
             ClassEntityDAO classEntityDAO) {
-        this(scheduleDAO, scheduleClassDAO, classEntityDAO, new ClassCourseDAO(), new ClassroomDAO(), new CourseDAO(), new TeacherDAO());
+        this(scheduleDAO, scheduleClassDAO, classEntityDAO, new ClassCourseDAO(), new ClassroomDAO(), new CourseDAO(), new TeacherDAO(), new RecurringScheduleDAO());
     }
 
     public ScheduleService(ScheduleDAO scheduleDAO, ScheduleClassDAO scheduleClassDAO,
             ClassEntityDAO classEntityDAO, ClassCourseDAO classCourseDAO, ClassroomDAO classroomDAO, CourseDAO courseDAO,
             TeacherDAO teacherDAO) {
+        this(scheduleDAO, scheduleClassDAO, classEntityDAO, classCourseDAO, classroomDAO, courseDAO, teacherDAO, new RecurringScheduleDAO());
+    }
+
+    public ScheduleService(ScheduleDAO scheduleDAO, ScheduleClassDAO scheduleClassDAO,
+            ClassEntityDAO classEntityDAO, ClassCourseDAO classCourseDAO, ClassroomDAO classroomDAO, CourseDAO courseDAO,
+            TeacherDAO teacherDAO, RecurringScheduleDAO recurringScheduleDAO) {
         this.scheduleDAO = scheduleDAO;
         this.scheduleClassDAO = scheduleClassDAO;
         this.classEntityDAO = classEntityDAO;
@@ -61,11 +70,19 @@ public class ScheduleService {
         this.classroomDAO = classroomDAO;
         this.courseDAO = courseDAO;
         this.teacherDAO = teacherDAO;
+        this.recurringScheduleDAO = recurringScheduleDAO;
     }
 
     public Schedule createSchedule(int classroomId, Integer teacherId, int courseId, LocalDate date,
             LocalTime startTime, LocalTime endTime, String status, String visibility, String type,
             int priority, int createdBy, List<Integer> classIds, Integer linkedScheduleId) {
+        return createSchedule(classroomId, teacherId, courseId, date, startTime, endTime, status, visibility, type,
+                priority, createdBy, classIds, linkedScheduleId, false);
+    }
+
+    public Schedule createSchedule(int classroomId, Integer teacherId, int courseId, LocalDate date,
+            LocalTime startTime, LocalTime endTime, String status, String visibility, String type,
+            int priority, int createdBy, List<Integer> classIds, Integer linkedScheduleId, boolean recurring) {
         validateScheduleCore(classroomId, teacherId, courseId, date, startTime, endTime, priority, createdBy);
 
         List<Integer> normalizedClassIds = normalizeClassIds(classIds);
@@ -107,6 +124,14 @@ public class ScheduleService {
                         throw new RuntimeException("Failed to link class " + classId + " to schedule");
                     }
                     linkedClassIds.add(classId);
+                }
+
+                if (recurring) {
+                    if (normalizedClassIds.size() != 1) {
+                        throw new IllegalArgumentException("Recurring schedules require exactly one class id");
+                    }
+
+                    createRecurringScheduleInstances(schedule, normalizedClassIds.get(0));
                 }
             } catch (Exception e) {
                 rollbackCreatedSchedule(schedule.getId(), linkedClassIds);
@@ -934,6 +959,74 @@ public class ScheduleService {
             scheduleDAO.deleteSchedule(scheduleId);
         } catch (Exception ignored) {
             // Best-effort rollback only.
+        }
+    }
+
+    private void createRecurringScheduleInstances(Schedule schedule, int classId) throws Exception {
+        if (schedule.getTeacherId() == null) {
+            throw new IllegalArgumentException("Recurring schedules require a teacher");
+        }
+
+        ClassEntity classEntity = classEntityDAO.getById(classId);
+        if (classEntity == null) {
+            throw new ClassNotFoundException("Class not found with id: " + classId);
+        }
+
+        LocalDate classEndDate = LocalDate.parse(classEntity.getEndDate());
+        LocalDate nextDate = schedule.getDate().plusWeeks(1);
+        if (nextDate.isAfter(classEndDate)) {
+            return;
+        }
+
+        List<Integer> recurringScheduleIds = new ArrayList<>();
+        try {
+            while (!nextDate.isAfter(classEndDate)) {
+                Schedule recurringSchedule = new Schedule(
+                        schedule.getClassroomId(),
+                        schedule.getTeacherId(),
+                        schedule.getCourseId(),
+                        nextDate,
+                        schedule.getStartTime(),
+                        schedule.getEndTime(),
+                        schedule.getStatus(),
+                        schedule.getVisibility(),
+                        schedule.getType(),
+                        schedule.getPriority(),
+                        schedule.getCreatedBy());
+                recurringSchedule.setCreatedAt(schedule.getCreatedAt());
+                recurringSchedule.setLinkedScheduleId(schedule.getLinkedScheduleId());
+
+                if (!scheduleDAO.createSchedule(recurringSchedule)) {
+                    throw new RuntimeException("Failed to create recurring schedule on " + nextDate);
+                }
+
+                recurringScheduleIds.add(recurringSchedule.getId());
+
+                if (!scheduleClassDAO.createScheduleClass(recurringSchedule.getId(), classId)) {
+                    throw new RuntimeException("Failed to link recurring class " + classId + " to schedule");
+                }
+
+                nextDate = nextDate.plusWeeks(1);
+            }
+
+            RecurringSchedule recurringRule = new RecurringSchedule(
+                    schedule.getTeacherId(),
+                    schedule.getClassroomId(),
+                    schedule.getCourseId(),
+                    schedule.getDate().getDayOfWeek().getValue() - 1,
+                    schedule.getStartTime(),
+                    schedule.getEndTime(),
+                    schedule.getDate().plusWeeks(1),
+                    classEndDate);
+
+            if (!recurringScheduleDAO.createSchedule(recurringRule)) {
+                throw new RuntimeException("Failed to create recurring schedule rule");
+            }
+        } catch (Exception e) {
+            for (int recurringScheduleId : recurringScheduleIds) {
+                rollbackCreatedSchedule(recurringScheduleId, List.of(classId));
+            }
+            throw e;
         }
     }
 

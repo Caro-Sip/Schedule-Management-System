@@ -16,27 +16,33 @@ public class RecurringScheduleDAO {
     }
 
     public boolean createSchedule(RecurringSchedule recurringSchedule) throws SQLException {
-        String sql = "INSERT INTO recurring_schedule (id, teacher_id, classroom_id, course_id, day_of_week, start_time, end_time, effective_from, effective_until) "
-            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO recurring_schedule (teacher_id, classroom_id, course_id, day_of_week, start_time, end_time, effective_from, effective_until) "
+            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            pstmt.setInt(1, recurringSchedule.getId());
-            pstmt.setInt(2, recurringSchedule.getTeacherId());
-            pstmt.setInt(3, recurringSchedule.getClassroomId());
-            pstmt.setInt(4, recurringSchedule.getCourseId());
-            pstmt.setInt(5, recurringSchedule.getDayOfWeek());
-            pstmt.setString(6, recurringSchedule.getStartTime().toString());
-            pstmt.setString(7, recurringSchedule.getEndTime().toString());
-            pstmt.setString(8, recurringSchedule.getEffectiveFrom().toString());
+            pstmt.setInt(1, recurringSchedule.getTeacherId());
+            pstmt.setInt(2, recurringSchedule.getClassroomId());
+            pstmt.setInt(3, recurringSchedule.getCourseId());
+            pstmt.setInt(4, recurringSchedule.getDayOfWeek());
+            pstmt.setString(5, recurringSchedule.getStartTime().toString());
+            pstmt.setString(6, recurringSchedule.getEndTime().toString());
+            pstmt.setString(7, recurringSchedule.getEffectiveFrom().toString());
             if (recurringSchedule.getEffectiveUntil() != null) {
-                pstmt.setString(9, recurringSchedule.getEffectiveUntil().toString());
+                pstmt.setString(8, recurringSchedule.getEffectiveUntil().toString());
             } else {
-                pstmt.setNull(9, Types.VARCHAR);
+                pstmt.setNull(8, Types.VARCHAR);
             }
 
             int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        recurringSchedule.setId(generatedKeys.getInt(1));
+                    }
+                }
+            }
             return rowsAffected > 0;
         } catch (SQLException e) {
             System.err.println("Error creating schedule: " + e.getMessage());

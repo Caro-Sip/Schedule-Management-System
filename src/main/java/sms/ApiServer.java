@@ -320,7 +320,8 @@ public class ApiServer {
                 readOptionalInt(payload, "priority", 0),
                 readInt(payload, "createdBy"),
                 readClassIds(payload.get("classIds")),
-                readOptionalInteger(payload, "linkedScheduleId")
+                readOptionalInteger(payload, "linkedScheduleId"),
+                readOptionalBoolean(payload, "recurring")
             );
             ctx.status(scheduleId != null && scheduleId > 0 ? 200 : 201).json(scheduleService.getScheduleView(savedSchedule.getId()));
         } catch (DateTimeParseException e) {
@@ -397,6 +398,17 @@ public class ApiServer {
 
             throw new IllegalArgumentException("Invalid classroom id: " + text);
         }
+    }
+
+    private static boolean readOptionalBoolean(Map<?, ?> payload, String key) {
+        Object value = payload.get(key);
+        if (value == null) {
+            return false;
+        }
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        }
+        return Boolean.parseBoolean(value.toString());
     }
 
     private static void getSchedulesForClass(Context ctx) {

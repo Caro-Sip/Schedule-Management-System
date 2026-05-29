@@ -496,7 +496,11 @@ function buildScheduleEvent(schedule, overrides = {}) {
 		: Array.isArray(schedule.classIds)
 			? schedule.classIds.map((value) => Number(value)).filter((value) => !Number.isNaN(value))
 			: [];
-	const title = overrides.title || schedule.title || `Course ${schedule.courseId}`;
+	const courseId = overrides.courseId !== undefined ? overrides.courseId : schedule.courseId;
+	const matchedCourse = (courseDirectory || []).find(
+		(c) => String(c.id) === String(courseId)
+	);
+	const title = overrides.title || schedule.title || (matchedCourse ? (matchedCourse.name || matchedCourse.code || `Course ${courseId}`) : `Course ${courseId}`);
 	const metaParts = [];
 	const teacherId = overrides.teacherId !== undefined ? overrides.teacherId : schedule.teacherId;
 	const classroomId = overrides.classroomId !== undefined ? overrides.classroomId : schedule.classroomId;
@@ -515,7 +519,7 @@ function buildScheduleEvent(schedule, overrides = {}) {
 		type: overrides.type || schedule.type || "",
 		professor: teacherId || null,
 		teacherId: teacherId || null,
-		courseId: overrides.courseId !== undefined ? overrides.courseId : schedule.courseId || null,
+		courseId: courseId || null,
 		createdBy: overrides.createdBy !== undefined ? overrides.createdBy : schedule.createdBy || null,
 		status: overrides.status || schedule.status || "",
 		visibility: overrides.visibility || schedule.visibility || "",

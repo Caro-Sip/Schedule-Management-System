@@ -3,6 +3,7 @@
 -- Assumes V4_class_courses.sql AND ip_se_y2_s2_insert.sql
 -- have already been applied (courses 5–10, classrooms up to id=8,
 -- classes up to id=6, teachers up to id=7 are all present).
+-- Uses WITH RECURSIVE to generate all weekly schedule occurrences
 -- =============================================================
 
 PRAGMA foreign_keys = ON;
@@ -32,8 +33,8 @@ INSERT INTO teachers (id, user_id, department) VALUES
 -- -------------------------------------------------------------
 -- 2. NEW CLASSROOMS
 -- J609 is listed as an alternative for one session (Tue Unix lecture).
--- "Room A-" on SP6 Monday/Tuesday rows is truncated in the source
--- timetable — classroom_id left NULL for those sessions, marked below.
+-- Note: SP6 Monday/Tuesday rows originally had "Room A-" (truncated).
+-- We now use NULL to indicate TBC.
 -- -------------------------------------------------------------
 
 INSERT INTO classrooms (name, building) VALUES
@@ -73,32 +74,39 @@ INSERT INTO class_courses (class_id, course_id) VALUES
     (7, 13);  -- Unix and C Programming
 
 -- -------------------------------------------------------------
--- 6. RECURRING SCHEDULE
+-- 6. RECURRING SCHEDULE (templates)
 -- day_of_week: 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri
 -- Normalized time blocks:
---   07:00–09:00  (timetable rows 7:00–7:55 + 8:00–8:55)
---   09:00–11:00  (timetable rows 9:10–10:05 + 10:10–11:05)
---   13:00–15:00  (timetable rows 13:00–13:55 + 14:00–14:55)
---   15:00–17:00  (timetable rows 15:10–16:05 + 16:10–17:10)
---
--- NOTE: SP6 Monday 07–09 and Tuesday 07–09 both list "Room A-"
--- (truncated in source). classroom_id = NULL until confirmed.
+--   07:00–09:00, 09:00–11:00, 13:00–15:00, 15:00–17:00
+-- Note: SP6 Monday 07–09 and Tuesday 07–09 have classroom_id = NULL (TBC)
 -- -------------------------------------------------------------
 
-INSERT INTO recurring_schedule
+DROP TABLE IF EXISTS temp._seed_recurring;
+CREATE TEMP TABLE _seed_recurring (
+    teacher_id INTEGER,
+    classroom_id INTEGER,
+    course_id INTEGER,
+    day_of_week INTEGER,
+    start_time TIME,
+    end_time TIME,
+    effective_from TEXT,
+    effective_until TEXT
+);
+
+INSERT INTO _seed_recurring
     (teacher_id, classroom_id, course_id, day_of_week, start_time, end_time, effective_from, effective_until)
 VALUES
     -- MONDAY (1)
-    (6,    NULL, 12,  1, '07:00', '09:00', '2026-03-02', '2026-06-27'),  -- SP6  Project,   Srang Sarot,   Room A-? (truncated)
+    (6,    NULL, 12,  1, '07:00', '09:00', '2026-03-02', '2026-06-27'),  -- SP6  Project,   Srang Sarot,   Room TBC
     (8,    1,    11,  1, '09:00', '11:00', '2026-03-02', '2026-06-27'),  -- CSC  Lecture,   Pich Reatrey,  A401
     (3,    1,    10,  1, '13:00', '15:00', '2026-03-02', '2026-06-27'),  -- LAS  Tutorial,  Phauk Sokkhey, A401
     (8,    5,    11,  1, '15:00', '17:00', '2026-03-02', '2026-06-27'),  -- CSC  Practical, Pich Reatrey,  J602
 
     -- TUESDAY (2)
-    (6,    NULL, 12,  2, '07:00', '09:00', '2026-03-03', '2026-06-27'),  -- SP6  Project,   Srang Sarot,   Room A-? (truncated)
+    (6,    NULL, 12,  2, '07:00', '09:00', '2026-03-03', '2026-06-27'),  -- SP6  Project,   Srang Sarot,   Room TBC
     (2,    8,    7,   2, '09:00', '11:00', '2026-03-03', '2026-06-27'),  -- DSA  Lecture,   Seak Leng,     A109
     (6,    3,    12,  2, '13:00', '15:00', '2026-03-03', '2026-06-27'),  -- SP6  Project,   Srang Sarot,   A417
-    (2,    8,    13,  2, '15:00', '17:00', '2026-03-03', '2026-06-27'),  -- UCP  Lecture,   Seak Leng,     A109 (alt: J609=9)
+    (2,    8,    13,  2, '15:00', '17:00', '2026-03-03', '2026-06-27'),  -- UCP  Lecture,   Seak Leng,     A109
 
     -- WEDNESDAY (3)
     (4,    1,    9,   3, '07:00', '09:00', '2026-03-04', '2026-06-27'),  -- IDB  Lecture,   Nop Phearum,   A401
@@ -114,61 +122,108 @@ VALUES
     (2,    3,    7,   5, '13:00', '15:00', '2026-03-06', '2026-06-27'),  -- DSA  Practical, Seak Leng,     A417
     (2,    3,    13,  5, '15:00', '17:00', '2026-03-06', '2026-06-27');  -- UCP  Practical, Seak Leng,     A417
 
+INSERT INTO recurring_schedule
+    (teacher_id, classroom_id, course_id, day_of_week, start_time, end_time, effective_from, effective_until)
+SELECT
+    teacher_id, classroom_id, course_id, day_of_week, start_time, end_time, effective_from, effective_until
+FROM _seed_recurring;
+
 -- -------------------------------------------------------------
--- 7. SCHEDULE (first-week sessions: 2026-03-02 to 2026-03-06)
--- created_at tag '2026-02-20 09:30:00' used to identify this batch
--- in the schedule_classes and schedule_history subqueries below.
+-- 7. SCHEDULE (auto-generated weekly occurrences)
+-- Uses WITH RECURSIVE to expand recurring_schedule into
+-- individual schedule rows for each week until effective_until.
+-- All BOOKED, VISIBLE, priority=1, created_by=1
+-- Type inference: based on course_id and time pattern
+-- created_at = '2026-02-20 09:30:00' for batch identification
 -- -------------------------------------------------------------
+
+WITH RECURSIVE schedule_gen AS (
+    -- Base case: start from first occurrence (effective_from)
+    SELECT
+        NULL as recurring_id,
+        rs.classroom_id,
+        rs.teacher_id,
+        rs.course_id,
+        rs.day_of_week,
+        rs.effective_from as gen_date,
+        rs.start_time,
+        rs.end_time,
+        rs.effective_until,
+        -- Infer type from (course_id, time pattern):
+        CASE 
+            WHEN rs.course_id = 12 THEN 'DEFAULT'  -- SP6 is flexible
+            WHEN rs.course_id = 11 AND rs.start_time = '09:00' THEN 'LECTURE'   -- CSC 09:00-11:00
+            WHEN rs.course_id = 11 AND rs.start_time = '15:00' THEN 'PRACTICAL' -- CSC 15:00-17:00
+            WHEN rs.course_id = 7 AND rs.start_time = '09:00' THEN 'LECTURE'    -- DSA 09:00-11:00
+            WHEN rs.course_id = 7 AND rs.start_time = '13:00' THEN 'PRACTICAL'  -- DSA 13:00-15:00
+            WHEN rs.course_id = 10 AND rs.start_time = '07:00' THEN 'LECTURE'   -- LAS 07:00-09:00
+            WHEN rs.course_id = 10 AND rs.start_time = '09:00' THEN 'PRACTICAL' -- LAS 09:00-11:00
+            WHEN rs.course_id = 10 AND rs.start_time = '13:00' THEN 'TUTORIAL'  -- LAS 13:00-15:00
+            WHEN rs.course_id = 9 AND rs.start_time = '07:00' THEN 'LECTURE'    -- IDB 07:00-09:00
+            WHEN rs.course_id = 9 AND rs.start_time = '15:00' THEN 'PRACTICAL'  -- IDB 15:00-17:00
+            WHEN rs.course_id = 13 AND rs.start_time = '15:00' THEN 'PRACTICAL' -- UCP 15:00-17:00
+            WHEN rs.course_id = 13 AND rs.start_time = '15:00' THEN 'LECTURE'   -- UCP 15:00-17:00
+            ELSE 'LECTURE'
+        END as inferred_type
+    FROM _seed_recurring rs
+
+    UNION ALL
+
+    -- Recursive case: advance by 7 days, stop at effective_until
+    SELECT
+        recurring_id,
+        classroom_id,
+        teacher_id,
+        course_id,
+        day_of_week,
+        date(gen_date, '+7 days') as gen_date,
+        start_time,
+        end_time,
+        effective_until,
+        inferred_type
+    FROM schedule_gen
+    WHERE date(gen_date, '+7 days') <= effective_until
+)
 
 INSERT INTO schedule (
     classroom_id, teacher_id, course_id, date, start_time, end_time,
     status, visibility, type, priority, created_by, created_at
-) VALUES
-    -- MONDAY 2026-03-02
-    (NULL, 6, 12, '2026-03-02', '07:00', '09:00', 'BOOKED', 'VISIBLE', 'DEFAULT',   1, 1, '2026-02-20 09:30:00'),  -- SP6  Project   (room TBC)
-    (1,    8, 11, '2026-03-02', '09:00', '11:00', 'BOOKED', 'VISIBLE', 'LECTURE',   1, 1, '2026-02-20 09:30:00'),  -- CSC  Lecture
-    (1,    3, 10, '2026-03-02', '13:00', '15:00', 'BOOKED', 'VISIBLE', 'TUTORIAL',  1, 1, '2026-02-20 09:30:00'),  -- LAS  Tutorial
-    (5,    8, 11, '2026-03-02', '15:00', '17:00', 'BOOKED', 'VISIBLE', 'PRACTICAL', 1, 1, '2026-02-20 09:30:00'),  -- CSC  Practical
-
-    -- TUESDAY 2026-03-03
-    (NULL, 6, 12, '2026-03-03', '07:00', '09:00', 'BOOKED', 'VISIBLE', 'DEFAULT',   1, 1, '2026-02-20 09:30:00'),  -- SP6  Project   (room TBC)
-    (8,    2, 7,  '2026-03-03', '09:00', '11:00', 'BOOKED', 'VISIBLE', 'LECTURE',   1, 1, '2026-02-20 09:30:00'),  -- DSA  Lecture
-    (3,    6, 12, '2026-03-03', '13:00', '15:00', 'BOOKED', 'VISIBLE', 'DEFAULT',   1, 1, '2026-02-20 09:30:00'),  -- SP6  Project
-    (8,    2, 13, '2026-03-03', '15:00', '17:00', 'BOOKED', 'VISIBLE', 'LECTURE',   1, 1, '2026-02-20 09:30:00'),  -- UCP  Lecture   (alt room: J609)
-
-    -- WEDNESDAY 2026-03-04
-    (1,    4, 9,  '2026-03-04', '07:00', '09:00', 'BOOKED', 'VISIBLE', 'LECTURE',   1, 1, '2026-02-20 09:30:00'),  -- IDB  Lecture
-    (5,    4, 9,  '2026-03-04', '15:00', '17:00', 'BOOKED', 'VISIBLE', 'PRACTICAL', 1, 1, '2026-02-20 09:30:00'),  -- IDB  Practical
-
-    -- THURSDAY 2026-03-05
-    (1,    3, 10, '2026-03-05', '07:00', '09:00', 'BOOKED', 'VISIBLE', 'LECTURE',   1, 1, '2026-02-20 09:30:00'),  -- LAS  Lecture
-    (3,    3, 10, '2026-03-05', '09:00', '11:00', 'BOOKED', 'VISIBLE', 'PRACTICAL', 1, 1, '2026-02-20 09:30:00'),  -- LAS  Practical
-    (5,    4, 9,  '2026-03-05', '15:00', '17:00', 'BOOKED', 'VISIBLE', 'PRACTICAL', 1, 1, '2026-02-20 09:30:00'),  -- IDB  Practical
-
-    -- FRIDAY 2026-03-06
-    (1,    3, 10, '2026-03-06', '09:00', '11:00', 'BOOKED', 'VISIBLE', 'LECTURE',   1, 1, '2026-02-20 09:30:00'),  -- LAS  Lecture
-    (3,    2, 7,  '2026-03-06', '13:00', '15:00', 'BOOKED', 'VISIBLE', 'PRACTICAL', 1, 1, '2026-02-20 09:30:00'),  -- DSA  Practical
-    (3,    2, 13, '2026-03-06', '15:00', '17:00', 'BOOKED', 'VISIBLE', 'PRACTICAL', 1, 1, '2026-02-20 09:30:00');  -- UCP  Practical
+)
+SELECT
+    classroom_id,
+    teacher_id,
+    course_id,
+    gen_date as date,
+    start_time,
+    end_time,
+    'BOOKED' as status,
+    'VISIBLE' as visibility,
+    inferred_type as type,
+    1 as priority,
+    1 as created_by,
+    '2026-02-20 09:30:00' as created_at
+FROM schedule_gen;
 
 -- -------------------------------------------------------------
--- 8. SCHEDULE–CLASS MAPPING (link all 16 sessions to class 7)
+-- 8. SCHEDULE–CLASS MAPPING (link all generated sessions to class 7)
+-- Query by created_at timestamp to identify the batch
 -- -------------------------------------------------------------
 
 INSERT INTO schedule_classes (schedule_id, class_id)
 SELECT s.id, 7
 FROM schedule s
-WHERE s.date BETWEEN '2026-03-02' AND '2026-03-06'
+WHERE s.date BETWEEN '2026-03-02' AND '2026-06-27'
   AND s.created_at = '2026-02-20 09:30:00';
 
 -- -------------------------------------------------------------
--- 9. SCHEDULE HISTORY
+-- 9. SCHEDULE HISTORY (audit log for the batch creation)
 -- -------------------------------------------------------------
 
 INSERT INTO schedule_history (schedule_id, action, changed_by, timestamp, note)
 SELECT s.id, 'CREATE', 1, '2026-02-20 09:30:00',
     'Initial schedule created for IP-AI-Y2-S2'
 FROM schedule s
-WHERE s.date BETWEEN '2026-03-02' AND '2026-03-06'
+WHERE s.date BETWEEN '2026-03-02' AND '2026-06-27'
   AND s.created_at = '2026-02-20 09:30:00';
 
 COMMIT;

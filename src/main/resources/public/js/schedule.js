@@ -10,7 +10,6 @@ function updateFilterGroup() {
 
 function updateActiveScopeLabel() {
   let label = "";
-  let placeholder = "Search class or room";
   if (state.view === "class" && state.selectedClassId) {
     const classItem = (classDirectory || []).find(
       (item) => String(item.id) === String(state.selectedClassId)
@@ -29,13 +28,36 @@ function updateActiveScopeLabel() {
       (user) => String(user.id) === String(teacherItem?.userId)
     );
     label = teacherUser?.name || `Teacher ${state.selectedTeacherId}`;
-    placeholder = "Search teacher";
   }
 
-  if (scheduleSearch) {
-    scheduleSearch.placeholder = placeholder;
-    scheduleSearch.value = label;
+  if (activeScopeLabel) {
+    activeScopeLabel.textContent = label;
+    activeScopeLabel.toggleAttribute("hidden", !label);
   }
+}
+
+function updateSmartToggleState() {
+  if (!smartToggle) {
+    return;
+  }
+
+  const canUseSmart =
+    isTeacherRole(state.role) &&
+    state.view === "class" &&
+    Boolean(state.selectedClassId) &&
+    Boolean(state.currentTeacherId);
+
+  if (!canUseSmart) {
+    state.smartOverlayEnabled = false;
+  }
+
+  smartToggle.toggleAttribute("hidden", !canUseSmart);
+  smartToggle.setAttribute(
+    "aria-pressed",
+    state.smartOverlayEnabled ? "true" : "false"
+  );
+  smartToggle.classList.toggle("btn-primary", state.smartOverlayEnabled);
+  smartToggle.classList.toggle("btn-ghost", !state.smartOverlayEnabled);
 }
 
 function openFilterPanel() {
@@ -149,12 +171,154 @@ function renderBookingClassSelection() {
   bookingClassSelection.removeAttribute("hidden");
 }
 
-function openBookingModal(dayIndex, startMinutes, eventData = null) {
+function syncPendingBookingClassSelection() {
+  if (!pendingBooking) {
+    return [];
+  }
+
+  const uniqueClassIds = [];
+  const seenClassIds = new Set();
+
+  (Array.isArray(pendingBooking.classIds) ? pendingBooking.classIds : []).forEach((classId) => {
+    const normalizedClassId = String(classId);
+    if (!normalizedClassId || seenClassIds.has(normalizedClassId)) {
+      return;
+    }
+    seenClassIds.add(normalizedClassId);
+    uniqueClassIds.push(classId);
+  });
+
+  pendingBooking.classIds = uniqueClassIds;
+  pendingBooking.classId = uniqueClassIds.length > 0 ? uniqueClassIds[0] : null;
+
+  return uniqueClassIds;
+}
+
+function renderBookingClassSelection() {
+  if (!bookingClassSelection || !bookingClassInput || !pendingBooking || state.view !== "room") {
+    return;
+  }
+
+  const classIds = syncPendingBookingClassSelection();
+  const classCatalog = getBookingClasses();
+
+  bookingClassSelection.innerHTML = "";
+  bookingClassInput.required = classIds.length === 0;
+  if (classIds.length > 0) {
+    bookingClassInput.dataset.classId = String(classIds[0]);
+  } else {
+    bookingClassInput.dataset.classId = "";
+  }
+
+  if (classIds.length === 0) {
+    bookingClassSelection.setAttribute("hidden", "");
+    return;
+  }
+
+  classIds.forEach((classId) => {
+    const classItem = classCatalog.find((item) => String(item.id) === String(classId)) || null;
+    const classLabel = getClassDisplayLabel(classItem);
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "booking-class-chip";
+    chip.setAttribute("aria-label", `Remove ${classLabel}`);
+
+    const label = document.createElement("span");
+    label.textContent = classLabel;
+
+    const remove = document.createElement("span");
+    remove.className = "booking-class-chip-remove";
+    remove.setAttribute("aria-hidden", "true");
+    remove.textContent = "×";
+
+    chip.appendChild(label);
+    chip.appendChild(remove);
+    chip.addEventListener("click", () => {
+      if (!pendingBooking) {
+        return;
+      }
+
+      pendingBooking.classIds = (Array.isArray(pendingBooking.classIds) ? pendingBooking.classIds : []).filter(
+        (selectedClassId) => String(selectedClassId) !== String(classId)
+      );
+      syncPendingBookingClassSelection();
+      if (bookingClassInput && bookingClassInput.value === classLabel) {
+        bookingClassInput.value = "";
+      }
+      renderBookingClassSelection();
+      renderBookingClassOptions();
+    });
+
+    bookingClassSelection.appendChild(chip);
+  });
+
+  bookingClassSelection.removeAttribute("hidden");
+}
+
+function applySmartBookingMode(enabled) {
+  if (bookingProfessorGroup) {
+    bookingProfessorGroup.toggleAttribute("hidden", enabled);
+  }
+  if (bookingProfessor) {
+    bookingProfessor.required = !enabled;
+  }
+  if (bookingSubjectGroup) {
+    bookingSubjectGroup.toggleAttribute("hidden", false);
+  }
+  if (bookingSubject) {
+    bookingSubject.required = true;
+  }
+
+  const bookingTypeLabel = bookingType ? bookingType.closest("label") : null;
+  if (bookingTypeLabel) {
+    bookingTypeLabel.toggleAttribute("hidden", enabled);
+  }
+  if (bookingType) {
+    bookingType.required = !enabled;
+  }
+
+  if (!enabled) {
+    return;
+  }
+
+  if (bookingProfessor) {
+    const teacherCatalog = getBookingTeachers();
+    const teacherItem = teacherCatalog.find(
+      (teacher) => String(teacher.id) === String(state.currentTeacherId)
+    );
+    bookingProfessor.value = teacherItem ? teacherItem.name : "";
+    bookingProfessor.dataset.teacherId = teacherItem ? String(teacherItem.id) : "";
+  }
+  if (bookingProfessorResults) {
+    bookingProfessorResults.setAttribute("hidden", "");
+    bookingProfessorResults.innerHTML = "";
+  }
+
+  if (bookingSubject) {
+    bookingSubject.value = "";
+    bookingSubject.dataset.courseId = "";
+  }
+  if (bookingSubjectResults) {
+    bookingSubjectResults.setAttribute("hidden", "");
+    bookingSubjectResults.innerHTML = "";
+  }
+
+  if (bookingType) {
+    bookingType.value = "DEFAULT";
+  }
+}
+
+function openBookingModal(dayIndex, startMinutes, eventData = null, options = {}) {
   if (!bookingModal || !bookingForm) {
     return;
   }
 
   const isEdit = Boolean(eventData);
+  const smartMode =
+    Boolean(options.smartMode) &&
+    !isEdit &&
+    state.view === "class" &&
+    isTeacherRole(state.role);
   const bookingDay = isEdit ? eventData.day : dayIndex;
   const activeClassId = state.view === "class" ? getSelectedClassId() : null;
   const attachedClassIds = isEdit
@@ -203,22 +367,27 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
           const slot = getUsualSlotForMinutes(startMinutes);
           return slot ? Math.min(slot[1], END_HOUR * 60) : Math.min(startMinutes + 60, END_HOUR * 60);
         })(),
+    smartMode,
   };
 
   if (bookingTitle) {
-    const titleMap = {
-      class: "Book Class",
-      room: "Book Room",
-      teacher: "Book Teacher",
-    };
-    const editMap = {
-      class: "Edit Class",
-      room: "Edit Room",
-      teacher: "Edit Teacher",
-    };
-    bookingTitle.textContent = isEdit
-      ? editMap[state.view] || "Edit Class"
-      : titleMap[state.view] || "Book Class";
+    if (smartMode) {
+      bookingTitle.textContent = "Smart booking";
+    } else {
+      const titleMap = {
+        class: "Book Class",
+        room: "Book Room",
+        teacher: "Book Teacher",
+      };
+      const editMap = {
+        class: "Edit Class",
+        room: "Edit Room",
+        teacher: "Edit Teacher",
+      };
+      bookingTitle.textContent = isEdit
+        ? editMap[state.view] || "Edit Class"
+        : titleMap[state.view] || "Book Class";
+    }
   }
 
   if (bookingStart) {
@@ -333,6 +502,8 @@ function openBookingModal(dayIndex, startMinutes, eventData = null) {
     bookingRecurringGroup.toggleAttribute("hidden", !showRecurring);
     bookingRecurring.checked = false;
   }
+  
+  applySmartBookingMode(smartMode);
 
   if (bookingDelete) {
     bookingDelete.toggleAttribute("hidden", !isEdit);
@@ -491,9 +662,7 @@ function renderEvents() {
     eventsEl.appendChild(column);
   }
 
-  ensureEventIds(state.view);
-  const items = eventsByView[state.view] || [];
-  let filteredItems = items.filter((eventItem) => {
+  const isInWeek = (eventItem) => {
     if (!eventItem.date) {
       return true;
     }
@@ -504,9 +673,13 @@ function renderEvents() {
     }
 
     return eventDate >= weekStart && eventDate < weekEnd;
-  });
+  };
 
-  if (state.view === "class" && isAdminRole(state.role)) {
+  ensureEventIds(state.view);
+  const items = eventsByView[state.view] || [];
+  let filteredItems = items.filter(isInWeek);
+
+  if (state.view === "class" && (isAdminRole(state.role) || isTeacherRole(state.role))) {
     if (!state.selectedClassId) {
       return;
     }
@@ -535,7 +708,26 @@ function renderEvents() {
     );
   }
 
-  filteredItems.forEach((eventItem) => {
+  let overlayItems = [];
+  if (
+    state.view === "class" &&
+    isTeacherRole(state.role) &&
+    state.smartOverlayEnabled &&
+    state.currentTeacherId
+  ) {
+    ensureEventIds("teacher");
+    const teacherItems = (eventsByView.teacher || [])
+      .filter(isInWeek)
+      .filter(
+        (item) =>
+          String(item.teacherId) === String(state.currentTeacherId) ||
+          String(item.professor) === String(state.currentTeacherId)
+      );
+    const baseIds = new Set(filteredItems.map((item) => item.id));
+    overlayItems = teacherItems.filter((item) => !baseIds.has(item.id));
+  }
+
+  const renderEventItem = (eventItem, viewClass, extraClass = "") => {
     const eventDate = eventItem.date ? new Date(eventItem.date) : null;
     const dayOffset = eventDate && !Number.isNaN(eventDate.getTime())
       ? Math.floor((new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate()).getTime() - weekStart.getTime()) / (24 * 60 * 60 * 1000))
@@ -546,7 +738,7 @@ function renderEvents() {
     }
 
     const eventEl = document.createElement("div");
-    eventEl.className = `event ${state.view}`;
+    eventEl.className = `event ${viewClass}${extraClass ? ` ${extraClass}` : ""}`;
     if (eventItem.id) {
       eventEl.dataset.eventId = eventItem.id;
     }
@@ -604,6 +796,14 @@ function renderEvents() {
     eventEl.appendChild(details);
 
     column.appendChild(eventEl);
+  };
+
+  filteredItems.forEach((eventItem) => {
+    renderEventItem(eventItem, state.view);
+  });
+
+  overlayItems.forEach((eventItem) => {
+    renderEventItem(eventItem, "teacher", "overlay");
   });
 }
 
@@ -699,6 +899,34 @@ function getBookingConflict(view, day, bookingDate, startMinutes, endMinutes, ig
         return false;
       }
       if (view === "teacher" && teacherId && String(eventItem.teacherId) !== String(teacherId)) {
+        return false;
+      }
+      const eventStart = parseTimeInput(eventItem.start);
+      const eventEnd = parseTimeInput(eventItem.end);
+      if (eventStart === null || eventEnd === null) {
+        return false;
+      }
+      return startMinutes < eventEnd && endMinutes > eventStart;
+    }) || null
+  );
+// schedule.js
+}
+
+function getTeacherBookingConflict(day, startMinutes, endMinutes, ignoreId, teacherId) {
+  if (!teacherId) {
+    return null;
+  }
+  const items = eventsByView.teacher || [];
+  return (
+    items.find((eventItem) => {
+      if (ignoreId && eventItem.id === ignoreId) {
+        return false;
+      }
+      if (eventItem.day !== day) {
+        return false;
+      }
+      const eventTeacherId = eventItem.teacherId || eventItem.professor || null;
+      if (String(eventTeacherId) !== String(teacherId)) {
         return false;
       }
       const eventStart = parseTimeInput(eventItem.start);

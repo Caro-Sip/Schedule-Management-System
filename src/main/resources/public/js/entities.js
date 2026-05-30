@@ -90,7 +90,6 @@ const filterGroup = document.getElementById("filter-group");
 const filterBuilding = document.getElementById("filter-building");
 const filterFloor = document.getElementById("filter-floor");
 const filterRoom = document.getElementById("filter-room");
-const scheduleSearch = document.getElementById("schedule-search");
 const filterGroupClass = document.querySelector('[data-filter-group="class"]');
 const filterGroupRoom = document.querySelector('[data-filter-group="room"]');
 const bookingModal = document.getElementById("booking-modal");
@@ -131,6 +130,7 @@ const activeScopeLabel = document.getElementById("active-scope-label");
 const prevWeekBtn = document.getElementById("prev-week");
 const nextWeekBtn = document.getElementById("next-week");
 const todayBtn = document.getElementById("today-btn");
+const smartToggle = document.getElementById("smart-toggle");
 
 const API_BASE = "/api";
 const ADMIN_API_BASE = `${API_BASE}/admin`;

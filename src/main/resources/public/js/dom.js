@@ -100,6 +100,9 @@ function closeUserModal() {
 }
 
 function openClassModal(mode, classItem) {
+  if (!isAdminRole(state.role)) {
+    return;
+  }
   if (!classModal || !classForm) {
     return;
   }
@@ -323,6 +326,9 @@ function renderCourseModalList() {
 }
 
 function openCourseModal(classItem) {
+  if (!isAdminRole(state.role)) {
+    return;
+  }
   if (!courseModal || !courseForm) {
     return;
   }
@@ -628,6 +634,7 @@ function renderClassList() {
   }
 
   const classes = getSortedClasses();
+  const isAdmin = isAdminRole(state.role);
   classCount.textContent = `${classes.length} class${classes.length === 1 ? "" : "es"}`;
   classList.innerHTML = "";
 
@@ -747,7 +754,39 @@ function renderClassList() {
     actions.appendChild(editButton);
 
     row.appendChild(content);
-    row.appendChild(actions);
+    if (isAdmin) {
+      const actions = document.createElement("div");
+      actions.className = "entity-actions";
+
+      const courseButton = document.createElement("button");
+      courseButton.type = "button";
+      courseButton.className = "btn btn-ghost class-course";
+      courseButton.textContent = "Course";
+      courseButton.dataset.classId = classItem.id;
+      courseButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        openCourseModal(classItem);
+      });
+
+      const editButton = document.createElement("button");
+      editButton.type = "button";
+      editButton.className = "icon-btn class-edit";
+      editButton.setAttribute("aria-label", "Edit class");
+      editButton.dataset.classId = classItem.id;
+      editButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        openClassModal("edit", classItem);
+      });
+      editButton.innerHTML =
+        '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+        '<path fill="currentColor" d="M3 17.25V21h3.75l11.06-11.06-3.75-3.75L3 17.25zm2.92 2.33H5v-.92l9.06-9.06.92.92-9.06 9.06zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />' +
+        "</svg>";
+
+      actions.appendChild(courseButton);
+      actions.appendChild(editButton);
+
+      row.appendChild(actions);
+    }
 
     classList.appendChild(row);
   });

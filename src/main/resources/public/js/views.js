@@ -24,6 +24,7 @@ function resetSessionState() {
   state.selectedRoomId = null;
   state.selectedTeacherId = null;
   state.userScheduleOrigin = null;
+  state.smartOverlayEnabled = false;
 }
 
 function saveSession(session) {
@@ -84,6 +85,7 @@ function applyAuthenticatedSession(token, user, persist = true) {
   state.userName = user.name || "User";
   state.currentTeacherId = null;
   state.defaultCourseId = null;
+  state.smartOverlayEnabled = false;
 
   if (persist) {
     saveSession({ token, user });
@@ -97,6 +99,9 @@ function setView(view) {
 
   if (view !== "user") {
     state.userScheduleOrigin = null;
+  }
+  if (view !== "class" || !isTeacherRole(state.role)) {
+    state.smartOverlayEnabled = false;
   }
 
   if (view !== "class") {
@@ -117,26 +122,31 @@ function setView(view) {
 
 function updateViewVisibility() {
   const isAdmin = isAdminRole(state.role);
+  const isTeacher = isTeacherRole(state.role);
   const isUserView = state.view === "user";
   const isClassView = state.view === "class";
   const isRoomView = state.view === "room";
   const isTeacherView = state.view === "teacher";
   const isAuditView = state.view === "audit";
 
-  const showClassList = isAdmin && isClassView && !state.selectedClassId;
+  const showClassList = (isAdmin || isTeacher) && isClassView && !state.selectedClassId;
   const showRoomList = isAdmin && isRoomView && !state.selectedRoomId;
   const showBackToList =
-    isAdmin &&
-    ((isClassView && state.selectedClassId) ||
-      (isRoomView && state.selectedRoomId) ||
-      (isTeacherView && state.selectedTeacherId && state.userScheduleOrigin === "user"));
-  const showSchedule =
-    !isUserView &&
-    !isAuditView &&
-    (!isAdmin ||
-      state.view === "teacher" ||
-      (isClassView && state.selectedClassId) ||
-      (isRoomView && state.selectedRoomId));
+    (isAdmin &&
+      ((isClassView && state.selectedClassId) ||
+        (isRoomView && state.selectedRoomId) ||
+        (isTeacherView && state.selectedTeacherId && state.userScheduleOrigin === "user"))) ||
+    (isTeacher && isClassView && state.selectedClassId);
+  let showSchedule = !isUserView && !isAuditView;
+  if (isAdmin) {
+    showSchedule =
+      showSchedule &&
+      (state.view === "teacher" ||
+        (isClassView && state.selectedClassId) ||
+        (isRoomView && state.selectedRoomId));
+  } else if (isTeacher && isClassView) {
+    showSchedule = showSchedule && Boolean(state.selectedClassId);
+  }
 
   if (scheduleControls) {
     scheduleControls.classList.toggle("hidden", !showSchedule);
@@ -153,6 +163,10 @@ function updateViewVisibility() {
   if (classControls) {
     classControls.classList.toggle("hidden", !showClassList);
     classControls.toggleAttribute("hidden", !showClassList);
+  }
+  if (classAddBtn) {
+    classAddBtn.classList.toggle("hidden", !isAdmin);
+    classAddBtn.toggleAttribute("hidden", !isAdmin);
   }
   if (classView) {
     classView.classList.toggle("hidden", !showClassList);
@@ -186,6 +200,9 @@ function updateViewVisibility() {
   if (typeof updateActiveScopeLabel === "function") {
     updateActiveScopeLabel();
   }
+  if (typeof updateSmartToggleState === "function") {
+    updateSmartToggleState();
+  }
 }
 
 function renderCurrentView() {
@@ -194,7 +211,7 @@ function renderCurrentView() {
     return;
   }
 
-  if (state.view === "class" && isAdminRole(state.role)) {
+  if (state.view === "class" && (isAdminRole(state.role) || isTeacherRole(state.role))) {
     renderClassList();
     if (state.selectedClassId) {
       renderEvents();

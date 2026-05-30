@@ -1290,6 +1290,13 @@ a.tab {
   border-left-color: #34a853;
 }
 
+.event.overlay {
+  opacity: 0.6;
+  border-style: dashed;
+  pointer-events: none;
+  z-index: 2;
+}
+
 .schedule-footer {
   display: flex;
   justify-content: space-between;

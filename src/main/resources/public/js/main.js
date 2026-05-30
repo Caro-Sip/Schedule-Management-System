@@ -58,6 +58,10 @@ function syncCurrentTeacherContext() {
             eventItem.courseId
     );
     state.defaultCourseId = teacherEvent ? Number(teacherEvent.courseId) : null;
+
+    if (typeof updateSmartToggleState === "function") {
+        updateSmartToggleState();
+    }
 }
 
 function syncCurrentUserDirectoryEntry() {
@@ -143,6 +147,22 @@ function bindEvents() {
         state.weekOffset = 0;
         updateWeek();
     });
+
+    if (smartToggle) {
+        smartToggle.addEventListener("click", () => {
+            if (!isTeacherRole(state.role)) {
+                return;
+            }
+            if (state.view !== "class" || !state.selectedClassId || !state.currentTeacherId) {
+                return;
+            }
+            state.smartOverlayEnabled = !state.smartOverlayEnabled;
+            if (typeof updateSmartToggleState === "function") {
+                updateSmartToggleState();
+            }
+            renderEvents();
+        });
+    }
 
   if (backToListBtn) {
     backToListBtn.addEventListener("click", () => {
@@ -235,12 +255,6 @@ function bindEvents() {
     if (userSearch) {
         userSearch.addEventListener("input", () => {
             renderUserList();
-        });
-    }
-
-    if (scheduleSearch) {
-        scheduleSearch.addEventListener("focus", () => {
-            scheduleSearch.select();
         });
     }
 
@@ -401,6 +415,9 @@ function bindEvents() {
 
     if (classAddBtn) {
         classAddBtn.addEventListener("click", () => {
+            if (!isAdminRole(state.role)) {
+                return;
+            }
             openClassModal("add");
         });
     }
@@ -409,6 +426,9 @@ function bindEvents() {
         classList.addEventListener("click", (event) => {
             const editButton = event.target.closest(".class-edit");
             if (editButton) {
+                if (!isAdminRole(state.role)) {
+                    return;
+                }
                 const classId = Number(editButton.dataset.classId);
                 if (Number.isNaN(classId)) {
                     return;
@@ -829,7 +849,11 @@ function bindEvents() {
             if (!column) {
                 return;
             }
-            if (state.view === "class" && isAdminRole(state.role) && !state.selectedClassId) {
+            if (
+                state.view === "class" &&
+                (isAdminRole(state.role) || isTeacherRole(state.role)) &&
+                !state.selectedClassId
+            ) {
                 alert("Select a class first.");
                 return;
             }
@@ -846,7 +870,11 @@ function bindEvents() {
             const slot = getUsualSlotForMinutes(absoluteClicked);
             const startMinutes = slot ? slot[0] : START_HOUR * 60 + Math.min(rawMinutes, totalMinutes - 30);
             const dayIndex = Number(column.dataset.day || 0);
-            openBookingModal(dayIndex, startMinutes);
+            const smartMode =
+                state.view === "class" &&
+                isTeacherRole(state.role) &&
+                state.smartOverlayEnabled;
+            openBookingModal(dayIndex, startMinutes, null, { smartMode });
         });
     }
 
@@ -868,6 +896,9 @@ function bindEvents() {
             }
 
             const targetView = pendingBooking.view || "class";
+            const isSmartMode = Boolean(pendingBooking.smartMode);
+            const isSmartClassBooking =
+                isSmartMode && targetView === "class" && isTeacherRole(state.role);
             const bookingDay = pendingBooking.day;
             const ignoreId = pendingBooking.eventId || null;
             const bookingDate = pendingBooking.date || (() => {
@@ -962,7 +993,6 @@ function bindEvents() {
                 (targetView === "class" || targetView === "teacher") && classroomId
                     ? getRoomBookingConflict(bookingDay, bookingDate, startMinutes, endMinutes, ignoreId, classroomId)
                     : null;
-
             if (conflict) {
                 const conflictTitle = conflict.title || "Existing booking";
                 alert(
@@ -976,23 +1006,71 @@ function bindEvents() {
                 return;
             }
 
-            const subjectInput = bookingSubject ? bookingSubject.value.trim() : "";
-            const selectedCourseId = bookingSubject?.dataset.courseId || pendingBooking.courseId || "";
+            const teacherCatalog = getBookingTeachers();
             const courseCatalog = courseDirectory || [];
-            const selectedCourse =
-                courseCatalog.find((course) => String(course.id) === String(selectedCourseId)) ||
-                resolveCourseFromInput(subjectInput, courseCatalog);
-            const subjectLabel =
-                selectedCourse?.name || selectedCourse?.code || subjectInput || "Untitled class";
-            const typeValue = bookingType ? bookingType.value : "";
-            const typeLabel = bookingType
-                ? bookingType.options[bookingType.selectedIndex]?.text || typeValue
-                : "";
+            const subjectInput = bookingSubject ? bookingSubject.value.trim() : "";
+
+            let teacherId = null;
+            let professorLabel = "";
+            let selectedCourse = null;
+            let subjectLabel = "";
+            let typeValue = "";
+            let typeLabel = "";
+
+            if (isSmartClassBooking) {
+                teacherId = state.currentTeacherId || null;
+                const teacherItem = teacherCatalog.find(
+                    (teacher) => String(teacher.id) === String(teacherId)
+                );
+                professorLabel = teacherItem?.name || "";
+                const selectedCourseId = bookingSubject?.dataset.courseId || pendingBooking.courseId || "";
+                selectedCourse =
+                    courseCatalog.find((course) => String(course.id) === String(selectedCourseId)) ||
+                    resolveCourseFromInput(subjectInput, courseCatalog);
+                subjectLabel = selectedCourse?.name || selectedCourse?.code || subjectInput || "";
+                typeValue = "DEFAULT";
+                typeLabel = "Default";
+            } else {
+                const professorInput = bookingProfessor ? bookingProfessor.value.trim() : "";
+                const selectedTeacherId = bookingProfessor?.dataset.teacherId || pendingBooking.teacherId || "";
+                const selectedTeacher =
+                    teacherCatalog.find((teacher) => String(teacher.id) === String(selectedTeacherId)) ||
+                    resolveTeacherFromInput(professorInput, teacherCatalog);
+                teacherId = selectedTeacher ? selectedTeacher.id : null;
+                professorLabel = selectedTeacher ? selectedTeacher.name || professorInput : professorInput;
+                const selectedCourseId = bookingSubject?.dataset.courseId || pendingBooking.courseId || "";
+                selectedCourse =
+                    courseCatalog.find((course) => String(course.id) === String(selectedCourseId)) ||
+                    resolveCourseFromInput(subjectInput, courseCatalog);
+                subjectLabel =
+                    selectedCourse?.name || selectedCourse?.code || subjectInput || "Untitled class";
+                typeValue = bookingType ? bookingType.value : "";
+                typeLabel = bookingType
+                    ? bookingType.options[bookingType.selectedIndex]?.text || typeValue
+                    : "";
+            }
+
             const recurringEnabled =
                 Boolean(bookingRecurring && bookingRecurring.checked) &&
                 targetView === "class" &&
                 isAdminRole(state.role) &&
                 !pendingBooking.eventId;
+
+            const shouldCheckTeacherConflict = isTeacherRole(state.role) && teacherId;
+            const teacherConflict = shouldCheckTeacherConflict
+                ? getTeacherBookingConflict(
+                    bookingDay,
+                    startMinutes,
+                    endMinutes,
+                    ignoreId,
+                    teacherId
+                )
+                : null;
+
+            if (teacherConflict) {
+                alert("That time slot conflicts with your teacher schedule.");
+                return;
+            }
 
             const metaParts = [];
             if (professorLabel) {
@@ -1019,10 +1097,23 @@ function bindEvents() {
                         ? {scopeType: "room", scopeId: classroomId}
                         : {scopeType: "general", scopeId: null};
 
-            const courseId = selectedCourse?.id || (await resolveCourseIdFromSubject(subjectLabel));
-            if (!courseId) {
-                alert("Select or enter a course name first.");
-                return;
+            let courseId = null;
+            if (isSmartClassBooking) {
+                courseId = selectedCourse?.id || (subjectLabel ? await resolveCourseIdFromSubject(subjectLabel) : null);
+                if (!courseId) {
+                    alert("Select or enter a course name first.");
+                    return;
+                }
+                if (!teacherId) {
+                    alert("No teacher profile found for this account.");
+                    return;
+                }
+            } else {
+                courseId = selectedCourse?.id || (await resolveCourseIdFromSubject(subjectLabel));
+                if (!courseId) {
+                    alert("Select or enter a course name first.");
+                    return;
+                }
             }
 
             if (pendingBooking) {

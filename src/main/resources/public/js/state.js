@@ -15,6 +15,7 @@ const state = {
   selectedRoomId: null,
   selectedTeacherId: null,
   userScheduleOrigin: null,
+  smartOverlayEnabled: false,
 };
 
 const eventsByView = {

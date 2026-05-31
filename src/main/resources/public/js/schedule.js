@@ -42,10 +42,9 @@ function updateSmartToggleState() {
   }
 
   const canUseSmart =
-    isTeacherRole(state.role) &&
-    state.view === "class" &&
-    Boolean(state.selectedClassId) &&
-    Boolean(state.currentTeacherId);
+    (isTeacherRole(state.role) || isAdminRole(state.role)) &&
+    state.view === "teacher" &&
+    Boolean(state.currentTeacherId || state.selectedTeacherId);
 
   if (!canUseSmart) {
     state.smartOverlayEnabled = false;
@@ -58,6 +57,156 @@ function updateSmartToggleState() {
   );
   smartToggle.classList.toggle("btn-primary", state.smartOverlayEnabled);
   smartToggle.classList.toggle("btn-ghost", !state.smartOverlayEnabled);
+}
+
+function normalizeSmartOverlayClassIds() {
+  if (!Array.isArray(state.smartOverlayClassIds)) {
+    state.smartOverlayClassIds = [];
+    return [];
+  }
+
+  const normalizedIds = [];
+  const seenIds = new Set();
+
+  state.smartOverlayClassIds.forEach((classId) => {
+    const numericClassId = Number(classId);
+    const normalizedClassId = Number.isFinite(numericClassId) ? numericClassId : classId;
+    const key = String(normalizedClassId);
+    if (!key || seenIds.has(key)) {
+      return;
+    }
+    seenIds.add(key);
+    normalizedIds.push(normalizedClassId);
+  });
+
+  state.smartOverlayClassIds = normalizedIds;
+  return normalizedIds;
+}
+
+function renderSmartOverlayClassOptions() {
+  if (!smartClassList) {
+    return;
+  }
+
+  smartClassList.innerHTML = "";
+  const selectedIds = new Set(normalizeSmartOverlayClassIds().map((classId) => String(classId)));
+  const classes = (classDirectory || [])
+    .slice()
+    .sort((a, b) => {
+      const nameCompare = (a.name || String(a.id)).localeCompare(b.name || String(b.id));
+      if (nameCompare !== 0) {
+        return nameCompare;
+      }
+      return String(a.id).localeCompare(String(b.id));
+    });
+
+  if (classes.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.textContent = "No classes are available yet.";
+    smartClassList.appendChild(empty);
+    return;
+  }
+
+  classes.forEach((classItem) => {
+    const option = document.createElement("label");
+    option.className = "smart-class-option";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.value = String(classItem.id);
+    checkbox.checked = selectedIds.has(String(classItem.id));
+
+    const content = document.createElement("div");
+
+    const title = document.createElement("strong");
+    title.textContent = classItem.name || `Class ${classItem.id}`;
+
+    const meta = document.createElement("div");
+    meta.className = "smart-class-meta";
+    meta.textContent = `ID ${classItem.id} · Year ${classItem.year || "-"} · Semester ${classItem.semester || "-"}`;
+
+    content.appendChild(title);
+    content.appendChild(meta);
+    option.appendChild(checkbox);
+    option.appendChild(content);
+
+    checkbox.addEventListener("change", () => {
+      const nextIds = new Set(normalizeSmartOverlayClassIds().map((classId) => String(classId)));
+      if (checkbox.checked) {
+        nextIds.add(String(classItem.id));
+      } else {
+        nextIds.delete(String(classItem.id));
+      }
+      state.smartOverlayClassIds = Array.from(nextIds).map((classId) => {
+        const numericClassId = Number(classId);
+        return Number.isFinite(numericClassId) ? numericClassId : classId;
+      });
+      normalizeSmartOverlayClassIds();
+    });
+
+    smartClassList.appendChild(option);
+  });
+}
+
+function openSmartOverlayModal() {
+  if (!smartModal) {
+    return;
+  }
+
+  const teacherId = state.currentTeacherId || state.selectedTeacherId || null;
+  state.smartOverlayTeacherId = teacherId;
+  if (!Array.isArray(state.smartOverlayClassIds) || state.smartOverlayClassIds.length === 0) {
+    if (state.selectedClassId) {
+      state.smartOverlayClassIds = [state.selectedClassId];
+    }
+  }
+
+  if (smartModalTitle) {
+    smartModalTitle.textContent = "Smart overlay";
+  }
+  if (smartTeacherInput) {
+    const teacherItem = (teacherDirectory || []).find(
+      (teacher) => String(teacher.id) === String(teacherId)
+    );
+    const teacherUser = (userDirectory || []).find(
+      (user) => String(user.id) === String(teacherItem?.userId)
+    );
+    smartTeacherInput.value = teacherUser?.name || `Teacher ${teacherId || ""}`;
+  }
+
+  renderSmartOverlayClassOptions();
+  smartModal.removeAttribute("hidden");
+}
+
+function closeSmartOverlayModal() {
+  if (!smartModal) {
+    return;
+  }
+
+  smartModal.setAttribute("hidden", "");
+}
+
+function applySmartOverlaySelection() {
+  const teacherId = state.smartOverlayTeacherId || state.currentTeacherId || state.selectedTeacherId || null;
+  const selectedClassIds = normalizeSmartOverlayClassIds();
+
+  if (!teacherId) {
+    alert("No teacher profile is available for this account.");
+    return;
+  }
+  if (selectedClassIds.length === 0) {
+    alert("Select at least one class.");
+    return;
+  }
+
+  state.smartOverlayTeacherId = teacherId;
+  state.selectedTeacherId = teacherId;
+  state.smartOverlayEnabled = true;
+  updateSmartToggleState();
+  updateActiveScopeLabel();
+  renderEvents();
+  closeSmartOverlayModal();
 }
 
 function openFilterPanel() {
@@ -172,35 +321,36 @@ function renderBookingClassSelection() {
 }
 
 function applySmartBookingMode(enabled) {
-  if (bookingProfessorGroup) {
-    bookingProfessorGroup.toggleAttribute("hidden", enabled);
-  }
-  if (bookingProfessor) {
-    bookingProfessor.required = !enabled;
-  }
-  if (bookingSubjectGroup) {
-    bookingSubjectGroup.toggleAttribute("hidden", false);
-  }
-  if (bookingSubject) {
-    bookingSubject.required = true;
-  }
-
-  const bookingTypeLabel = bookingType ? bookingType.closest("label") : null;
-  if (bookingTypeLabel) {
-    bookingTypeLabel.toggleAttribute("hidden", enabled);
-  }
-  if (bookingType) {
-    bookingType.required = !enabled;
-  }
-
   if (!enabled) {
     return;
+  }
+
+  if (bookingClassGroup) {
+    bookingClassGroup.toggleAttribute("hidden", true);
+  }
+  if (bookingClassInput) {
+    bookingClassInput.required = false;
+    bookingClassInput.value = "";
+    bookingClassInput.dataset.classId = "";
+  }
+  if (bookingClassResults) {
+    bookingClassResults.setAttribute("hidden", "");
+    bookingClassResults.innerHTML = "";
+  }
+  if (bookingClassSelection) {
+    bookingClassSelection.setAttribute("hidden", "");
+    bookingClassSelection.innerHTML = "";
+  }
+  if (pendingBooking) {
+    pendingBooking.classIds = normalizeSmartOverlayClassIds();
+    pendingBooking.classId = pendingBooking.classIds.length > 0 ? pendingBooking.classIds[0] : null;
+    pendingBooking.teacherId = state.smartOverlayTeacherId || state.currentTeacherId || pendingBooking.teacherId;
   }
 
   if (bookingProfessor) {
     const teacherCatalog = getBookingTeachers();
     const teacherItem = teacherCatalog.find(
-      (teacher) => String(teacher.id) === String(state.currentTeacherId)
+      (teacher) => String(teacher.id) === String(state.smartOverlayTeacherId || state.currentTeacherId)
     );
     bookingProfessor.value = teacherItem ? teacherItem.name : "";
     bookingProfessor.dataset.teacherId = teacherItem ? String(teacherItem.id) : "";
@@ -208,19 +358,6 @@ function applySmartBookingMode(enabled) {
   if (bookingProfessorResults) {
     bookingProfessorResults.setAttribute("hidden", "");
     bookingProfessorResults.innerHTML = "";
-  }
-
-  if (bookingSubject) {
-    bookingSubject.value = "";
-    bookingSubject.dataset.courseId = "";
-  }
-  if (bookingSubjectResults) {
-    bookingSubjectResults.setAttribute("hidden", "");
-    bookingSubjectResults.innerHTML = "";
-  }
-
-  if (bookingType) {
-    bookingType.value = "DEFAULT";
   }
 }
 
@@ -233,7 +370,7 @@ function openBookingModal(dayIndex, startMinutes, eventData = null, options = {}
   const smartMode =
     Boolean(options.smartMode) &&
     !isEdit &&
-    state.view === "class" &&
+    state.view === "teacher" &&
     isTeacherRole(state.role);
   const bookingDay = isEdit ? eventData.day : dayIndex;
   const activeClassId = state.view === "class" ? getSelectedClassId() : null;
@@ -243,12 +380,16 @@ function openBookingModal(dayIndex, startMinutes, eventData = null, options = {}
       : eventData.classId
         ? [eventData.classId]
         : []
-    : activeClassId
-      ? [activeClassId]
-      : [];
+    : smartMode
+      ? normalizeSmartOverlayClassIds().slice()
+      : activeClassId
+        ? [activeClassId]
+        : [];
   const resolvedClassId = isEdit
     ? eventData.classId || attachedClassIds[0] || activeClassId || null
-    : activeClassId || null;
+    : smartMode
+      ? normalizeSmartOverlayClassIds()[0] || activeClassId || null
+      : activeClassId || null;
   const defaultTeacherId =
     !isEdit
       ? state.view === "teacher" && state.selectedTeacherId
@@ -340,7 +481,7 @@ function openBookingModal(dayIndex, startMinutes, eventData = null, options = {}
     }
   }
   if (bookingClassGroup && bookingClassInput) {
-    const showClassPicker = state.view === "room" || state.view === "teacher";
+    const showClassPicker = state.view === "room" || (state.view === "teacher" && !smartMode);
     bookingClassGroup.toggleAttribute("hidden", !showClassPicker);
     if (showClassPicker) {
       const classCatalog = getBookingClasses();
@@ -363,6 +504,11 @@ function openBookingModal(dayIndex, startMinutes, eventData = null, options = {}
       if (bookingClassSelection) {
         bookingClassSelection.setAttribute("hidden", "");
         bookingClassSelection.innerHTML = "";
+      }
+      if (smartMode) {
+        const smartClassIds = normalizeSmartOverlayClassIds();
+        bookingClassInput.value = smartClassIds.length > 0 ? `${smartClassIds.length} selected` : "";
+        bookingClassInput.dataset.classId = smartClassIds.length > 0 ? String(smartClassIds[0]) : "";
       }
     }
   }
@@ -626,21 +772,23 @@ function renderEvents() {
 
   let overlayItems = [];
   if (
-    state.view === "class" &&
-    isTeacherRole(state.role) &&
+    state.view === "teacher" &&
+    (isTeacherRole(state.role) || isAdminRole(state.role)) &&
     state.smartOverlayEnabled &&
-    state.currentTeacherId
+    normalizeSmartOverlayClassIds().length > 0
   ) {
-    ensureEventIds("teacher");
-    const teacherItems = (eventsByView.teacher || [])
+    ensureEventIds("class");
+    const selectedClassIds = new Set(
+      normalizeSmartOverlayClassIds().map((classId) => String(classId))
+    );
+    const classItems = (eventsByView.class || [])
       .filter(isInWeek)
-      .filter(
-        (item) =>
-          String(item.teacherId) === String(state.currentTeacherId) ||
-          String(item.professor) === String(state.currentTeacherId)
-      );
+      .filter((item) => {
+        const eventClassIds = getEventClassIds(item);
+        return eventClassIds.some((classId) => selectedClassIds.has(String(classId)));
+      });
     const baseIds = new Set(filteredItems.map((item) => item.id));
-    overlayItems = teacherItems.filter((item) => !baseIds.has(item.id));
+    overlayItems = classItems.filter((item) => !baseIds.has(item.id));
   }
 
   const renderEventItem = (eventItem, viewClass, extraClass = "") => {

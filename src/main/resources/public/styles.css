@@ -139,6 +139,21 @@ label {
   gap: 8px;
 }
 
+#smart-toggle {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 40;
+  min-width: 96px;
+  box-shadow: var(--shadow);
+}
+
+#smart-toggle[aria-pressed="true"] {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+}
+
 input,
 select {
   padding: 10px 12px;
@@ -440,6 +455,46 @@ a.tab {
 .modal-form {
   display: grid;
   gap: 12px;
+}
+
+.smart-modal-card {
+  width: min(520px, 100%);
+}
+
+.smart-modal-form {
+  gap: 14px;
+}
+
+.smart-overlay-help {
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+.smart-class-list {
+  display: grid;
+  gap: 8px;
+  max-height: 320px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.smart-class-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.smart-class-option input {
+  margin: 0;
+}
+
+.smart-class-meta {
+  font-size: 12px;
+  color: var(--ink-muted);
 }
 
 /* Put start and end time inputs on the same row in booking modal */

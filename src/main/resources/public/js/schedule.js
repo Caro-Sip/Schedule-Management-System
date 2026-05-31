@@ -741,15 +741,17 @@ function renderEvents() {
   const items = eventsByView[state.view] || [];
   let filteredItems = items.filter(isInWeek);
 
-  if (state.view === "class" && (isAdminRole(state.role) || isTeacherRole(state.role))) {
-    if (!state.selectedClassId) {
+  if (state.view === "class") {
+    const selectedClassId = getSelectedClassId();
+    if (!selectedClassId) {
       return;
     }
-    filteredItems = items.filter((item) => {
-      if (Array.isArray(item.classIds) && item.classIds.length > 0) {
-        return item.classIds.includes(state.selectedClassId);
-      }
-      return item.classId === state.selectedClassId;
+
+    filteredItems = filteredItems.filter((item) => {
+      const eventClassIds = getEventClassIds(item);
+      return eventClassIds.some(
+        (eventClassId) => String(eventClassId) === String(selectedClassId)
+      );
     });
   }
 
@@ -757,13 +759,13 @@ function renderEvents() {
     if (!state.selectedRoomId) {
       return;
     }
-    filteredItems = items.filter(
+    filteredItems = filteredItems.filter(
       (item) => String(item.roomId) === String(state.selectedRoomId)
     );
   }
 
   if (state.view === "teacher" && state.selectedTeacherId) {
-    filteredItems = items.filter(
+    filteredItems = filteredItems.filter(
       (item) =>
         String(item.teacherId) === String(state.selectedTeacherId) ||
         String(item.professor) === String(state.selectedTeacherId)

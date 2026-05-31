@@ -132,6 +132,13 @@ label {
   color: var(--ink-muted);
 }
 
+/* Keep most labels stacked, but make the booking recurring checkbox inline */
+#booking-recurring-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 input,
 select {
   padding: 10px 12px;

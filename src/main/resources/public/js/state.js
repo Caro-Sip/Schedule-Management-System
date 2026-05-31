@@ -11,6 +11,8 @@ const state = {
   currentUser: null,
   currentTeacherId: null,
   defaultCourseId: null,
+  smartOverlayTeacherId: null,
+  smartOverlayClassIds: [],
   selectedClassId: null,
   selectedRoomId: null,
   selectedTeacherId: null,

@@ -150,17 +150,47 @@ function bindEvents() {
 
     if (smartToggle) {
         smartToggle.addEventListener("click", () => {
-            if (!isTeacherRole(state.role)) {
+            if (!isTeacherRole(state.role) && !isAdminRole(state.role)) {
                 return;
             }
-            if (state.view !== "class" || !state.selectedClassId || !state.currentTeacherId) {
+            if (state.view !== "teacher" || (!state.currentTeacherId && !state.selectedTeacherId)) {
                 return;
             }
-            state.smartOverlayEnabled = !state.smartOverlayEnabled;
-            if (typeof updateSmartToggleState === "function") {
-                updateSmartToggleState();
+            if (typeof openSmartOverlayModal === "function") {
+                openSmartOverlayModal();
             }
-            renderEvents();
+        });
+    }
+
+    if (smartApplyBtn) {
+        smartApplyBtn.addEventListener("click", () => {
+            if (typeof applySmartOverlaySelection === "function") {
+                applySmartOverlaySelection();
+            }
+        });
+    }
+
+    if (smartCancelBtn) {
+        smartCancelBtn.addEventListener("click", () => {
+            if (typeof closeSmartOverlayModal === "function") {
+                closeSmartOverlayModal();
+            }
+        });
+    }
+
+    if (smartCloseBtn) {
+        smartCloseBtn.addEventListener("click", () => {
+            if (typeof closeSmartOverlayModal === "function") {
+                closeSmartOverlayModal();
+            }
+        });
+    }
+
+    if (smartModal) {
+        smartModal.addEventListener("click", (event) => {
+            if (event.target === smartModal && typeof closeSmartOverlayModal === "function") {
+                closeSmartOverlayModal();
+            }
         });
     }
 
@@ -871,8 +901,8 @@ function bindEvents() {
             const startMinutes = slot ? slot[0] : START_HOUR * 60 + Math.min(rawMinutes, totalMinutes - 30);
             const dayIndex = Number(column.dataset.day || 0);
             const smartMode =
-                state.view === "class" &&
-                isTeacherRole(state.role) &&
+                state.view === "teacher" &&
+                (isTeacherRole(state.role) || isAdminRole(state.role)) &&
                 state.smartOverlayEnabled;
             openBookingModal(dayIndex, startMinutes, null, { smartMode });
         });
@@ -898,7 +928,7 @@ function bindEvents() {
             const targetView = pendingBooking.view || "class";
             const isSmartMode = Boolean(pendingBooking.smartMode);
             const isSmartClassBooking =
-                isSmartMode && targetView === "class" && isTeacherRole(state.role);
+                isSmartMode && targetView === "teacher" && (isTeacherRole(state.role) || isAdminRole(state.role));
             const bookingDay = pendingBooking.day;
             const ignoreId = pendingBooking.eventId || null;
             const bookingDate = pendingBooking.date || (() => {
@@ -1006,6 +1036,26 @@ function bindEvents() {
                 return;
             }
 
+            const selectedClassIds = isSmartClassBooking
+                ? (Array.isArray(state.smartOverlayClassIds) ? state.smartOverlayClassIds : [])
+                : Array.isArray(pendingBooking.classIds)
+                    ? pendingBooking.classIds
+                    : [];
+            const classConflict = selectedClassIds.find((selectedClassId) =>
+                getClassBookingConflict(
+                    bookingDay,
+                    bookingDate,
+                    startMinutes,
+                    endMinutes,
+                    ignoreId,
+                    selectedClassId
+                )
+            );
+            if (classConflict) {
+                alert("That time slot conflicts with one of the selected classes.");
+                return;
+            }
+
             const submitTeacherCatalog = getBookingTeachers();
             const courseCatalog = courseDirectory || [];
             const subjectInput = bookingSubject ? bookingSubject.value.trim() : "";
@@ -1019,7 +1069,7 @@ function bindEvents() {
             let typeLabel = "";
 
             if (isSmartClassBooking) {
-                resolvedTeacherId = state.currentTeacherId || null;
+                resolvedTeacherId = state.smartOverlayTeacherId || state.currentTeacherId || null;
                 const teacherItem = submitTeacherCatalog.find(
                     (teacher) => String(teacher.id) === String(resolvedTeacherId)
                 );
@@ -1029,8 +1079,10 @@ function bindEvents() {
                     courseCatalog.find((course) => String(course.id) === String(selectedCourseId)) ||
                     resolveCourseFromInput(subjectInput, courseCatalog);
                 subjectLabel = selectedCourse?.name || selectedCourse?.code || subjectInput || "";
-                typeValue = "DEFAULT";
-                typeLabel = "Default";
+                typeValue = bookingType ? bookingType.value : "";
+                typeLabel = bookingType
+                    ? bookingType.options[bookingType.selectedIndex]?.text || typeValue
+                    : "";
             } else {
                 const professorInput = bookingProfessor ? bookingProfessor.value.trim() : "";
                 const selectedTeacherId = bookingProfessor?.dataset.teacherId || pendingBooking.teacherId || "";

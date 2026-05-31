@@ -120,13 +120,7 @@
                 <span class="week-scope" id="active-scope-label" hidden></span>
                 <button class="btn btn-ghost" id="next-week">Next</button>
             </div>
-            <button
-                    class="btn btn-ghost"
-                    id="smart-toggle"
-                    type="button"
-                    aria-pressed="false"
-                    hidden
-            >
+            <button class="btn btn-ghost" id="smart-toggle" type="button" aria-pressed="false" hidden>
                 SMART
             </button>
             <button class="btn btn-primary" id="today-btn">Today</button>
@@ -635,6 +629,34 @@
                 </div>
             </div>
         </form>
+    </div>
+</div>
+
+<div class="modal" id="smart-modal" hidden>
+    <div class="modal-card smart-modal-card" role="dialog" aria-modal="true" aria-labelledby="smart-modal-title">
+        <div class="modal-header">
+            <h2 class="modal-title" id="smart-modal-title">Smart overlay</h2>
+            <button class="modal-close" id="smart-close" type="button" aria-label="Close">
+                x
+            </button>
+        </div>
+        <div class="modal-form smart-modal-form">
+            <label>
+                Teacher
+                <input type="text" id="smart-teacher" readonly />
+            </label>
+            <div class="smart-overlay-help">
+                Select one or more classes to overlay with your schedule.
+            </div>
+            <div class="smart-class-list" id="smart-class-list"></div>
+        </div>
+        <div class="modal-actions split">
+            <div></div>
+            <div class="modal-actions-right">
+                <button class="btn" id="smart-cancel" type="button">Cancel</button>
+                <button class="btn btn-primary" id="smart-apply" type="button">Show overlay</button>
+            </div>
+        </div>
     </div>
 </div>
 

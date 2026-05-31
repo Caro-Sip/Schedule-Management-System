@@ -20,6 +20,8 @@ function resetSessionState() {
   state.currentUser = null;
   state.currentTeacherId = null;
   state.defaultCourseId = null;
+  state.smartOverlayTeacherId = null;
+  state.smartOverlayClassIds = [];
   state.selectedClassId = null;
   state.selectedRoomId = null;
   state.selectedTeacherId = null;
@@ -85,6 +87,8 @@ function applyAuthenticatedSession(token, user, persist = true) {
   state.userName = user.name || "User";
   state.currentTeacherId = null;
   state.defaultCourseId = null;
+  state.smartOverlayTeacherId = null;
+  state.smartOverlayClassIds = [];
   state.smartOverlayEnabled = false;
 
   if (persist) {

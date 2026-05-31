@@ -154,7 +154,12 @@ INSERT INTO class_students (class_id, user_id) VALUES
     (3, 5),
     (3, 8),
     (4, 16),
-    (5, 17);
+    (5, 17),
+    (2, 15),
+    (2, 11),
+    (2, 12),
+    (2, 13),
+    (2, 14);
 
 INSERT INTO classrooms (name, building) VALUES
     ('A401', 'Building A'),

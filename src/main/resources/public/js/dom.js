@@ -459,8 +459,9 @@ function resolveClassIdForUser(user) {
   if (Number.isFinite(Number(user.classId))) {
     return Number(user.classId);
   }
-  const byId = classDirectory.find((item) => String(item.id) === String(user.id));
-  return byId ? Number(byId.id) : null;
+  // No reliable client-side fallback: class membership must be provided
+  // by the server (user.classId) or looked up via an API.
+  return null;
 }
 
 function resolveTeacherIdForUser(user) {
@@ -478,13 +479,14 @@ async function showUserSchedule(user) {
     return;
   }
 
-  if (user.role === "class-monitor") {
+  if (user.role === "class-monitor" || user.role === "student") {
     if (classDirectory.length === 0) {
       await loadClasses();
     }
     const classId = resolveClassIdForUser(user);
     if (!classId) {
-      alert("No class is linked to this class monitor.");
+      const roleLabel = user.role === "class-monitor" ? "class monitor" : "student";
+      alert(`No class is linked to this ${roleLabel}.`);
       return;
     }
     state.selectedTeacherId = null;

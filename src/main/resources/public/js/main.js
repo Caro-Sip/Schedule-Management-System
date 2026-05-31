@@ -86,6 +86,27 @@ function syncCurrentUserDirectoryEntry() {
     );
 }
 
+function syncCurrentStudentClassContext() {
+    if (!state.currentUser) {
+        return;
+    }
+
+    const isClassScopedUser =
+        state.currentUser.role === "class-monitor" || state.currentUser.role === "student";
+    if (!isClassScopedUser) {
+        return;
+    }
+
+    const classId = resolveClassIdForUser(state.currentUser);
+    const hasMatchingClass = classDirectory.some(
+        (classItem) => String(classItem.id) === String(classId)
+    );
+
+    state.selectedTeacherId = null;
+    state.selectedRoomId = null;
+    state.selectedClassId = hasMatchingClass ? Number(classId) : null;
+}
+
 
 function bindEvents() {
     guestLoginBtn.addEventListener("click", () => showSchedule("guest", "Guest", false));
@@ -1412,6 +1433,7 @@ async function initializeAuthenticatedApp() {
     await loadClassrooms();
     await loadCourses();
     await loadClasses();
+    syncCurrentStudentClassContext();
     syncCurrentUserDirectoryEntry();
     if (isAdminRole(state.role)) {
         await loadUsers();

@@ -261,7 +261,11 @@ public class ApiServer {
 
     private static void getAllTeachers(Context ctx) {
         List<Teacher> teachers = teacherService.getAllTeachers();
-        ctx.json(teachers);
+        List<Map<String, Object>> payload = new ArrayList<>();
+        for (Teacher teacher : teachers) {
+            payload.add(toPublicTeacher(teacher));
+        }
+        ctx.json(payload);
     }
 
     private static void getAllUsers(Context ctx) {
@@ -669,7 +673,11 @@ public class ApiServer {
         try {
             String department = ctx.pathParam("department");
             List<Teacher> teachers = teacherService.getTeachersByDepartment(department);
-            ctx.json(teachers);
+            List<Map<String, Object>> payload = new ArrayList<>();
+            for (Teacher teacher : teachers) {
+                payload.add(toPublicTeacher(teacher));
+            }
+            ctx.json(payload);
         } catch (IllegalArgumentException e) {
             ctx.status(400).json(errorResponse(e, "Invalid department"));
         } catch (Exception e) {
@@ -952,6 +960,26 @@ public class ApiServer {
         } catch (Exception e) {
             // ignore lookup failures
         }
+        return payload;
+    }
+
+    private static Map<String, Object> toPublicTeacher(Teacher teacher) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("id", teacher.getId());
+        payload.put("userId", teacher.getUserId());
+        payload.put("department", teacher.getDepartment());
+
+        String name = null;
+        try {
+            User user = userService.getUser(teacher.getUserId());
+            if (user != null) {
+                name = user.getName();
+            }
+        } catch (Exception ignored) {
+            name = null;
+        }
+        payload.put("name", name);
+
         return payload;
     }
 

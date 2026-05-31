@@ -308,6 +308,7 @@ async function loadTeachers() {
 			teacherDirectory.push({
 				id: Number(teacher.id),
 				userId: Number(teacher.userId ?? teacher.user_id),
+				name: (teacher.name || "").toString().trim(),
 				department: teacher.department || "",
 			});
 		});

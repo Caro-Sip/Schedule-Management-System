@@ -968,6 +968,11 @@ function bindEvents() {
             const professorLabel = selectedTeacher ? selectedTeacher.name || professorInput : professorInput;
 
             const activeClassId = getSelectedClassId();
+            const fallbackUserClassId =
+                state.currentUser &&
+                (state.currentUser.role === "class-monitor" || state.currentUser.role === "student")
+                    ? state.currentUser.classId || null
+                    : null;
             const roomSelectedClassId =
                 bookingClassInput?.dataset.classId ||
                 pendingBooking.classId ||
@@ -975,9 +980,9 @@ function bindEvents() {
                 "";
             const classId =
                 targetView === "class"
-                    ? pendingBooking.classId || pendingBooking.classIds?.[0] || activeClassId || null
+                    ? pendingBooking.classId || pendingBooking.classIds?.[0] || activeClassId || fallbackUserClassId || null
                     : (targetView === "room" || targetView === "teacher")
-                        ? roomSelectedClassId || pendingBooking.classId || pendingBooking.classIds?.[0] || null
+                        ? roomSelectedClassId || pendingBooking.classId || pendingBooking.classIds?.[0] || fallbackUserClassId || null
                         : null;
             let classroomId = targetView === "room" ? pendingBooking.roomId : null;
             let roomLabel = "";

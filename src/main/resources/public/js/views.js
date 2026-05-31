@@ -101,6 +101,10 @@ function setView(view) {
     return;
   }
 
+  const isClassScopedUser =
+    state.currentUser &&
+    (state.currentUser.role === "class-monitor" || state.currentUser.role === "student");
+
   if (view !== "user") {
     state.userScheduleOrigin = null;
   }
@@ -109,7 +113,14 @@ function setView(view) {
   }
 
   if (view !== "class") {
-    state.selectedClassId = null;
+    if (!isClassScopedUser) {
+      state.selectedClassId = null;
+    }
+  } else if (isClassScopedUser && !state.selectedClassId) {
+    const classId = Number(state.currentUser.classId);
+    if (Number.isFinite(classId)) {
+      state.selectedClassId = classId;
+    }
   }
 
   state.view = view;
@@ -127,6 +138,7 @@ function setView(view) {
 function updateViewVisibility() {
   const isAdmin = isAdminRole(state.role);
   const isTeacher = isTeacherRole(state.role);
+  const canRoomScope = canUseRoomScopedView(state.role);
   const isUserView = state.view === "user";
   const isClassView = state.view === "class";
   const isRoomView = state.view === "room";
@@ -134,12 +146,13 @@ function updateViewVisibility() {
   const isAuditView = state.view === "audit";
 
   const showClassList = (isAdmin || isTeacher) && isClassView && !state.selectedClassId;
-  const showRoomList = isAdmin && isRoomView && !state.selectedRoomId;
+  const showRoomList = canRoomScope && isRoomView && !state.selectedRoomId;
   const showBackToList =
     (isAdmin &&
       ((isClassView && state.selectedClassId) ||
         (isRoomView && state.selectedRoomId) ||
         (isTeacherView && state.selectedTeacherId && state.userScheduleOrigin === "user"))) ||
+    (canRoomScope && isRoomView && state.selectedRoomId) ||
     (isTeacher && isClassView && state.selectedClassId);
   let showSchedule = !isUserView && !isAuditView;
   if (isAdmin) {
@@ -148,6 +161,8 @@ function updateViewVisibility() {
       (state.view === "teacher" ||
         (isClassView && state.selectedClassId) ||
         (isRoomView && state.selectedRoomId));
+  } else if (canRoomScope && isRoomView) {
+    showSchedule = showSchedule && Boolean(state.selectedRoomId);
   } else if (isTeacher && isClassView) {
     showSchedule = showSchedule && Boolean(state.selectedClassId);
   }
@@ -223,7 +238,7 @@ function renderCurrentView() {
     return;
   }
 
-  if (state.view === "room" && isAdminRole(state.role)) {
+  if (state.view === "room" && canUseRoomScopedView(state.role)) {
     renderRoomList();
     if (state.selectedRoomId) {
       renderEvents();

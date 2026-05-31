@@ -909,10 +909,10 @@ function bindEvents() {
 
             const professorInput = bookingProfessor ? bookingProfessor.value.trim() : "";
             const selectedTeacherId = bookingProfessor?.dataset.teacherId || pendingBooking.teacherId || "";
-            const teacherCatalog = getBookingTeachers();
+            const bookingTeacherCatalog = getBookingTeachers();
             const selectedTeacher =
-                teacherCatalog.find((teacher) => String(teacher.id) === String(selectedTeacherId)) ||
-                resolveTeacherFromInput(professorInput, teacherCatalog);
+                bookingTeacherCatalog.find((teacher) => String(teacher.id) === String(selectedTeacherId)) ||
+                resolveTeacherFromInput(professorInput, bookingTeacherCatalog);
             const teacherId = selectedTeacher ? selectedTeacher.id : null;
             const professorLabel = selectedTeacher ? selectedTeacher.name || professorInput : professorInput;
 
@@ -1006,11 +1006,12 @@ function bindEvents() {
                 return;
             }
 
-            const teacherCatalog = getBookingTeachers();
+            const submitTeacherCatalog = getBookingTeachers();
             const courseCatalog = courseDirectory || [];
             const subjectInput = bookingSubject ? bookingSubject.value.trim() : "";
 
-            let teacherId = null;
+            {
+            let resolvedTeacherId = null;
             let professorLabel = "";
             let selectedCourse = null;
             let subjectLabel = "";
@@ -1018,9 +1019,9 @@ function bindEvents() {
             let typeLabel = "";
 
             if (isSmartClassBooking) {
-                teacherId = state.currentTeacherId || null;
-                const teacherItem = teacherCatalog.find(
-                    (teacher) => String(teacher.id) === String(teacherId)
+                resolvedTeacherId = state.currentTeacherId || null;
+                const teacherItem = submitTeacherCatalog.find(
+                    (teacher) => String(teacher.id) === String(resolvedTeacherId)
                 );
                 professorLabel = teacherItem?.name || "";
                 const selectedCourseId = bookingSubject?.dataset.courseId || pendingBooking.courseId || "";
@@ -1034,9 +1035,9 @@ function bindEvents() {
                 const professorInput = bookingProfessor ? bookingProfessor.value.trim() : "";
                 const selectedTeacherId = bookingProfessor?.dataset.teacherId || pendingBooking.teacherId || "";
                 const selectedTeacher =
-                    teacherCatalog.find((teacher) => String(teacher.id) === String(selectedTeacherId)) ||
-                    resolveTeacherFromInput(professorInput, teacherCatalog);
-                teacherId = selectedTeacher ? selectedTeacher.id : null;
+                    submitTeacherCatalog.find((teacher) => String(teacher.id) === String(selectedTeacherId)) ||
+                    resolveTeacherFromInput(professorInput, submitTeacherCatalog);
+                resolvedTeacherId = selectedTeacher ? selectedTeacher.id : null;
                 professorLabel = selectedTeacher ? selectedTeacher.name || professorInput : professorInput;
                 const selectedCourseId = bookingSubject?.dataset.courseId || pendingBooking.courseId || "";
                 selectedCourse =
@@ -1056,14 +1057,14 @@ function bindEvents() {
                 isAdminRole(state.role) &&
                 !pendingBooking.eventId;
 
-            const shouldCheckTeacherConflict = isTeacherRole(state.role) && teacherId;
+            const shouldCheckTeacherConflict = isTeacherRole(state.role) && resolvedTeacherId;
             const teacherConflict = shouldCheckTeacherConflict
                 ? getTeacherBookingConflict(
                     bookingDay,
                     startMinutes,
                     endMinutes,
                     ignoreId,
-                    teacherId
+                    resolvedTeacherId
                 )
                 : null;
 
@@ -1104,7 +1105,7 @@ function bindEvents() {
                     alert("Select or enter a course name first.");
                     return;
                 }
-                if (!teacherId) {
+                if (!resolvedTeacherId) {
                     alert("No teacher profile found for this account.");
                     return;
                 }
@@ -1117,14 +1118,14 @@ function bindEvents() {
             }
 
             if (pendingBooking) {
-                pendingBooking.teacherId = teacherId;
+                pendingBooking.teacherId = resolvedTeacherId;
                 pendingBooking.courseId = courseId;
             }
 
             if (pendingBooking.eventId) {
                 const payload = {
                     classroomId,
-                    teacherId,
+                    teacherId: resolvedTeacherId,
                     courseId,
                     date: pendingBooking.date,
                     startTime: startValue,
@@ -1158,7 +1159,7 @@ function bindEvents() {
                 try {
                     const payload = {
                         classroomId,
-                        teacherId,
+                        teacherId: resolvedTeacherId,
                         courseId,
                         date: bookingDate,
                         startTime: startValue,
@@ -1186,6 +1187,7 @@ function bindEvents() {
                     console.error("Failed to create schedule", saveError);
                     alert(`Failed to create booking: ${saveError.message}`);
                 }
+            }
             }
         });
     }

@@ -55,6 +55,25 @@ public class ClassStudentDAO {
         return null;
     }
 
+    // Get class id for a given user id
+    public Integer getClassIdByUserId(int userId) {
+        String sql = "SELECT class_id FROM class_students WHERE user_id = ? LIMIT 1";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, userId);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt("class_id");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving class id for user: " + e.getMessage());
+        }
+        return null;
+    }
+
 
     // UPDATE - Update user information
     public boolean updateUser(ClassStudent student) {

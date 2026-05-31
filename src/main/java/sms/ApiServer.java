@@ -32,6 +32,7 @@ import sms.Objects.Schedule;
 import sms.Objects.User;
 import sms.Objects.Teacher;
 import sms.Service.ClassService;
+import sms.DAO.ClassStudentDAO;
 import sms.Service.TeacherService;
 import sms.Service.ScheduleService;
 import sms.Service.UserService;
@@ -911,7 +912,8 @@ public class ApiServer {
             case "ADMIN" -> "admin";
             case "TEACHER" -> "professor";
             case "MONITOR" -> "class-monitor";
-            case "STUDENT", "GUEST" -> "guest";
+            case "STUDENT" -> "student";
+            case "GUEST" -> "guest";
             default -> role.toLowerCase();
         };
     }
@@ -933,6 +935,23 @@ public class ApiServer {
         payload.put("role", normalizeRoleForClient(user.getRole()));
         payload.put("department", department);
         payload.put("lastModified", user.getLastModified());
+        // If this user is a student or class monitor, expose their classId for the client
+        try {
+            if (user != null) {
+                String rawRole = user.getRole();
+                if (rawRole != null) {
+                    String up = rawRole.trim().toUpperCase();
+                    if ("MONITOR".equals(up) || "STUDENT".equals(up)) {
+                        Integer classId = new ClassStudentDAO().getClassIdByUserId(user.getId());
+                        if (classId != null) {
+                            payload.put("classId", classId);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // ignore lookup failures
+        }
         return payload;
     }
 

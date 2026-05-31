@@ -27,7 +27,7 @@ function updateActiveScopeLabel() {
     const teacherUser = (userDirectory || []).find(
       (user) => String(user.id) === String(teacherItem?.userId)
     );
-    label = teacherUser?.name || `Teacher ${state.selectedTeacherId}`;
+    label = teacherItem?.name || teacherUser?.name || `Teacher ${state.selectedTeacherId}`;
   }
 
   if (activeScopeLabel) {
@@ -172,7 +172,7 @@ function openSmartOverlayModal() {
     const teacherUser = (userDirectory || []).find(
       (user) => String(user.id) === String(teacherItem?.userId)
     );
-    smartTeacherInput.value = teacherUser?.name || `Teacher ${teacherId || ""}`;
+    smartTeacherInput.value = teacherItem?.name || teacherUser?.name || `Teacher ${teacherId || ""}`;
   }
 
   renderSmartOverlayClassOptions();
@@ -908,7 +908,7 @@ function resolveEventTeacherLabel(eventItem) {
   const teacherUser = (userDirectory || []).find(
     (user) => String(user.id) === String(teacher.userId)
   );
-  return teacherUser?.name || `Teacher ${teacher.id}`;
+  return teacher.name || teacherUser?.name || `Teacher ${teacher.id}`;
 }
 
 function formatEventType(value) {
@@ -1184,7 +1184,7 @@ function getBookingTeachers() {
     return {
       id: teacher.id,
       userId: teacher.userId,
-      name: teacherUser?.name || `Teacher ${teacher.id}`,
+      name: teacher.name || teacherUser?.name || `Teacher ${teacher.id}`,
       role: "professor",
       department: teacher.department || "",
     };

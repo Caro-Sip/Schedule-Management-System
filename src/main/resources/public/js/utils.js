@@ -52,6 +52,10 @@ function isAdminRole(role) {
   return role === "admin";
 }
 
+function canUseRoomScopedView(role) {
+  return role === "admin" || role === "class-monitor";
+}
+
 function createEventId() {
   return `event-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
 }
@@ -126,11 +130,13 @@ function formatDate(value) {
 }
 
 function normalizeRoomText(value) {
-  return (value || "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+  const text = value === null || value === undefined ? "" : String(value);
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, "");
 }
 
 function normalizeClassText(value) {
-  return (value || "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+  const text = value === null || value === undefined ? "" : String(value);
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, "");
 }
 
 function normalizeCourseCode(value) {
@@ -147,7 +153,7 @@ function getBookingClasses() {
 }
 
 function parseRoomInput(value) {
-  const normalized = (value || "").trim();
+  const normalized = (value === null || value === undefined ? "" : String(value)).trim();
   const match = normalized.match(/([A-Za-z])\s*[-·]??\s*(\d{1,4})/);
   if (match) {
     return {

@@ -116,6 +116,8 @@ function setView(view) {
     if (!isClassScopedUser) {
       state.selectedClassId = null;
     }
+  } else if (isClassScopedUser) {
+    state.selectedRoomId = null;
   } else if (isClassScopedUser && !state.selectedClassId) {
     const classId = Number(state.currentUser.classId);
     if (Number.isFinite(classId)) {

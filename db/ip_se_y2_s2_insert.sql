@@ -37,6 +37,17 @@ INSERT INTO classes (id, name, year, semester, start_date, end_date, created_by)
     (6, 'IP-SE-Y2-S2', 2, 2, '2026-03-02', '2026-06-27', 1);
 
 -- -------------------------------------------------------------
+-- 4a. NEW CLASS MONITOR USER FOR IP-SE-Y2-S2
+-- user id=19 (kept separate from the IP-AI seed's monitor user)
+-- -------------------------------------------------------------
+
+INSERT INTO users (id, name, email, password_hash, role, last_modified) VALUES
+    (19, 'Monitor SE', 'monitor.se@school.local', '12345', 'MONITOR', '2026-05-31T09:00:00');
+
+INSERT INTO class_students (class_id, user_id) VALUES
+    (6, 19);
+
+-- -------------------------------------------------------------
 -- 4. CLASS–COURSES MAPPING
 -- -------------------------------------------------------------
 

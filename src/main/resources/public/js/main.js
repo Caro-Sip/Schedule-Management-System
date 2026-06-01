@@ -309,6 +309,18 @@ function bindEvents() {
         });
     }
 
+    if (classSearch) {
+        classSearch.addEventListener("input", () => {
+            renderClassList();
+        });
+    }
+
+    if (roomSearch) {
+        roomSearch.addEventListener("input", () => {
+            renderRoomList();
+        });
+    }
+
     if (userAddBtn) {
         userAddBtn.addEventListener("click", () => {
             openUserModal("add");

@@ -311,7 +311,14 @@ a.tab {
 .entity-controls-actions {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.entity-search-group {
+  display: flex;
+  align-items: center;
   gap: 12px;
   flex-wrap: wrap;
 }
@@ -324,6 +331,10 @@ a.tab {
 }
 
 .user-controls-actions .search-field input {
+  height: 38px;
+}
+
+.entity-search-group .search-field input {
   height: 38px;
 }
 
@@ -1428,6 +1439,10 @@ a.tab {
   .entity-controls-actions {
     width: 100%;
     justify-content: flex-start;
+  }
+
+  .entity-search-group {
+    width: 100%;
   }
 
   .user-search-group {

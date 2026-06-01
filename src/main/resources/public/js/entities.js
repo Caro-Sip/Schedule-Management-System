@@ -313,6 +313,7 @@ async function loadTeachers() {
 				userId: Number(teacher.userId ?? teacher.user_id),
 				name: (teacher.name || "").toString().trim(),
 				department: teacher.department || "",
+				name: teacher.name || teacher.fullName || "",
 			});
 		});
 	} catch (error) {

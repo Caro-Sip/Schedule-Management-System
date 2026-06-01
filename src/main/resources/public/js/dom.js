@@ -703,6 +703,28 @@ function getClassIdsForTeacher(teacherId) {
   return classIds;
 }
 
+function getRoomIdsForTeacher(teacherId) {
+  if (!teacherId) {
+    return new Set();
+  }
+
+  const scheduleItems = (eventsByView.teacher || []).filter((item) => {
+    return (
+      String(item.teacherId) === String(teacherId) ||
+      String(item.professor) === String(teacherId)
+    );
+  });
+
+  const roomIds = new Set();
+  scheduleItems.forEach((item) => {
+    if (item.roomId != null) {
+      roomIds.add(String(item.roomId));
+    }
+  });
+
+  return roomIds;
+}
+
 function renderClassList() {
   if (!classList || !classCount) {
     return;
@@ -711,10 +733,11 @@ function renderClassList() {
   let classes = getFilteredClasses();
   const searchTerm = classSearch ? classSearch.value.trim() : "";
   const isAdmin = isAdminRole(state.role);
-  const effectiveTeacherId = state.view === "teacher" ? getEffectiveTeacherId() : null;
+  const effectiveTeacherId = getEffectiveTeacherId();
   const isTeacherScheduleView = state.view === "teacher" && effectiveTeacherId;
+  const isTeacherClassView = state.view === "class" && isTeacherRole(state.role) && effectiveTeacherId;
 
-  if (isTeacherScheduleView) {
+  if (isTeacherScheduleView || isTeacherClassView) {
     const teacherClassIds = getClassIdsForTeacher(effectiveTeacherId);
     classes = classes.filter((classItem) => teacherClassIds.has(Number(classItem.id)));
   }
@@ -739,7 +762,7 @@ function renderClassList() {
     const row = document.createElement("div");
     row.className = "class-row";
     row.dataset.classId = classItem.id;
-    if (state.selectedClassId === classItem.id) {
+    if (String(state.selectedClassId) === String(classItem.id)) {
       row.classList.add("selected");
     }
 
@@ -751,7 +774,7 @@ function renderClassList() {
 
     const name = document.createElement("div");
     name.className = "user-name";
-    name.textContent = classItem.name;
+    name.textContent = classItem.name || `Class ${classItem.id}`;
 
     const id = document.createElement("div");
     id.className = "user-id";
@@ -777,12 +800,14 @@ function renderClassList() {
       : "Sem —";
     tags.appendChild(semesterTag);
 
-    const dateRangeTag = document.createElement("span");
-    dateRangeTag.className = "tag date-range";
     const start = classItem.startDate || classItem.start_date || null;
     const end = classItem.endDate || classItem.end_date || null;
-    dateRangeTag.textContent = start && end ? `${formatDate(start)} — ${formatDate(end)}` : "";
-    tags.appendChild(dateRangeTag);
+    if (start && end) {
+      const dateRangeTag = document.createElement("span");
+      dateRangeTag.className = "tag date-range";
+      dateRangeTag.textContent = `${formatDate(start)} — ${formatDate(end)}`;
+      tags.appendChild(dateRangeTag);
+    }
 
     const courseCountTag = document.createElement("span");
     courseCountTag.className = "tag course-count";
@@ -844,37 +869,37 @@ function renderClassList() {
 
     row.appendChild(content);
     if (isAdmin) {
-      const actions = document.createElement("div");
-      actions.className = "entity-actions";
+      const adminActions = document.createElement("div");
+      adminActions.className = "entity-actions";
 
-      const courseButton = document.createElement("button");
-      courseButton.type = "button";
-      courseButton.className = "btn btn-ghost class-course";
-      courseButton.textContent = "Course";
-      courseButton.dataset.classId = classItem.id;
-      courseButton.addEventListener("click", (event) => {
+      const adminCourseButton = document.createElement("button");
+      adminCourseButton.type = "button";
+      adminCourseButton.className = "btn btn-ghost class-course";
+      adminCourseButton.textContent = "Course";
+      adminCourseButton.dataset.classId = classItem.id;
+      adminCourseButton.addEventListener("click", (event) => {
         event.stopPropagation();
         openCourseModal(classItem);
       });
 
-      const editButton = document.createElement("button");
-      editButton.type = "button";
-      editButton.className = "icon-btn class-edit";
-      editButton.setAttribute("aria-label", "Edit class");
-      editButton.dataset.classId = classItem.id;
-      editButton.addEventListener("click", (event) => {
+      const adminEditButton = document.createElement("button");
+      adminEditButton.type = "button";
+      adminEditButton.className = "icon-btn class-edit";
+      adminEditButton.setAttribute("aria-label", "Edit class");
+      adminEditButton.dataset.classId = classItem.id;
+      adminEditButton.addEventListener("click", (event) => {
         event.stopPropagation();
         openClassModal("edit", classItem);
       });
-      editButton.innerHTML =
+      adminEditButton.innerHTML =
         '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
         '<path fill="currentColor" d="M3 17.25V21h3.75l11.06-11.06-3.75-3.75L3 17.25zm2.92 2.33H5v-.92l9.06-9.06.92.92-9.06 9.06zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />' +
         "</svg>";
 
-      actions.appendChild(courseButton);
-      actions.appendChild(editButton);
+      adminActions.appendChild(adminCourseButton);
+      adminActions.appendChild(adminEditButton);
 
-      row.appendChild(actions);
+      row.appendChild(adminActions);
     }
 
     classList.appendChild(row);
@@ -892,8 +917,13 @@ function updateClassHeaderForTeacherView() {
     return;
   }
 
-  const effectiveTeacherId = state.view === "teacher" ? getEffectiveTeacherId() : null;
-  if (effectiveTeacherId) {
+  const effectiveTeacherId = getEffectiveTeacherId();
+  const isTeacherClassHeader =
+    isTeacherRole(state.role) &&
+    effectiveTeacherId &&
+    (state.view === "teacher" || state.view === "class");
+
+  if (isTeacherClassHeader) {
     const teacher = (teacherDirectory || []).find(
       (item) => String(item.id) === String(effectiveTeacherId)
     );
@@ -925,8 +955,17 @@ function getSortedRooms() {
 
 function getFilteredRooms() {
   const term = roomSearch ? roomSearch.value.trim().toLowerCase() : "";
+  const isTeacherRoomView = state.view === "room" && isTeacherRole(state.role);
+  const effectiveTeacherId = isTeacherRoomView ? getEffectiveTeacherId() : null;
+  const teacherRoomIds = isTeacherRoomView && effectiveTeacherId
+    ? getRoomIdsForTeacher(effectiveTeacherId)
+    : null;
 
   return getSortedRooms().filter((roomItem) => {
+    if (teacherRoomIds && !teacherRoomIds.has(String(roomItem.id))) {
+      return false;
+    }
+
     if (!term) {
       return true;
     }
@@ -961,7 +1000,11 @@ function renderRoomList() {
   if (rooms.length === 0) {
     const empty = document.createElement("div");
     empty.className = "empty-state";
-    empty.textContent = searchTerm ? "No rooms match your search." : "No rooms yet.";
+    empty.textContent = searchTerm
+      ? "No rooms match your search."
+      : (state.view === "room" && isTeacherRole(state.role)
+        ? "No rooms are currently linked to this teacher."
+        : "No rooms yet.");
     roomList.appendChild(empty);
     return;
   }
@@ -980,7 +1023,7 @@ function renderRoomList() {
 
     const name = document.createElement("div");
     name.className = "user-name";
-    name.textContent = roomItem.name;
+    name.textContent = roomItem.name || `Room ${roomItem.id}`;
 
     const id = document.createElement("div");
     id.className = "user-id";
@@ -994,7 +1037,7 @@ function renderRoomList() {
 
     const buildingTag = document.createElement("span");
     buildingTag.className = "tag building";
-    buildingTag.textContent = roomItem.building;
+    buildingTag.textContent = roomItem.building || "Building —";
 
     const floorTag = document.createElement("span");
     floorTag.className = "tag floor";

@@ -314,7 +314,6 @@ function bindEvents() {
             renderClassList();
         });
     }
-
     if (roomSearch) {
         roomSearch.addEventListener("input", () => {
             renderRoomList();

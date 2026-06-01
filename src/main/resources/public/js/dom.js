@@ -534,6 +534,30 @@ function getFilteredUsers() {
     .sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified));
 }
 
+function getFilteredClasses() {
+  const term = classSearch ? classSearch.value.trim().toLowerCase() : "";
+
+  return getSortedClasses().filter((classItem) => {
+    if (!term) {
+      return true;
+    }
+
+    const searchableValues = [
+      classItem.name,
+      classItem.id,
+      classItem.year,
+      classItem.semester,
+      getClassDisplayLabel(classItem),
+    ]
+      .filter(Boolean)
+      .map((value) => normalizeClassText(value));
+
+    return searchableValues.some(
+        (value) => value === term || value.includes(term)
+    );
+  });
+}
+
 function renderUserList() {
   if (!userList || !userCount) {
     return;
@@ -635,7 +659,8 @@ function renderClassList() {
     return;
   }
 
-  const classes = getSortedClasses();
+  const classes = getFilteredClasses();
+  const searchTerm = classSearch ? classSearch.value.trim() : "";
   const isAdmin = isAdminRole(state.role);
   classCount.textContent = `${classes.length} class${classes.length === 1 ? "" : "es"}`;
   classList.innerHTML = "";
@@ -643,7 +668,7 @@ function renderClassList() {
   if (classes.length === 0) {
     const empty = document.createElement("div");
     empty.className = "empty-state";
-    empty.textContent = "No classes yet.";
+    empty.textContent = searchTerm ? "No classes match your search." : "No classes yet.";
     classList.appendChild(empty);
     return;
   }
@@ -808,19 +833,45 @@ function getSortedRooms() {
     });
 }
 
+function getFilteredRooms() {
+  const term = roomSearch ? roomSearch.value.trim().toLowerCase() : "";
+
+  return getSortedRooms().filter((roomItem) => {
+    if (!term) {
+      return true;
+    }
+
+    const searchableValues = [
+      roomItem.name,
+      roomItem.id,
+      roomItem.building,
+      roomItem.floor,
+      getRoomShortLabel(roomItem),
+      getRoomDisplayLabel(roomItem),
+    ]
+      .filter(Boolean)
+      .map((value) => normalizeRoomText(value));
+
+    return searchableValues.some(
+        (value) => value === term || value.includes(term)
+    );
+  });
+}
+
 function renderRoomList() {
   if (!roomList || !roomCount) {
     return;
   }
 
-  const rooms = getSortedRooms();
+  const rooms = getFilteredRooms();
+  const searchTerm = roomSearch ? roomSearch.value.trim() : "";
   roomCount.textContent = `${rooms.length} room${rooms.length === 1 ? "" : "s"}`;
   roomList.innerHTML = "";
 
   if (rooms.length === 0) {
     const empty = document.createElement("div");
     empty.className = "empty-state";
-    empty.textContent = "No rooms yet.";
+    empty.textContent = searchTerm ? "No rooms match your search." : "No rooms yet.";
     roomList.appendChild(empty);
     return;
   }

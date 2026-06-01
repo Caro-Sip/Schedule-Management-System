@@ -679,25 +679,62 @@ function getSortedClasses() {
     );
 }
 
+function getClassIdsForTeacher(teacherId) {
+  if (!teacherId) {
+    return new Set();
+  }
+
+  const scheduleItems = (eventsByView.teacher || []).filter((item) => {
+    return (
+      String(item.teacherId) === String(teacherId) ||
+      String(item.professor) === String(teacherId)
+    );
+  });
+
+  const classIds = new Set();
+  scheduleItems.forEach((item) => {
+    if (Array.isArray(item.classIds) && item.classIds.length > 0) {
+      item.classIds.forEach((classId) => classIds.add(Number(classId)));
+    } else if (item.classId != null) {
+      classIds.add(Number(item.classId));
+    }
+  });
+
+  return classIds;
+}
+
 function renderClassList() {
   if (!classList || !classCount) {
     return;
   }
 
-  const classes = getFilteredClasses();
+  let classes = getFilteredClasses();
   const searchTerm = classSearch ? classSearch.value.trim() : "";
   const isAdmin = isAdminRole(state.role);
+  const effectiveTeacherId = state.view === "teacher" ? getEffectiveTeacherId() : null;
+  const isTeacherScheduleView = state.view === "teacher" && effectiveTeacherId;
+
+  if (isTeacherScheduleView) {
+    const teacherClassIds = getClassIdsForTeacher(effectiveTeacherId);
+    classes = classes.filter((classItem) => teacherClassIds.has(Number(classItem.id)));
+  }
+
   classCount.textContent = `${classes.length} class${classes.length === 1 ? "" : "es"}`;
   classList.innerHTML = "";
 
   if (classes.length === 0) {
     const empty = document.createElement("div");
     empty.className = "empty-state";
-    empty.textContent = searchTerm ? "No classes match your search." : "No classes yet.";
+    empty.textContent = searchTerm
+      ? "No classes match your search."
+      : (state.view === "teacher" && state.selectedTeacherId
+        ? "No classes are currently linked to this teacher."
+        : "No classes yet.");
     classList.appendChild(empty);
     return;
   }
 
+  updateClassHeaderForTeacherView();
   classes.forEach((classItem) => {
     const row = document.createElement("div");
     row.className = "class-row";
@@ -844,18 +881,46 @@ function renderClassList() {
   });
 }
 
+function updateClassHeaderForTeacherView() {
+  if (!classControls) {
+    return;
+  }
+
+  const titleEl = classControls.querySelector("h2");
+  const subtitleEl = classControls.querySelector("p.muted");
+  if (!titleEl || !subtitleEl) {
+    return;
+  }
+
+  const effectiveTeacherId = state.view === "teacher" ? getEffectiveTeacherId() : null;
+  if (effectiveTeacherId) {
+    const teacher = (teacherDirectory || []).find(
+      (item) => String(item.id) === String(effectiveTeacherId)
+    );
+    const teacherUser = (userDirectory || []).find(
+      (user) => String(user.id) === String(teacher?.userId)
+    );
+    titleEl.textContent = "Teacher classes";
+    subtitleEl.textContent = teacherUser
+      ? `Classes taught by ${teacherUser.name}`
+      : "Classes taught by the selected teacher.";
+  } else {
+    titleEl.textContent = "Classes";
+    subtitleEl.textContent = "Select a class to view its schedule.";
+  }
+}
+
 function getSortedRooms() {
-  return getBookingClassrooms()
-    .slice()
-    .sort((a, b) => {
-      const nameCompare = (a.name || String(a.id || "")).localeCompare(
-        b.name || String(b.id || "")
-      );
-      if (nameCompare !== 0) {
-        return nameCompare;
-      }
-      return String(a.id || "").localeCompare(String(b.id || ""));
-    });
+  const rooms = typeof getBookingClassrooms === "function" ? getBookingClassrooms() : (roomDirectory || []);
+  return rooms.slice().sort((a, b) => {
+    const nameCompare = (a.name || String(a.id || "")).localeCompare(
+      b.name || String(b.id || "")
+    );
+    if (nameCompare !== 0) {
+      return nameCompare;
+    }
+    return String(a.id || "").localeCompare(String(b.id || ""));
+  });
 }
 
 function getFilteredRooms() {
@@ -908,6 +973,7 @@ function renderRoomList() {
     if (String(state.selectedRoomId) === String(roomItem.id)) {
       row.classList.add("selected");
     }
+    row.addEventListener("click", () => selectRoom(roomItem.id));
 
     const main = document.createElement("div");
     main.className = "user-main";

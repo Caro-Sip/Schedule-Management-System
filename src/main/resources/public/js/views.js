@@ -116,8 +116,6 @@ function setView(view) {
     if (!isClassScopedUser) {
       state.selectedClassId = null;
     }
-  } else if (isClassScopedUser) {
-    state.selectedRoomId = null;
   } else if (isClassScopedUser && !state.selectedClassId) {
     const classId = Number(state.currentUser.classId);
     if (Number.isFinite(classId)) {
@@ -147,15 +145,18 @@ function updateViewVisibility() {
   const isTeacherView = state.view === "teacher";
   const isAuditView = state.view === "audit";
 
-  const showClassList = (isAdmin || isTeacher) && isClassView && !state.selectedClassId;
-  const showRoomList = canRoomScope && isRoomView && !state.selectedRoomId;
+  const effectiveTeacherId = state.selectedTeacherId || state.currentTeacherId || null;
+  const showClassList =
+    (isAdmin || isTeacher) &&
+    (isClassView && !state.selectedClassId);
+  const showRoomList = (isAdmin || isTeacher || canRoomScope) && isRoomView && !state.selectedRoomId;
   const showBackToList =
     (isAdmin &&
       ((isClassView && state.selectedClassId) ||
         (isRoomView && state.selectedRoomId) ||
         (isTeacherView && state.selectedTeacherId && state.userScheduleOrigin === "user"))) ||
-    (canRoomScope && isRoomView && state.selectedRoomId) ||
-    (isTeacher && isClassView && state.selectedClassId);
+    (isTeacher && isClassView && state.selectedClassId) ||
+    ((isTeacher || canRoomScope) && isRoomView && state.selectedRoomId);
   let showSchedule = !isUserView && !isAuditView;
   if (isAdmin) {
     showSchedule =
@@ -167,6 +168,8 @@ function updateViewVisibility() {
     showSchedule = showSchedule && Boolean(state.selectedRoomId);
   } else if (isTeacher && isClassView) {
     showSchedule = showSchedule && Boolean(state.selectedClassId);
+  } else if (isTeacher && isRoomView) {
+    showSchedule = showSchedule && Boolean(state.selectedRoomId);
   }
 
   if (scheduleControls) {
@@ -240,7 +243,12 @@ function renderCurrentView() {
     return;
   }
 
-  if (state.view === "room" && canUseRoomScopedView(state.role)) {
+  if (state.view === "teacher" && getEffectiveTeacherId()) {
+    renderEvents();
+    return;
+  }
+
+  if (state.view === "room" && (isAdminRole(state.role) || isTeacherRole(state.role) || canUseRoomScopedView(state.role))) {
     renderRoomList();
     if (state.selectedRoomId) {
       renderEvents();
@@ -347,7 +355,7 @@ function showLogin() {
   loginView.classList.remove("hidden");
   welcomeLine.textContent = "Welcome, Guest";
   if (typeof closeAuditPanel === "function") {
-  closeAuditPanel();
+    closeAuditPanel();
   }
   // visually hide both elements after closing
   if (auditPanel) {

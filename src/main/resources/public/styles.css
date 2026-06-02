@@ -677,9 +677,38 @@ a.tab {
   gap: 12px;
 }
 
-.course-modal-panel-header h3 {
-  font-size: 14px;
-  font-weight: 600;
+.course-search-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.course-search-label input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 10px;
+  font: inherit;
+  font-size: 13px;
+  background: #ffffff;
+  color: var(--ink);
+}
+
+.course-search-label input:focus {
+  border-color: #c6dafc;
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.12);
+  outline: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .course-modal-subtitle {

@@ -217,6 +217,20 @@ function selectCourseForEdit(course) {
   }
 }
 
+function courseMatchesModalSearch(course) {
+  const searchTerm = (courseModalSearchTerm || "").trim().toLowerCase();
+  if (!searchTerm) {
+    return true;
+  }
+
+  return [
+    course?.name,
+    course?.code,
+    course?.id,
+    course?.totalHours,
+  ].some((value) => String(value || "").toLowerCase().includes(searchTerm));
+}
+
 function renderCourseModalList() {
   if (!courseList) {
     return;
@@ -240,6 +254,7 @@ function renderCourseModalList() {
   );
   const courses = (courseDirectory || [])
     .slice()
+    .filter(courseMatchesModalSearch)
     .sort((a, b) => {
       const aLinked = linkedCourseIds.has(Number(a.id));
       const bLinked = linkedCourseIds.has(Number(b.id));
@@ -258,7 +273,9 @@ function renderCourseModalList() {
   if (courses.length === 0) {
     const empty = document.createElement("div");
     empty.className = "empty-state";
-    empty.textContent = "No courses are available yet.";
+    empty.textContent = courseModalSearchTerm
+      ? "No courses match your search."
+      : "No courses are available yet.";
     courseList.appendChild(empty);
     return;
   }
@@ -334,6 +351,10 @@ function openCourseModal(classItem) {
   }
 
   courseModalClassId = classItem?.id ?? state.selectedClassId ?? null;
+  courseModalSearchTerm = "";
+  if (courseSearchInput) {
+    courseSearchInput.value = "";
+  }
   if (courseModalTitle) {
     courseModalTitle.textContent = "Class courses";
   }
@@ -354,6 +375,10 @@ function closeCourseModal() {
 
   courseModal.setAttribute("hidden", "");
   courseModalClassId = null;
+  courseModalSearchTerm = "";
+  if (courseSearchInput) {
+    courseSearchInput.value = "";
+  }
   clearCourseForm();
 }
 

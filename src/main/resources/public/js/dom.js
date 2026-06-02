@@ -955,17 +955,8 @@ function getSortedRooms() {
 
 function getFilteredRooms() {
   const term = roomSearch ? roomSearch.value.trim().toLowerCase() : "";
-  const isTeacherRoomView = state.view === "room" && isTeacherRole(state.role);
-  const effectiveTeacherId = isTeacherRoomView ? getEffectiveTeacherId() : null;
-  const teacherRoomIds = isTeacherRoomView && effectiveTeacherId
-    ? getRoomIdsForTeacher(effectiveTeacherId)
-    : null;
 
   return getSortedRooms().filter((roomItem) => {
-    if (teacherRoomIds && !teacherRoomIds.has(String(roomItem.id))) {
-      return false;
-    }
-
     if (!term) {
       return true;
     }

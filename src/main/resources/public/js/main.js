@@ -657,6 +657,13 @@ function bindEvents() {
         });
     }
 
+    if (courseSearchInput) {
+        courseSearchInput.addEventListener("input", () => {
+            courseModalSearchTerm = courseSearchInput.value;
+            renderCourseModalList();
+        });
+    }
+
     if (courseForm) {
         courseForm.addEventListener("submit", async (event) => {
             event.preventDefault();

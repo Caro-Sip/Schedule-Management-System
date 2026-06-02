@@ -56,6 +56,7 @@ const classCloseBtn = document.getElementById("class-close");
 const courseModal = document.getElementById("course-modal");
 const courseModalTitle = document.getElementById("course-modal-title");
 const courseModalClassLabel = document.getElementById("course-modal-class-label");
+const courseSearchInput = document.getElementById("course-search");
 const courseList = document.getElementById("course-list");
 const courseForm = document.getElementById("course-form");
 const courseNameInput = document.getElementById("course-name");

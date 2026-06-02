@@ -476,7 +476,15 @@
         <div class="course-modal-body">
             <section class="course-modal-list-panel">
                 <div class="course-modal-panel-header">
-                    <h3>Courses in this class</h3>
+                    <label class="course-search-label" for="course-search">
+                        <span class="sr-only">Search courses</span>
+                        <input
+                                type="search"
+                                id="course-search"
+                                placeholder="Search for the courses"
+                                autocomplete="off"
+                        />
+                    </label>
                     <button class="btn btn-ghost course-new-btn" id="course-new" type="button">
                         New course
                     </button>

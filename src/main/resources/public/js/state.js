@@ -71,5 +71,6 @@ let editingClassId = null;
 let editingRoomId = null;
 let editingCourseId = null;
 let courseModalClassId = null;
+let courseModalSearchTerm = "";
 
 const auditLog = [];

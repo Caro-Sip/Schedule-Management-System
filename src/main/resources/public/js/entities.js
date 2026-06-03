@@ -546,8 +546,114 @@ async function loadSchedules() {
 	}
 }
 
+// --- Scoped schedule loading (uses per-class/teacher/room endpoints) ---
+
+function processSchedulePayload(schedules) {
+	const events = [];
+	(schedules || []).forEach((s) => {
+		const event = buildScheduleEvent(s);
+		if (event) {
+			events.push(event);
+		}
+	});
+	return events;
+}
+
+async function loadSchedulesForClass(classId) {
+	try {
+		const schedules = await requestJson(`${API_BASE}/schedules/class/${classId}`);
+		return processSchedulePayload(schedules);
+	} catch (error) {
+		console.error(`Failed to load schedules for class ${classId}`, error);
+		return [];
+	}
+}
+
+async function loadSchedulesForTeacher(teacherId) {
+	try {
+		const schedules = await requestJson(`${API_BASE}/schedules/teacher/${teacherId}`);
+		return processSchedulePayload(schedules);
+	} catch (error) {
+		console.error(`Failed to load schedules for teacher ${teacherId}`, error);
+		return [];
+	}
+}
+
+async function loadSchedulesForRoom(roomId) {
+	try {
+		const schedules = await requestJson(`${API_BASE}/schedules/room/${roomId}`);
+		return processSchedulePayload(schedules);
+	} catch (error) {
+		console.error(`Failed to load schedules for room ${roomId}`, error);
+		return [];
+	}
+}
+
+function applyEventsToAllViews(events) {
+	eventsByView.class = events;
+	eventsByView.room = events.map((e) => Object.assign({}, e));
+	eventsByView.teacher = events.map((e) => Object.assign({}, e));
+}
+
+async function loadScopedSchedules() {
+	const role = state.role;
+
+	// Students / class monitors / guests: load only their class's schedules
+	if (role === "student" || role === "class-monitor" || role === "guest") {
+		if (state.selectedClassId) {
+			const events = await loadSchedulesForClass(state.selectedClassId);
+			applyEventsToAllViews(events);
+		}
+		renderEvents();
+		return;
+	}
+
+	// Teachers: load their own schedule initially
+	if (isTeacherRole(role)) {
+		await loadTeachersIfNeeded();
+		syncCurrentTeacherContext();
+		const teacherId = state.currentTeacherId;
+		if (teacherId) {
+			const events = await loadSchedulesForTeacher(teacherId);
+			applyEventsToAllViews(events);
+		}
+		renderEvents();
+		return;
+	}
+
+	// Admin: load all schedules (they need full overview)
+	if (isAdminRole(role)) {
+		await loadSchedules();
+		return;
+	}
+
+	// Fallback
+	renderEvents();
+}
+
+async function loadTeachersIfNeeded() {
+	if (teacherDirectory.length === 0) {
+		await loadTeachers();
+	}
+}
+
 async function refreshSchedules() {
-	await loadSchedules();
+	// Re-fetch scoped data based on current context instead of full reload
+	if (state.view === "class" && state.selectedClassId) {
+		const events = await loadSchedulesForClass(state.selectedClassId);
+		applyEventsToAllViews(events);
+	} else if (state.view === "room" && state.selectedRoomId) {
+		const events = await loadSchedulesForRoom(state.selectedRoomId);
+		eventsByView.room = events;
+	} else if (state.view === "teacher") {
+		const teacherId = typeof getEffectiveTeacherId === "function" ? getEffectiveTeacherId() : null;
+		if (teacherId) {
+			const events = await loadSchedulesForTeacher(teacherId);
+			eventsByView.teacher = events;
+		}
+	} else if (isAdminRole(state.role)) {
+		await loadSchedules();
+	}
 	renderCurrentView();
 }
 

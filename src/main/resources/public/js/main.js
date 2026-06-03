@@ -594,7 +594,7 @@ function bindEvents() {
                 closeClassModal();
 
                 if (targetId && (!wasEditing || state.selectedClassId === targetId)) {
-                    selectClass(targetId);
+                    await selectClass(targetId);
                 }
             } catch (error) {
                 alert(error?.message || "Failed to save class.");
@@ -830,9 +830,9 @@ function bindEvents() {
                     renderRoomList();
 
                     if (!wasEditing && Number.isFinite(roomId)) {
-                        selectRoom(roomId);
+                        await selectRoom(roomId);
                     } else if (previousId && String(state.selectedRoomId) === String(previousId)) {
-                        selectRoom(previousId);
+                        await selectRoom(previousId);
                     }
                 })
                 .catch((error) => {
@@ -1453,17 +1453,33 @@ function bindEvents() {
 }
 
 async function initializeAuthenticatedApp() {
+    const role = state.role;
+
+    // COMMON: All roles need classrooms, courses, classes for schedule display
     await loadClassrooms();
     await loadCourses();
     await loadClasses();
+
     syncCurrentStudentClassContext();
     syncCurrentUserDirectoryEntry();
-    if (isAdminRole(state.role)) {
+
+    // ADMIN ONLY: user management
+    if (isAdminRole(role)) {
         await loadUsers();
+        await loadTeacherDepartments();
     }
-    await loadTeacherDepartments();
-    await loadTeachers();
-    await loadSchedules();
+
+    // ADMIN + TEACHER: need teacher directory & departments
+    if (isAdminRole(role) || isTeacherRole(role)) {
+        if (!isAdminRole(role)) {
+            await loadTeacherDepartments();
+        }
+        await loadTeachers();
+    }
+
+    // Load schedules SCOPED to the user's context
+    await loadScopedSchedules();
+
     syncCurrentTeacherContext();
     renderCurrentView();
 }

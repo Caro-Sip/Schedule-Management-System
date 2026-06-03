@@ -432,12 +432,17 @@ function closeRoomModal() {
   editingRoomId = null;
 }
 
-function selectClass(classId) {
+async function selectClass(classId) {
   const numericId = Number(classId);
   if (Number.isNaN(numericId)) {
     return;
   }
   state.selectedClassId = numericId;
+
+  // Fetch latest schedules for this class
+  const events = await loadSchedulesForClass(numericId);
+  applyEventsToAllViews(events);
+
   updateViewVisibility();
   renderClassList();
   renderEvents();
@@ -462,9 +467,14 @@ function getSelectedClassId() {
   return null;
 }
 
-function selectRoom(roomId) {
+async function selectRoom(roomId) {
   const numericRoomId = Number(roomId);
   state.selectedRoomId = Number.isNaN(numericRoomId) ? roomId : numericRoomId;
+
+  // Fetch latest schedules for this room
+  const events = await loadSchedulesForRoom(state.selectedRoomId);
+  eventsByView.room = events;
+
   updateViewVisibility();
   renderRoomList();
   renderEvents();
@@ -515,16 +525,16 @@ async function showUserSchedule(user) {
       return;
     }
     state.selectedTeacherId = null;
-    setView("class");
+    await setView("class");
     state.userScheduleOrigin = "user";
-    selectClass(classId);
+    await selectClass(classId);
     return;
   }
 
   if (isTeacherRole(user.role)) {
     state.selectedClassId = null;
     state.selectedRoomId = null;
-    setView("teacher");
+    await setView("teacher");
     state.userScheduleOrigin = "user";
     const teacherId = resolveTeacherIdForUser(user);
     if (!teacherId) {

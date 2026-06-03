@@ -96,7 +96,7 @@ function applyAuthenticatedSession(token, user, persist = true) {
   }
 }
 
-function setView(view) {
+async function setView(view) {
   if (view === "user" && !isAdminRole(state.role)) {
     return;
   }
@@ -131,8 +131,30 @@ function setView(view) {
   closeUserModal();
   closeClassModal();
   closeRoomModal();
+
+  // Lazy-load data needed for the new view
+  await ensureDataForView(view);
+
   updateViewVisibility();
   renderCurrentView();
+}
+
+async function ensureDataForView(view) {
+  // Load teachers directory if going to teacher view and not yet loaded
+  if (view === "teacher" && teacherDirectory.length === 0) {
+    await loadTeachers();
+    syncCurrentTeacherContext();
+  }
+
+  // Load users if going to user view (admin only)
+  if (view === "user" && isAdminRole(state.role)) {
+    await loadUsersIfNeeded();
+  }
+
+  // Load teacher departments for user management filters
+  if (view === "user" && teacherDepartmentDirectory.length === 0) {
+    await loadTeacherDepartments();
+  }
 }
 
 function updateViewVisibility() {

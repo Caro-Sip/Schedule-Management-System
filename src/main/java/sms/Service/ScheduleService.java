@@ -20,6 +20,7 @@ import sms.DAO.RecurringScheduleDAO;
 import sms.DAO.ScheduleClassDAO;
 import sms.DAO.ScheduleDAO;
 import sms.DAO.TeacherDAO;
+import sms.DAO.TeacherCourseDAO;
 import sms.Objects.ClassEntity;
 import sms.Objects.RecurringSchedule;
 import sms.Objects.Schedule;
@@ -44,25 +45,32 @@ public class ScheduleService {
     private final CourseDAO courseDAO;
     private final TeacherDAO teacherDAO;
     private final RecurringScheduleDAO recurringScheduleDAO;
+    private final TeacherCourseDAO teacherCourseDAO;
 
     public ScheduleService() {
-        this(new ScheduleDAO(), new ScheduleClassDAO(), new ClassEntityDAO(), new ClassCourseDAO(), new ClassroomDAO(), new CourseDAO(), new TeacherDAO(), new RecurringScheduleDAO());
+        this(new ScheduleDAO(), new ScheduleClassDAO(), new ClassEntityDAO(), new ClassCourseDAO(), new ClassroomDAO(), new CourseDAO(), new TeacherDAO(), new RecurringScheduleDAO(), new TeacherCourseDAO());
     }
 
     public ScheduleService(ScheduleDAO scheduleDAO, ScheduleClassDAO scheduleClassDAO,
             ClassEntityDAO classEntityDAO) {
-        this(scheduleDAO, scheduleClassDAO, classEntityDAO, new ClassCourseDAO(), new ClassroomDAO(), new CourseDAO(), new TeacherDAO(), new RecurringScheduleDAO());
+        this(scheduleDAO, scheduleClassDAO, classEntityDAO, new ClassCourseDAO(), new ClassroomDAO(), new CourseDAO(), new TeacherDAO(), new RecurringScheduleDAO(), new TeacherCourseDAO());
     }
 
     public ScheduleService(ScheduleDAO scheduleDAO, ScheduleClassDAO scheduleClassDAO,
             ClassEntityDAO classEntityDAO, ClassCourseDAO classCourseDAO, ClassroomDAO classroomDAO, CourseDAO courseDAO,
             TeacherDAO teacherDAO) {
-        this(scheduleDAO, scheduleClassDAO, classEntityDAO, classCourseDAO, classroomDAO, courseDAO, teacherDAO, new RecurringScheduleDAO());
+        this(scheduleDAO, scheduleClassDAO, classEntityDAO, classCourseDAO, classroomDAO, courseDAO, teacherDAO, new RecurringScheduleDAO(), new TeacherCourseDAO());
     }
 
     public ScheduleService(ScheduleDAO scheduleDAO, ScheduleClassDAO scheduleClassDAO,
             ClassEntityDAO classEntityDAO, ClassCourseDAO classCourseDAO, ClassroomDAO classroomDAO, CourseDAO courseDAO,
             TeacherDAO teacherDAO, RecurringScheduleDAO recurringScheduleDAO) {
+        this(scheduleDAO, scheduleClassDAO, classEntityDAO, classCourseDAO, classroomDAO, courseDAO, teacherDAO, recurringScheduleDAO, new TeacherCourseDAO());
+    }
+
+    public ScheduleService(ScheduleDAO scheduleDAO, ScheduleClassDAO scheduleClassDAO,
+            ClassEntityDAO classEntityDAO, ClassCourseDAO classCourseDAO, ClassroomDAO classroomDAO, CourseDAO courseDAO,
+            TeacherDAO teacherDAO, RecurringScheduleDAO recurringScheduleDAO, TeacherCourseDAO teacherCourseDAO) {
         this.scheduleDAO = scheduleDAO;
         this.scheduleClassDAO = scheduleClassDAO;
         this.classEntityDAO = classEntityDAO;
@@ -71,6 +79,7 @@ public class ScheduleService {
         this.courseDAO = courseDAO;
         this.teacherDAO = teacherDAO;
         this.recurringScheduleDAO = recurringScheduleDAO;
+        this.teacherCourseDAO = teacherCourseDAO;
     }
 
     public Schedule createSchedule(int classroomId, Integer teacherId, int courseId, LocalDate date,
@@ -905,6 +914,10 @@ public class ScheduleService {
 
             if (!classCourseDAO.classHasCourse(classId, courseId)) {
                 throw new IllegalArgumentException("Course not assigned to class with id: " + classId);
+            }
+
+            if (teacherId != null && !teacherCourseDAO.teacherTeachesCourseToClass(teacherId, courseId, classId)) {
+                throw new IllegalArgumentException("Teacher with id " + teacherId + " does not teach course " + courseId + " to class " + classId);
             }
         }
     }

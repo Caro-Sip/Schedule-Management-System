@@ -441,7 +441,7 @@ async function deleteUserApi(id) {
 }
 
 function normalizeClassroomPayload(payload) {
-	const existingRoom = roomDirectory.find(
+	const existingRoom = classroomDirectory.find(
 		(item) => String(item.id) === String(payload.id)
 	);
 	const timestamp = new Date().toISOString();
@@ -449,6 +449,7 @@ function normalizeClassroomPayload(payload) {
 		id: Number(payload.id),
 		name: payload.name || "",
 		building: payload.building || "",
+		capacity: payload.capacity != null ? Number(payload.capacity) : 0,
 		floor: payload.floor || existingRoom?.floor || getRoomFloorLabel(payload),
 		lastModified:
 			payload.lastModified || payload.last_modified || existingRoom?.lastModified || timestamp,

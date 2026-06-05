@@ -35,29 +35,7 @@ const teacherDirectory = [];
 const teacherDepartmentDirectory = [];
 const teacherCourseDirectory = [];
 
-const roomDirectory = [
-  {
-    id: "R-101",
-    name: "Room 101",
-    building: "Building A",
-    floor: "1",
-    lastModified: "2026-05-14T13:05:00",
-  },
-  {
-    id: "R-202",
-    name: "Room 202",
-    building: "Building B",
-    floor: "2",
-    lastModified: "2026-05-12T10:30:00",
-  },
-  {
-    id: "R-303",
-    name: "Room 303",
-    building: "Building C",
-    floor: "3",
-    lastModified: "2026-05-10T16:15:00",
-  },
-];
+
 
 const roleLabels = {
   admin: "Admin",

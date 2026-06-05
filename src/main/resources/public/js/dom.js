@@ -951,7 +951,7 @@ function updateClassHeaderForTeacherView() {
 }
 
 function getSortedRooms() {
-  const rooms = typeof getBookingClassrooms === "function" ? getBookingClassrooms() : (roomDirectory || []);
+  const rooms = typeof getBookingClassrooms === "function" ? getBookingClassrooms() : (classroomDirectory || []);
   return rooms.slice().sort((a, b) => {
     const nameCompare = (a.name || String(a.id || "")).localeCompare(
       b.name || String(b.id || "")
@@ -1097,7 +1097,7 @@ function isDuplicateClassId(nextId) {
 
 function isDuplicateRoomId(nextId) {
   const normalized = nextId.toLowerCase();
-  const rooms = typeof getBookingClassrooms === "function" ? getBookingClassrooms() : roomDirectory;
+  const rooms = typeof getBookingClassrooms === "function" ? getBookingClassrooms() : classroomDirectory;
   return rooms.some(
     (item) => item.id.toLowerCase() === normalized && item.id !== editingRoomId
   );
@@ -1147,7 +1147,7 @@ function upsertClass({ id, name, year, createdBy }) {
 function upsertRoom({ id, name, building, floor }) {
   const timestamp = new Date().toISOString();
   const actor = state.userName || "User";
-  const rooms = typeof getBookingClassrooms === "function" ? getBookingClassrooms() : roomDirectory;
+  const rooms = typeof getBookingClassrooms === "function" ? getBookingClassrooms() : classroomDirectory;
   if (editingRoomId) {
     const target = rooms.find((item) => String(item.id) === String(editingRoomId));
     if (!target) {

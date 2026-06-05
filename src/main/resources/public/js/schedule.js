@@ -578,8 +578,71 @@ function openBookingModal(dayIndex, startMinutes, eventData = null, options = {}
     bookingSubmit.textContent = isEdit ? "Save" : "Book";
   }
 
+  // Handle Details vs Edit Form visibility
+  if (isEdit) {
+    if (bookingForm) {
+      bookingForm.setAttribute("hidden", "");
+      bookingForm.classList.add("hidden");
+    }
+    if (bookingDetails) {
+      bookingDetails.removeAttribute("hidden");
+      bookingDetails.classList.remove("hidden");
+    }
+    if (bookingTitle) {
+      bookingTitle.textContent = "Schedule Details";
+    }
+
+    // Populate details view fields
+    if (detailSubject) {
+      detailSubject.textContent = eventData.title || "Untitled Class";
+    }
+    if (detailType) {
+      detailType.textContent = formatEventType(eventData.type) || "Default";
+    }
+    if (detailTime) {
+      const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+      const dayName = dayNames[eventData.day] || "";
+      const timeStr = eventData.date
+        ? `${dayName}, ${formatDate(eventData.date)} · ${formatClockTime(eventData.start)} - ${formatClockTime(eventData.end)}`
+        : `${dayName} · ${formatClockTime(eventData.start)} - ${formatClockTime(eventData.end)}`;
+      detailTime.textContent = timeStr;
+    }
+    if (detailClass) {
+      const eventClassIds = getEventClassIds(eventData);
+      const classLabels = eventClassIds.map(classId => {
+        const classItem = (classDirectory || []).find(c => String(c.id) === String(classId));
+        return classItem ? (classItem.name || `Class ${classId}`) : `Class ${classId}`;
+      });
+      detailClass.textContent = classLabels.join(", ") || "None";
+    }
+    if (detailRoom) {
+      const rooms = typeof getBookingClassrooms === "function" ? getBookingClassrooms() : [];
+      const roomItem = (rooms || []).find((item) => String(item.id) === String(eventData.roomId));
+      const roomLabel = roomItem ? (getRoomDisplayLabel(roomItem) || roomItem.name) : (eventData.roomId || "TBD");
+      detailRoom.textContent = roomLabel;
+    }
+    if (detailProfessor) {
+      detailProfessor.textContent = resolveEventTeacherLabel(eventData) || "TBD";
+    }
+
+    const canEdit = isAdminRole(state.role) || isTeacherRole(state.role);
+    if (bookingEditBtn) {
+      bookingEditBtn.toggleAttribute("hidden", !canEdit);
+      bookingEditBtn.classList.toggle("hidden", !canEdit);
+    }
+  } else {
+    if (bookingDetails) {
+      bookingDetails.setAttribute("hidden", "");
+      bookingDetails.classList.add("hidden");
+    }
+    if (bookingForm) {
+      bookingForm.removeAttribute("hidden");
+      bookingForm.classList.remove("hidden");
+    }
+  }
+
   bookingModal.removeAttribute("hidden");
-  if (bookingStart) {
+  if (bookingStart && !isEdit) {
     bookingStart.focus();
   }
 }
@@ -589,6 +652,14 @@ function closeBookingModal() {
     return;
   }
   bookingModal.setAttribute("hidden", "");
+  if (bookingDetails) {
+    bookingDetails.setAttribute("hidden", "");
+    bookingDetails.classList.add("hidden");
+  }
+  if (bookingForm) {
+    bookingForm.setAttribute("hidden", "");
+    bookingForm.classList.add("hidden");
+  }
   if (bookingClassInput) {
     bookingClassInput.value = "";
     bookingClassInput.dataset.classId = "";

@@ -561,6 +561,37 @@
                 x
             </button>
         </div>
+        <div id="booking-details" class="booking-details-view" hidden>
+            <div class="details-header-block">
+                <h3 class="details-subject" id="detail-subject">Subject</h3>
+                <span class="detail-type-badge" id="detail-type">Lecture</span>
+            </div>
+            <div class="details-grid">
+                <div class="detail-row">
+                    <span class="detail-label">Time</span>
+                    <span class="detail-value" id="detail-time"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Class</span>
+                    <span class="detail-value" id="detail-class"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Room</span>
+                    <span class="detail-value" id="detail-room"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Professor</span>
+                    <span class="detail-value" id="detail-professor"></span>
+                </div>
+            </div>
+            <div class="modal-actions split">
+                <div></div>
+                <div class="modal-actions-right">
+                    <button class="btn btn-ghost" id="booking-view-close-btn" type="button">Close</button>
+                    <button class="btn btn-primary" id="booking-edit-btn" type="button">Edit</button>
+                </div>
+            </div>
+        </div>
         <form class="modal-form" id="booking-form">
             <div class="time-pair">
                 <label>

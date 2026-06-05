@@ -1362,7 +1362,49 @@ function bindEvents() {
     }
 
     if (bookingCancel) {
-        bookingCancel.addEventListener("click", closeBookingModal);
+        bookingCancel.addEventListener("click", () => {
+            if (pendingBooking && pendingBooking.eventId) {
+                // Return to details view
+                if (bookingForm) {
+                    bookingForm.setAttribute("hidden", "");
+                    bookingForm.classList.add("hidden");
+                }
+                if (bookingDetails) {
+                    bookingDetails.removeAttribute("hidden");
+                    bookingDetails.classList.remove("hidden");
+                }
+                if (bookingTitle) {
+                    bookingTitle.textContent = "Schedule Details";
+                }
+            } else {
+                closeBookingModal();
+            }
+        });
+    }
+
+    if (bookingEditBtn) {
+        bookingEditBtn.addEventListener("click", () => {
+            if (bookingDetails) {
+                bookingDetails.setAttribute("hidden", "");
+                bookingDetails.classList.add("hidden");
+            }
+            if (bookingForm) {
+                bookingForm.removeAttribute("hidden");
+                bookingForm.classList.remove("hidden");
+            }
+            if (bookingTitle) {
+                const editMap = {
+                    class: "Edit Class",
+                    room: "Edit Room",
+                    teacher: "Edit Teacher",
+                };
+                bookingTitle.textContent = editMap[state.view] || "Edit Class";
+            }
+        });
+    }
+
+    if (bookingViewCloseBtn) {
+        bookingViewCloseBtn.addEventListener("click", closeBookingModal);
     }
 
     if (bookingDelete) {

@@ -145,7 +145,7 @@ function normalizeCourseCode(value) {
 }
 
 function getBookingClassrooms() {
-  return classroomDirectory && classroomDirectory.length > 0 ? classroomDirectory : roomDirectory;
+  return classroomDirectory;
 }
 
 function getBookingClasses() {
@@ -295,7 +295,9 @@ function getRoomDisplayLabel(room) {
   }
 
   const shortLabel = getRoomShortLabel(room);
-  return shortLabel ? `${shortLabel} · ${room.name || room.id}` : room.name || room.id || "";
+  const capacity = (room.capacity !== undefined && room.capacity !== null) ? room.capacity : 0;
+  const rightPart = `Capacity: ${capacity}`;
+  return shortLabel ? `${shortLabel} · ${rightPart}` : rightPart;
 }
 
 function getRoomFloorLabel(room) {

@@ -93,6 +93,11 @@ public class RoomService {
         room.setBuilding(normalizeBuilding(room.getBuilding()));
 
         try {
+            Classroom existing = classroomDAO.getClassroomById(room.getId());
+            if (existing != null && room.getCapacity() == null) {
+                room.setCapacity(existing.getCapacity());
+            }
+
             boolean isUpdated = classroomDAO.updateClassroom(room);
 
             if (!isUpdated) {

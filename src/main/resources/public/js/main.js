@@ -776,7 +776,7 @@ function bindEvents() {
 
     if (roomList) {
         roomList.addEventListener("click", (event) => {
-            const roomStore = typeof getBookingClassrooms === "function" ? getBookingClassrooms() : roomDirectory;
+            const roomStore = typeof getBookingClassrooms === "function" ? getBookingClassrooms() : classroomDirectory;
             const editButton = event.target.closest(".room-edit");
             if (editButton) {
                 const roomId = editButton.dataset.roomId;
@@ -851,7 +851,7 @@ function bindEvents() {
                 return;
             }
 
-            const roomStore = typeof getBookingClassrooms === "function" ? getBookingClassrooms() : roomDirectory;
+            const roomStore = typeof getBookingClassrooms === "function" ? getBookingClassrooms() : classroomDirectory;
             const actor = state.userName || "User";
             const removed = roomStore.find((item) => String(item.id) === String(editingRoomId)) || null;
 
@@ -1026,8 +1026,8 @@ function bindEvents() {
                 const selectedRoom =
                     roomCatalog.find((roomItem) => String(roomItem.id) === String(pendingBooking.roomId)) ||
                     resolveClassroomFromInput(
-                        roomDirectory.find((item) => item.id === pendingBooking.roomId)
-                            ? getRoomDisplayLabel(roomDirectory.find((item) => item.id === pendingBooking.roomId))
+                        roomCatalog.find((item) => item.id === pendingBooking.roomId)
+                            ? getRoomDisplayLabel(roomCatalog.find((item) => item.id === pendingBooking.roomId))
                             : pendingBooking.roomId,
                         roomCatalog
                     );

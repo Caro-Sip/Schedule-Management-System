@@ -1314,6 +1314,7 @@ function bindEvents() {
             }
             bookingProfessor.dataset.teacherId = "";
             renderBookingProfessorOptions();
+            renderBookingSubjectOptions();
         });
         bookingProfessor.addEventListener("focus", renderBookingProfessorOptions);
     }
@@ -1459,6 +1460,7 @@ async function initializeAuthenticatedApp() {
     await loadClassrooms();
     await loadCourses();
     await loadClasses();
+    await loadTeacherCourses();
 
     syncCurrentStudentClassContext();
     syncCurrentUserDirectoryEntry();

@@ -321,6 +321,23 @@ async function loadTeachers() {
 	}
 }
 
+async function loadTeacherCourses() {
+	try {
+		const teacherCourses = await requestJson(`${API_BASE}/teacher-courses`);
+		teacherCourseDirectory.length = 0;
+		(teacherCourses || []).forEach((mapping) => {
+			teacherCourseDirectory.push({
+				teacherId: Number(mapping.teacherId),
+				courseId: Number(mapping.courseId),
+				classId: Number(mapping.classId),
+				hoursTaught: Number(mapping.hoursTaught),
+			});
+		});
+	} catch (error) {
+		console.error("Failed to load teacher courses", error);
+	}
+}
+
 function updateDepartmentSelectOptions(selectEl, departments, includeAllOption = false) {
 	if (!selectEl) {
 		return;

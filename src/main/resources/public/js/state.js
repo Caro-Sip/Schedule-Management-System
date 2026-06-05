@@ -33,6 +33,7 @@ const classroomDirectory = [];
 const courseDirectory = [];
 const teacherDirectory = [];
 const teacherDepartmentDirectory = [];
+const teacherCourseDirectory = [];
 
 const roomDirectory = [
   {

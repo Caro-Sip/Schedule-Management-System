@@ -1270,6 +1270,46 @@ function resolveCourseFromInput(value, availableCourses) {
   );
 }
 
+function getBookingActiveTargetClassId() {
+  if (Array.isArray(pendingBooking?.classIds) && pendingBooking.classIds.length > 0) {
+    return pendingBooking.classIds[0];
+  }
+  if (state.view === "class" && state.selectedClassId) {
+    return state.selectedClassId;
+  }
+  return null;
+}
+
+function autoselectTeacherForCourse(courseId) {
+  if (!bookingProfessor || !pendingBooking) {
+    return;
+  }
+
+  const classId = getBookingActiveTargetClassId();
+  let matchedMapping = null;
+
+  if (classId) {
+    matchedMapping = teacherCourseDirectory.find(
+      (m) => Number(m.courseId) === Number(courseId) && Number(m.classId) === Number(classId)
+    );
+  }
+
+  if (!matchedMapping) {
+    matchedMapping = teacherCourseDirectory.find(
+      (m) => Number(m.courseId) === Number(courseId)
+    );
+  }
+
+  if (matchedMapping) {
+    const teacher = getBookingTeachers().find((t) => Number(t.id) === Number(matchedMapping.teacherId));
+    if (teacher) {
+      bookingProfessor.value = getTeacherDisplayLabel(teacher);
+      bookingProfessor.dataset.teacherId = String(teacher.id);
+      pendingBooking.teacherId = teacher.id;
+    }
+  }
+}
+
 function renderBookingProfessorOptions() {
   if (!bookingProfessor || !bookingProfessorResults || !pendingBooking) {
     return;
@@ -1321,6 +1361,7 @@ function renderBookingProfessorOptions() {
       bookingProfessor.dataset.teacherId = String(teacher.id);
       pendingBooking.teacherId = teacher.id;
       bookingProfessorResults.setAttribute("hidden", "");
+      renderBookingSubjectOptions();
     });
 
     bookingProfessorResults.appendChild(option);
@@ -1354,7 +1395,19 @@ function renderBookingSubjectOptions() {
     : requiresClassSelection
       ? new Set()
       : null;
+  const coursesTaughtByTeacher = pendingBooking.teacherId
+    ? new Set(
+        (teacherCourseDirectory || [])
+          .filter((m) => Number(m.teacherId) === Number(pendingBooking.teacherId))
+          .map((m) => Number(m.courseId))
+      )
+    : null;
+
   const courses = (courseDirectory || []).filter((course) => {
+    if (coursesTaughtByTeacher && !coursesTaughtByTeacher.has(Number(course.id))) {
+      return false;
+    }
+
     if (!allowedCourseIds) {
       return true;
     }
@@ -1409,6 +1462,7 @@ function renderBookingSubjectOptions() {
       bookingSubject.dataset.courseId = String(course.id);
       pendingBooking.courseId = course.id;
       bookingSubjectResults.setAttribute("hidden", "");
+      autoselectTeacherForCourse(course.id);
     });
 
     bookingSubjectResults.appendChild(option);

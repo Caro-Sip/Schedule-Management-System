@@ -37,6 +37,7 @@ import sms.Service.TeacherService;
 import sms.Service.ScheduleService;
 import sms.Service.UserService;
 import sms.Service.CourseService;
+import sms.DAO.TeacherCourseDAO;
 import sms.exception.ClassNotFoundException;
 import sms.exception.InvalidClassException;
 import sms.exception.InvalidRoomException;
@@ -54,6 +55,7 @@ public class ApiServer {
     private static RoomService roomService;
     private static UserService userService;
     private static CourseService courseService;
+    private static TeacherCourseDAO teacherCourseDAO;
 
     public static void main(String[] args) {
         ensureDatabase();
@@ -63,6 +65,7 @@ public class ApiServer {
         userService = new UserService();
         roomService = new RoomService();
         courseService = new CourseService();
+        teacherCourseDAO = new TeacherCourseDAO();
 
         Javalin app = Javalin.create(config -> {
             config.staticFiles.add(staticFiles -> {
@@ -105,6 +108,9 @@ public class ApiServer {
                     get("/{id}", ApiServer::getCourseById);
                     put("/{id}", ApiServer::updateCourse);
                     delete("/{id}", ApiServer::deleteCourse);
+                });
+                path("/api/teacher-courses", () -> {
+                    get(ApiServer::getAllTeacherCourses);
                 });
                 path("/api/schedules", () -> {
                     get(ApiServer::getAllSchedules);
@@ -288,6 +294,15 @@ public class ApiServer {
         } catch (Exception e) {
             e.printStackTrace();
             ctx.status(500).json(errorResponse(e, "Failed to load schedules"));
+        }
+    }
+
+    private static void getAllTeacherCourses(Context ctx) {
+        try {
+            ctx.json(teacherCourseDAO.getAllTeacherCourses());
+        } catch (Exception e) {
+            e.printStackTrace();
+            ctx.status(500).json(errorResponse(e, "Failed to load teacher courses"));
         }
     }
 

@@ -74,6 +74,18 @@ INSERT INTO class_courses (class_id, course_id) VALUES
     (7, 13);  -- Unix and C Programming
 
 -- -------------------------------------------------------------
+-- 5b. TEACHER–COURSES MAPPING FOR IP-AI-Y2-S2 (class_id=7)
+-- -------------------------------------------------------------
+
+INSERT INTO teacher_courses (teacher_id, course_id, class_id, hours_taught) VALUES
+    (6, 12, 7, 0), -- Srang Sarot teaches SP6 to Class 7
+    (8, 11, 7, 0), -- Pich Reatrey teaches CSC to Class 7
+    (3, 10, 7, 0), -- Phauk Sokkhey teaches LAS to Class 7
+    (2, 7,  7, 0), -- Seak Leng teaches DSA to Class 7
+    (2, 13, 7, 0), -- Seak Leng teaches UCP to Class 7
+    (4, 9,  7, 0); -- Nop Phearum teaches IDB to Class 7
+
+-- -------------------------------------------------------------
 -- 6. RECURRING SCHEDULE (templates)
 -- day_of_week: 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri
 -- Normalized time blocks:

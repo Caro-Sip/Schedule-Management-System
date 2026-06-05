@@ -60,6 +60,18 @@ INSERT INTO class_courses (class_id, course_id) VALUES
     (6, 10); -- LAS
 
 -- -------------------------------------------------------------
+-- 4c. TEACHER–COURSES MAPPING FOR IP-SE-Y2-S2 (class_id=6)
+-- -------------------------------------------------------------
+
+INSERT INTO teacher_courses (teacher_id, course_id, class_id, hours_taught) VALUES
+    (1, 5,  6, 0), -- Hok Tin teaches OOP to Class 6
+    (6, 6,  6, 0), -- Srang Sarot teaches SP4 to Class 6
+    (2, 7,  6, 0), -- Seak Leng teaches DSA to Class 6
+    (5, 8,  6, 0), -- Hen Rathpisey teaches OS to Class 6
+    (4, 9,  6, 0), -- Nop Phearum teaches IDB to Class 6
+    (3, 10, 6, 0); -- Phauk Sokkhey teaches LAS to Class 6
+
+-- -------------------------------------------------------------
 -- 5. RECURRING SCHEDULE (templates)
 -- day_of_week: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
 -- effective_from = first occurrence date in the semester

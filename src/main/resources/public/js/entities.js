@@ -320,9 +320,8 @@ async function loadTeachers() {
 			teacherDirectory.push({
 				id: Number(teacher.id),
 				userId: Number(teacher.userId ?? teacher.user_id),
-				name: (teacher.name || "").toString().trim(),
+				name: (teacher.name || teacher.fullName || "").toString().trim(),
 				department: teacher.department || "",
-				name: teacher.name || teacher.fullName || "",
 			});
 		});
 	} catch (error) {

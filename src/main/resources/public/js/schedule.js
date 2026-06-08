@@ -24,10 +24,7 @@ function updateActiveScopeLabel() {
     const teacherItem = (teacherDirectory || []).find(
       (teacher) => String(teacher.id) === String(state.selectedTeacherId)
     );
-    const teacherUser = (userDirectory || []).find(
-      (user) => String(user.id) === String(teacherItem?.userId)
-    );
-    label = teacherUser?.name || `Teacher ${state.selectedTeacherId}`;
+    label = teacherItem?.name || `Teacher ${state.selectedTeacherId}`;
   }
 
   if (activeScopeLabel) {
@@ -173,10 +170,7 @@ function openSmartOverlayModal() {
     const teacherItem = (teacherDirectory || []).find(
       (teacher) => String(teacher.id) === String(teacherId)
     );
-    const teacherUser = (userDirectory || []).find(
-      (user) => String(user.id) === String(teacherItem?.userId)
-    );
-    smartTeacherInput.value = teacherUser?.name || `Teacher ${teacherId || ""}`;
+    smartTeacherInput.value = teacherItem?.name || `Teacher ${teacherId || ""}`;
   }
 
   renderSmartOverlayClassOptions();
@@ -191,7 +185,7 @@ function closeSmartOverlayModal() {
   smartModal.setAttribute("hidden", "");
 }
 
-function applySmartOverlaySelection() {
+async function applySmartOverlaySelection() {
   const teacherId = state.smartOverlayTeacherId || state.currentTeacherId || state.selectedTeacherId || null;
   const selectedClassIds = normalizeSmartOverlayClassIds();
 
@@ -202,6 +196,14 @@ function applySmartOverlaySelection() {
   if (selectedClassIds.length === 0) {
     alert("Select at least one class.");
     return;
+  }
+
+  try {
+    const promises = selectedClassIds.map((classId) => loadSchedulesForClass(classId));
+    const results = await Promise.all(promises);
+    eventsByView.class = results.flat();
+  } catch (error) {
+    console.error("Failed to load overlay class schedules", error);
   }
 
   state.smartOverlayTeacherId = teacherId;
@@ -375,7 +377,7 @@ function openBookingModal(dayIndex, startMinutes, eventData = null, options = {}
     Boolean(options.smartMode) &&
     !isEdit &&
     state.view === "teacher" &&
-    isTeacherRole(state.role);
+    (isTeacherRole(state.role) || isAdminRole(state.role));
   const bookingDay = isEdit ? eventData.day : dayIndex;
   const activeClassId = state.view === "class" ? getSelectedClassId() : null;
   const attachedClassIds = isEdit
@@ -1268,7 +1270,7 @@ function getBookingTeachers() {
     return {
       id: teacher.id,
       userId: teacher.userId,
-      name: teacherUser?.name || `Teacher ${teacher.id}`,
+      name: teacherUser?.name || teacher.name || `Teacher ${teacher.id}`,
       role: "professor",
       department: teacher.department || "",
     };

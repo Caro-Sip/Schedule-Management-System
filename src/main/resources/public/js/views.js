@@ -108,7 +108,7 @@ async function setView(view) {
   if (view !== "user") {
     state.userScheduleOrigin = null;
   }
-  if (view !== "class" || !isTeacherRole(state.role)) {
+  if (view !== "teacher") {
     state.smartOverlayEnabled = false;
   }
 

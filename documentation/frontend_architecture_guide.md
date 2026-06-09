@@ -12,17 +12,17 @@ Before diving into the code, let's understand the two main halves of the system 
 
 ```mermaid
 graph TD
-    subgraph Frontend [Web Browser Client]
-        HTML[index.html (Structure)]
-        CSS[styles.css (Design)]
-        JS[JavaScript Files (Logic & State)]
+    subgraph Frontend ["Web Browser Client"]
+        HTML["index.html (Structure)"]
+        CSS["styles.css (Design)"]
+        JS["JavaScript Files (Logic & State)"]
     end
 
-    subgraph Backend [Java Server & DB]
-        Javalin[ApiServer.java (REST Controller)]
-        Services[Service Layer (Business Logic)]
-        DAOs[DAO Layer (SQL Queries)]
-        DB[(SQLite Database)]
+    subgraph Backend ["Java Server & DB"]
+        Javalin["ApiServer.java (REST Controller)"]
+        Services["Service Layer (Business Logic)"]
+        DAOs["DAO Layer (SQL Queries)"]
+        DB[("SQLite Database")]
     end
 
     JS -- "HTTP Fetch (JSON & JWT Token)" --> Javalin
@@ -35,7 +35,7 @@ graph TD
 ### The Separation of Concerns
 1. **The Backend (Java 25 + Javalin + SQLite)**:
    - Lives in `src/main/java/sms/`.
-   - Starts a web server on port `8080` (configured in [ApiServer.java](file:///c:/Users/syphon/Schedule-Management-System/src/main/java/sms/ApiServer.java)).
+   - Starts a web server on port `8080` (configured in [ApiServer.java](../src/main/java/sms/ApiServer.java)).
    - Serves the database records via **REST API endpoints** (e.g., `/api/classes`, `/api/schedules`).
    - Serves the frontend static files (HTML, CSS, JS) from the `/public` folder to the browser on startup.
 2. **The Frontend (Vanilla HTML5 / CSS3 / ES6 JavaScript)**:
@@ -53,8 +53,8 @@ If you haven't written frontend code before, think of web development as buildin
 *   **JavaScript (Behavior)**: The electrical system and smart controls. It listens when a user clicks a button, talks to the server, and updates the text on the walls without tearing down the house.
 
 In our project:
-*   **HTML** is contained in [index.html](file:///c:/Users/syphon/Schedule-Management-System/src/main/resources/public/index.html).
-*   **CSS** is contained in [styles.css](file:///c:/Users/syphon/Schedule-Management-System/src/main/resources/public/styles.css).
+*   **HTML** is contained in [index.html](../src/main/resources/public/index.html).
+*   **CSS** is contained in [styles.css](../src/main/resources/public/styles.css).
 *   **JavaScript** logic is modularized into several files in the `js/` folder.
 
 ---
@@ -72,28 +72,28 @@ Here is what each file does:
 
 | Script File | Responsibility | Key Content |
 | :--- | :--- | :--- |
-| **[state.js](file:///c:/Users/syphon/Schedule-Management-System/src/main/resources/public/js/state.js)** | **Global State**: Holds the single source of truth for the frontend application. | `state` object (current role, active view tab, auth token, selected IDs), lists/directories for classes/users/teachers. |
-| **[dom.js](file:///c:/Users/syphon/Schedule-Management-System/src/main/resources/public/js/dom.js)** | **DOM References & Helpers**: Stores shortcuts to HTML elements and handles common input bindings. | Element select-option helpers, showing user schedules based on role. |
-| **[utils.js](file:///c:/Users/syphon/Schedule-Management-System/src/main/resources/public/js/utils.js)** | **Helper Calculations**: Common math, string parsers, and date/time formatters. | `minutesFromStart`, `formatClockTime`, `resolveClassroomFromInput` (parses typing filters like `j6` to building floors). |
-| **[audit.js](file:///c:/Users/syphon/Schedule-Management-System/src/main/resources/public/js/audit.js)** | **Sidebar Logs Handler**: Controls the collapsible right-hand audit log widget. | Renders short audit log updates in the aside menu. |
-| **[audit-log.js](file:///c:/Users/syphon/Schedule-Management-System/src/main/resources/public/audit-log.js)** | **Admin Log View**: Controls search, filtering, and listing in the main Audit Log tab. | `renderAdminAuditLog`, search input listeners for audit log entries. |
-| **[entities.js](file:///c:/Users/syphon/Schedule-Management-System/src/main/resources/public/js/entities.js)** | **API Client & Normalization**: The layer that fetches data from Java endpoints and maps database keys to frontend properties. | `requestJson` helper, endpoints wrappers (`loginApi`, `loadClasses`, `saveScheduleApi`). |
-| **[schedule.js](file:///c:/Users/syphon/Schedule-Management-System/src/main/resources/public/js/schedule.js)** | **Calendar Grid Renderer**: Calculates grid positions and draws scheduled event blocks. | `renderEvents` (draws event divs, positioning them by translating time to CSS height/top coordinates). |
-| **[views.js](file:///c:/Users/syphon/Schedule-Management-System/src/main/resources/public/js/views.js)** | **Screen Transitions & Visibility**: Shows and hides different panels based on user role and selected view. | `setView`, `updateViewVisibility` (hides/shows tables, tabs, buttons, or modals). |
-| **[main.js](file:///c:/Users/syphon/Schedule-Management-System/src/main/resources/public/js/main.js)** | **App Entry Point**: Listens for user interactions (clicks, form submissions) and wires up user workflows. | `bindEvents` (binds click/submit event listeners), `initializeAuthenticatedApp`. |
+| **[state.js](../src/main/resources/public/js/state.js)** | **Global State**: Holds the single source of truth for the frontend application. | `state` object (current role, active view tab, auth token, selected IDs), lists/directories for classes/users/teachers. |
+| **[dom.js](../src/main/resources/public/js/dom.js)** | **DOM References & Helpers**: Stores shortcuts to HTML elements and handles common input bindings. | Element select-option helpers, showing user schedules based on role. |
+| **[utils.js](../src/main/resources/public/js/utils.js)** | **Helper Calculations**: Common math, string parsers, and date/time formatters. | `minutesFromStart`, `formatClockTime`, `resolveClassroomFromInput` (parses typing filters like `j6` to building floors). |
+| **[audit.js](../src/main/resources/public/js/audit.js)** | **Sidebar Logs Handler**: Controls the collapsible right-hand audit log widget. | Renders short audit log updates in the aside menu. |
+| **[audit-log.js](../src/main/resources/public/audit-log.js)** | **Admin Log View**: Controls search, filtering, and listing in the main Audit Log tab. | `renderAdminAuditLog`, search input listeners for audit log entries. |
+| **[entities.js](../src/main/resources/public/js/entities.js)** | **API Client & Normalization**: The layer that fetches data from Java endpoints and maps database keys to frontend properties. | `requestJson` helper, endpoints wrappers (`loginApi`, `loadClasses`, `saveScheduleApi`). |
+| **[schedule.js](../src/main/resources/public/js/schedule.js)** | **Calendar Grid Renderer**: Calculates grid positions and draws scheduled event blocks. | `renderEvents` (draws event divs, positioning them by translating time to CSS height/top coordinates). |
+| **[views.js](../src/main/resources/public/js/views.js)** | **Screen Transitions & Visibility**: Shows and hides different panels based on user role and selected view. | `setView`, `updateViewVisibility` (hides/shows tables, tabs, buttons, or modals). |
+| **[main.js](../src/main/resources/public/js/main.js)** | **App Entry Point**: Listens for user interactions (clicks, form submissions) and wires up user workflows. | `bindEvents` (binds click/submit event listeners), `initializeAuthenticatedApp`. |
 
 ---
 
 ## 4. State Management (The Brain of the Frontend)
 
-Instead of passing variables between functions, this application uses a **Global State** pattern. The `state` object inside [js/state.js](file:///c:/Users/syphon/Schedule-Management-System/src/main/resources/public/js/state.js) represents the current configuration of the application at any given microsecond.
+Instead of passing variables between functions, this application uses a **Global State** pattern. The `state` object inside [js/state.js](../src/main/resources/public/js/state.js) represents the current configuration of the application at any given microsecond.
 
 For example, when a user clicks to view a room schedule for room ID `5`:
 1. `state.view` is set to `"room"`.
 2. `state.selectedRoomId` is set to `5`.
 3. The UI queries: *"Hey scheduler, draw events where `roomId === 5`"* and redraws the calendar.
 
-If the user changes tabs or logs out, we invoke `resetSessionState()` (in [js/views.js](file:///c:/Users/syphon/Schedule-Management-System/src/main/resources/public/js/views.js)), restoring defaults.
+If the user changes tabs or logs out, we invoke `resetSessionState()` (in [js/views.js](../src/main/resources/public/js/views.js)), restoring defaults.
 
 ---
 
@@ -103,8 +103,8 @@ Let's trace what happens when a user signs in. This illustrates the full round-t
 
 ### Step 1: User action (HTML -> JS Event Listener)
 In the login form on the web page:
-*   The developer writes `<form id="login-form">` in [index.html](file:///c:/Users/syphon/Schedule-Management-System/src/main/resources/public/index.html).
-*   In [js/main.js](file:///c:/Users/syphon/Schedule-Management-System/src/main/resources/public/js/main.js), we bind a submit listener:
+*   The developer writes `<form id="login-form">` in [index.html](../src/main/resources/public/index.html).
+*   In [js/main.js](../src/main/resources/public/js/main.js), we bind a submit listener:
     ```javascript
     loginForm.addEventListener("submit", async (event) => {
         event.preventDefault(); // Stop page reload
@@ -117,7 +117,7 @@ In the login form on the web page:
     ```
 
 ### Step 2: The API Request (Fetch Client)
-*   In [js/entities.js](file:///c:/Users/syphon/Schedule-Management-System/src/main/resources/public/js/entities.js), the `loginApi` function makes an HTTP request:
+*   In [js/entities.js](../src/main/resources/public/js/entities.js), the `loginApi` function makes an HTTP request:
     ```javascript
     async function loginApi(email, password) {
         return requestJson(`/api/auth/login`, {
@@ -129,7 +129,7 @@ In the login form on the web page:
 *   `requestJson` handles sending the headers and converts response payloads from text into usable JavaScript objects.
 
 ### Step 3: Backend Processing (Java controller -> DB)
-*   The server in [ApiServer.java](file:///c:/Users/syphon/Schedule-Management-System/src/main/java/sms/ApiServer.java) listens for `POST /api/auth/login` and directs it to the `login()` method:
+*   The server in [ApiServer.java](../src/main/java/sms/ApiServer.java) listens for `POST /api/auth/login` and directs it to the `login()` method:
     ```java
     private static void login(Context ctx) {
         Map<?, ?> payload = ctx.bodyAsClass(Map.class);
@@ -152,20 +152,20 @@ In the login form on the web page:
 *   `userService.login(email, password)` calls the database layer to check if the credentials match the encrypted hash.
 
 ### Step 4: UI Update (JS -> HTML Render)
-*   Back in [js/main.js](file:///c:/Users/syphon/Schedule-Management-System/src/main/resources/public/js/main.js), if the server sends back a `200 OK`, we invoke:
+*   Back in [js/main.js](../src/main/resources/public/js/main.js), if the server sends back a `200 OK`, we invoke:
     ```javascript
     applyAuthenticatedSession(data.token, loggedInUser);
     showSchedule(loggedInUser.role, loggedInUser.name);
     await initializeAuthenticatedApp();
     ```
-*   `applyAuthenticatedSession` (in [js/views.js](file:///c:/Users/syphon/Schedule-Management-System/src/main/resources/public/js/views.js)) stores the token so subsequent requests are authenticated.
+*   `applyAuthenticatedSession` (in [js/views.js](../src/main/resources/public/js/views.js)) stores the token so subsequent requests are authenticated.
 *   `showSchedule` toggles CSS classes (`hidden`) to make the login panel vanish and render the scheduling grid.
 
 ---
 
 ## 6. How the Schedule Grid is Drawn
 
-The schedule looks like a calendar table, but it is actually a dynamically drawn layout in [js/schedule.js](file:///c:/Users/syphon/Schedule-Management-System/src/main/resources/public/js/schedule.js).
+The schedule looks like a calendar table, but it is actually a dynamically drawn layout in [js/schedule.js](../src/main/resources/public/js/schedule.js).
 
 1. **Calculating Columns**:
    - The grid represents Monday to Sunday (columns 0 to 6).
@@ -215,17 +215,17 @@ Press **F12** or **Right Click -> Inspect** in Chrome/Firefox to open the Develo
 
 If you are asked to add a new button that performs an action (e.g., "Clear all schedules for this class"):
 1.  **Add the Button in HTML**:
-    Open [index.html](file:///c:/Users/syphon/Schedule-Management-System/src/main/resources/public/index.html) and place the button under the controls section:
+    Open [index.html](../src/main/resources/public/index.html) and place the button under the controls section:
     ```html
     <button class="btn btn-ghost" id="clear-schedule-btn">Clear All</button>
     ```
 2.  **Define Element shortcut in JS**:
-    Open [js/dom.js](file:///c:/Users/syphon/Schedule-Management-System/src/main/resources/public/js/dom.js) or `js/main.js` and get a reference to it:
+    Open [js/dom.js](../src/main/resources/public/js/dom.js) or `js/main.js` and get a reference to it:
     ```javascript
     const clearScheduleBtn = document.getElementById("clear-schedule-btn");
     ```
 3.  **Bind Event Listener**:
-    In [js/main.js](file:///c:/Users/syphon/Schedule-Management-System/src/main/resources/public/js/main.js)'s `bindEvents()`, attach an action:
+    In [js/main.js](../src/main/resources/public/js/main.js)'s `bindEvents()`, attach an action:
     ```javascript
     clearScheduleBtn.addEventListener("click", async () => {
         if (!state.selectedClassId) return alert("Select a class first!");
@@ -238,7 +238,7 @@ If you are asked to add a new button that performs an action (e.g., "Clear all s
     });
     ```
 4.  **Add API Wrapper**:
-    In [js/entities.js](file:///c:/Users/syphon/Schedule-Management-System/src/main/resources/public/js/entities.js), write the REST caller:
+    In [js/entities.js](../src/main/resources/public/js/entities.js), write the REST caller:
     ```javascript
     async function deleteSchedulesForClassApi(classId) {
         return requestJson(`/api/schedules/class/${classId}`, {
@@ -247,4 +247,4 @@ If you are asked to add a new button that performs an action (e.g., "Clear all s
     }
     ```
 5.  **Expose endpoint in Java Backend**:
-    In [ApiServer.java](file:///c:/Users/syphon/Schedule-Management-System/src/main/java/sms/ApiServer.java), register the path mapping and write the matching handler method.
+    In [ApiServer.java](../src/main/java/sms/ApiServer.java), register the path mapping and write the matching handler method.

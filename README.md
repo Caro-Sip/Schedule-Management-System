@@ -5,13 +5,14 @@ Object Oriented Programming Proposed Project
 
 If you are a new developer or are onboarding into this repository, please start by reading our detailed guide guides:
 
-*   **[Frontend Architecture Guide](file:///c:/Users/syphon/Schedule-Management-System/documentation/frontend_architecture_guide.md)** — A complete walkthrough of how the user interface works, files structure, state management, and debugging tips for new developers who aren't yet familiar with JavaScript, HTML, and CSS.
-*   **[Teacher Login & Scheduling Guide](file:///c:/Users/syphon/Schedule-Management-System/documentation/teacher_login_and_scheduling.md)** — Comprehensive walkthrough of the teacher (professor) role, credentials authorization, profile mapping context, schedule grid filtering, and the SMART overlay comparison functionality.
-*   **[Project Brief](file:///c:/Users/syphon/Schedule-Management-System/documentation/project_brief.md)** — Core responsibilities of the service layer and directory structures.
-*   **[Build & Deployment Guide](file:///c:/Users/syphon/Schedule-Management-System/documentation/build_deployment.md)** — How to compile and run CLI (Console UI) and API (Javalin Web Server) profiles.
-*   **[Schedule Display Logic Report](file:///c:/Users/syphon/Schedule-Management-System/documentation/schedule_display_logic.md)** — In-depth breakdown of user, teacher, class, and room display filters.
-*   **[User Session Management](file:///c:/Users/syphon/Schedule-Management-System/documentation/user_session.md)** — Details on session persistency, HTTP sessions, and JWT.
-*   **[Javalin Routing API](file:///c:/Users/syphon/Schedule-Management-System/documentation/javalin_routing.md)** — How backend routes are mapped.
+*   **[Frontend Architecture Guide](documentation/frontend_architecture_guide.md)** — A complete walkthrough of how the user interface works, files structure, state management, and debugging tips for new developers who aren't yet familiar with JavaScript, HTML, and CSS.
+*   **[Teacher Login & Scheduling Guide](documentation/teacher_login_and_scheduling.md)** — Comprehensive walkthrough of the teacher (professor) role, credentials authorization, profile mapping context, schedule grid filtering, and the SMART overlay comparison functionality.
+*   **[Project Brief](documentation/project_brief.md)** — Core responsibilities of the service layer and directory structures.
+*   **[Build & Deployment Guide](documentation/build_deployment.md)** — How to compile and run CLI (Console UI) and API (Javalin Web Server) profiles.
+*   **[Schedule Display Logic Report](documentation/schedule_display_logic.md)** — In-depth breakdown of user, teacher, class, and room display filters.
+*   **[User Session Management](documentation/user_session.md)** — Details on session persistency, HTTP sessions, and JWT.
+*   **[Javalin Routing API](documentation/javalin_routing.md)** — How backend routes are mapped.
+
 
 
 ---

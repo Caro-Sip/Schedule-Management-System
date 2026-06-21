@@ -90,9 +90,34 @@ function renderSmartOverlayClassOptions() {
   }
 
   smartClassList.innerHTML = "";
-  const selectedIds = new Set(normalizeSmartOverlayClassIds().map((classId) => String(classId)));
+  const effectiveTeacherId = getEffectiveTeacherId();
+  const isTeacherScoped =
+    Boolean(effectiveTeacherId) &&
+    isTeacherRole(state.role) &&
+    !isAdminRole(state.role);
+  const teacherClassIds = isTeacherScoped
+    ? getClassIdsForTeacher(effectiveTeacherId)
+    : null;
+
+  const normalizedSelectedIds = normalizeSmartOverlayClassIds();
+  const selectedIds = new Set(
+    normalizedSelectedIds
+      .filter((classId) => !teacherClassIds || teacherClassIds.has(Number(classId)))
+      .map((classId) => String(classId))
+  );
+
+  if (isTeacherScoped && teacherClassIds && selectedIds.size !== normalizedSelectedIds.length) {
+    state.smartOverlayClassIds = Array.from(selectedIds).map((classId) => Number(classId));
+  }
+
   const classes = (classDirectory || [])
     .slice()
+    .filter((classItem) => {
+      if (!teacherClassIds) {
+        return true;
+      }
+      return teacherClassIds.has(Number(classItem.id));
+    })
     .sort((a, b) => {
       const nameCompare = (a.name || String(a.id)).localeCompare(b.name || String(b.id));
       if (nameCompare !== 0) {
@@ -104,7 +129,9 @@ function renderSmartOverlayClassOptions() {
   if (classes.length === 0) {
     const empty = document.createElement("div");
     empty.className = "empty-state";
-    empty.textContent = "No classes are available yet.";
+    empty.textContent = isTeacherScoped
+      ? "No classes are assigned to this teacher yet."
+      : "No classes are available yet.";
     smartClassList.appendChild(empty);
     return;
   }

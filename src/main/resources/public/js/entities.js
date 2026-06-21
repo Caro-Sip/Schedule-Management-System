@@ -73,6 +73,7 @@ const smartClassList = document.getElementById("smart-class-list");
 const smartApplyBtn = document.getElementById("smart-apply");
 const smartCancelBtn = document.getElementById("smart-cancel");
 const smartCloseBtn = document.getElementById("smart-close");
+const smartClearBtn = document.getElementById("smart-clear");
 const roomControls = document.getElementById("room-controls");
 const roomView = document.getElementById("room-view");
 const roomSearch = document.getElementById("room-search");

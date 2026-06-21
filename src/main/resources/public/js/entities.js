@@ -129,6 +129,9 @@ const bookingProfessorResults = document.getElementById("booking-professor-resul
 const bookingSubjectGroup = document.getElementById("booking-subject-group");
 const bookingSubject = document.getElementById("booking-subject");
 const bookingSubjectResults = document.getElementById("booking-subject-results");
+const courseTeacherGroup = document.getElementById("course-teacher-group");
+const courseTeacher = document.getElementById("course-teacher");
+const courseTeacherResults = document.getElementById("course-teacher-results");
 const bookingType = document.getElementById("booking-type");
 const bookingRecurringGroup = document.getElementById("booking-recurring-group");
 const bookingRecurring = document.getElementById("booking-recurring");
@@ -776,4 +779,21 @@ async function loadUsersIfNeeded() {
 	if (userDirectory.length === 0) {
 		await loadUsers();
 	}
+}
+
+async function getCourseTeacherApi(classId, courseId) {
+	return requestJson(`${API_BASE}/classes/${classId}/courses/${courseId}/teacher`);
+}
+
+async function assignCourseTeacherApi(classId, courseId, teacherId) {
+	return requestJson(`${API_BASE}/classes/${classId}/courses/${courseId}/teacher`, {
+		method: "POST",
+		body: JSON.stringify({ teacherId }),
+	});
+}
+
+async function removeCourseTeacherApi(classId, courseId) {
+	return requestJson(`${API_BASE}/classes/${classId}/courses/${courseId}/teacher`, {
+		method: "DELETE",
+	});
 }

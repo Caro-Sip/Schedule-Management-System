@@ -187,6 +187,10 @@ function clearCourseForm() {
   if (courseHoursInput) {
     courseHoursInput.value = "45";
   }
+  if (courseTeacher) {
+    courseTeacher.value = "";
+    courseTeacher.dataset.teacherId = "";
+  }
   if (courseDeleteBtn) {
     courseDeleteBtn.toggleAttribute("hidden", true);
   }
@@ -206,6 +210,24 @@ function selectCourseForEdit(course) {
   }
   if (courseHoursInput) {
     courseHoursInput.value = course.totalHours || 45;
+  }
+  if (courseTeacher) {
+    courseTeacher.value = "";
+    courseTeacher.dataset.teacherId = "";
+    if (courseModalClassId && course.id) {
+      getCourseTeacherApi(courseModalClassId, course.id)
+        .then((res) => {
+          if (res && res.teacherId) {
+            const teachers = getBookingTeachers();
+            const teacher = teachers.find((t) => Number(t.id) === Number(res.teacherId));
+            if (teacher) {
+              courseTeacher.value = getTeacherDisplayLabel(teacher);
+              courseTeacher.dataset.teacherId = String(teacher.id);
+            }
+          }
+        })
+        .catch((err) => console.error("Failed to load course teacher", err));
+    }
   }
   if (courseDeleteBtn) {
     courseDeleteBtn.toggleAttribute("hidden", false);

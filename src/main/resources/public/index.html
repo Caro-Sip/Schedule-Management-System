@@ -504,6 +504,20 @@
                     Total hours
                     <input type="number" id="course-hours" required min="1" placeholder="45"/>
                 </label>
+                <div class="room-picker" id="course-teacher-group">
+                    <div class="room-picker-field">
+                        <label>
+                            Teacher
+                            <input
+                                    type="text"
+                                    id="course-teacher"
+                                    placeholder="Select a teacher"
+                                    autocomplete="off"
+                            />
+                        </label>
+                        <div class="room-picker-results" id="course-teacher-results" hidden></div>
+                    </div>
+                </div>
                 <div class="modal-actions split">
                     <button class="btn" id="course-delete" type="button" hidden>Delete</button>
                     <div class="modal-actions-right">

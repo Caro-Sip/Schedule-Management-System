@@ -92,6 +92,9 @@ public class ApiServer {
                     put("/{id}/courses", ApiServer::replaceClassCourses);
                     post("/{id}/courses/{courseId}", ApiServer::addCourseToClass);
                     delete("/{id}/courses/{courseId}", ApiServer::removeCourseFromClass);
+                    get("/{id}/courses/{courseId}/teacher", ApiServer::getCourseTeacher);
+                    post("/{id}/courses/{courseId}/teacher", ApiServer::assignCourseTeacher);
+                    delete("/{id}/courses/{courseId}/teacher", ApiServer::removeCourseTeacher);
                     put("/{id}", ApiServer::updateClass);
                     delete("/{id}", ApiServer::deleteClass);
                 });
@@ -848,6 +851,52 @@ public class ApiServer {
             ctx.status(400).json(errorResponse(e, "Invalid class course data"));
         } catch (Exception e) {
             ctx.status(500).json(errorResponse(e, "Failed to remove course from class"));
+        }
+    }
+
+    private static void getCourseTeacher(Context ctx) {
+        try {
+            int classId = Integer.parseInt(ctx.pathParam("id"));
+            int courseId = Integer.parseInt(ctx.pathParam("courseId"));
+            Integer teacherId = teacherCourseDAO.getTeacherIdByCourseAndClass(courseId, classId);
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("teacherId", teacherId);
+            ctx.status(200).json(response);
+        } catch (NumberFormatException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid class or course id"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to get course teacher"));
+        }
+    }
+
+    private static void assignCourseTeacher(Context ctx) {
+        try {
+            int classId = Integer.parseInt(ctx.pathParam("id"));
+            int courseId = Integer.parseInt(ctx.pathParam("courseId"));
+            Map<?, ?> payload = ctx.bodyAsClass(Map.class);
+            Integer teacherId = readOptionalInteger(payload, "teacherId");
+            if (teacherId == null || teacherId <= 0) {
+                throw new IllegalArgumentException("Invalid teacher id");
+            }
+            teacherCourseDAO.assignTeacherToCourse(teacherId, courseId, classId);
+            ctx.status(204);
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid data"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to assign teacher to course"));
+        }
+    }
+
+    private static void removeCourseTeacher(Context ctx) {
+        try {
+            int classId = Integer.parseInt(ctx.pathParam("id"));
+            int courseId = Integer.parseInt(ctx.pathParam("courseId"));
+            teacherCourseDAO.removeTeacherFromCourse(courseId, classId);
+            ctx.status(204);
+        } catch (NumberFormatException e) {
+            ctx.status(400).json(errorResponse(e, "Invalid class or course id"));
+        } catch (Exception e) {
+            ctx.status(500).json(errorResponse(e, "Failed to remove course teacher"));
         }
     }
 

@@ -31,6 +31,43 @@ public class TeacherCourseDAO {
         }
     }
 
+    public Integer getTeacherIdByCourseAndClass(int courseId, int classId) throws SQLException {
+        String sql = "SELECT teacher_id FROM teacher_courses WHERE course_id = ? AND class_id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, courseId);
+            pstmt.setInt(2, classId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("teacher_id");
+                }
+            }
+        }
+        return null;
+    }
+
+    public void removeTeacherFromCourse(int courseId, int classId) throws SQLException {
+        String sql = "DELETE FROM teacher_courses WHERE course_id = ? AND class_id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, courseId);
+            pstmt.setInt(2, classId);
+            pstmt.executeUpdate();
+        }
+    }
+
+    public void assignTeacherToCourse(int teacherId, int courseId, int classId) throws SQLException {
+        removeTeacherFromCourse(courseId, classId);
+        String sql = "INSERT INTO teacher_courses (teacher_id, course_id, class_id, hours_taught) VALUES (?, ?, ?, 0)";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, teacherId);
+            pstmt.setInt(2, courseId);
+            pstmt.setInt(3, classId);
+            pstmt.executeUpdate();
+        }
+    }
+
     public List<Map<String, Object>> getAllTeacherCourses() throws SQLException {
         String sql = "SELECT teacher_id, course_id, class_id, hours_taught FROM teacher_courses";
         List<Map<String, Object>> list = new ArrayList<>();

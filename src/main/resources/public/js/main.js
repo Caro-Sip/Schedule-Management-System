@@ -328,6 +328,29 @@ function bindEvents() {
 
   if (userList) {
     userList.addEventListener("click", async (event) => {
+      const profileButton = event.target.closest(".user-profile");
+      if (profileButton) {
+        const userId = profileButton.dataset.userId;
+        const user = userDirectory.find((item) => String(item.id) === String(userId));
+        if (!user) {
+          return;
+        }
+        if (teacherDirectory.length === 0) {
+          await loadTeachers();
+        }
+        if (teacherCourseDirectory.length === 0) {
+          await loadTeacherCourses();
+        }
+        if (courseDirectory.length === 0) {
+          await loadCourses();
+        }
+        if (classDirectory.length === 0) {
+          await loadClasses();
+        }
+        openTeacherProfileModal(user);
+        return;
+      }
+
       const editButton = event.target.closest(".user-edit");
       if (editButton) {
         const userId = editButton.dataset.userId;
@@ -471,6 +494,20 @@ function bindEvents() {
         userModal.addEventListener("click", (event) => {
             if (event.target === userModal) {
                 closeUserModal();
+            }
+        });
+    }
+
+    if (profileCloseBtn) {
+        profileCloseBtn.addEventListener("click", closeTeacherProfileModal);
+    }
+    if (profileModalClose) {
+        profileModalClose.addEventListener("click", closeTeacherProfileModal);
+    }
+    if (teacherProfileModal) {
+        teacherProfileModal.addEventListener("click", (event) => {
+            if (event.target === teacherProfileModal) {
+                closeTeacherProfileModal();
             }
         });
     }

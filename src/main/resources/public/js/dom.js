@@ -694,6 +694,19 @@ function renderUserList() {
 
     actions.appendChild(editButton);
 
+    if (user.role === "professor") {
+      const profileButton = document.createElement("button");
+      profileButton.type = "button";
+      profileButton.className = "icon-btn user-profile";
+      profileButton.setAttribute("aria-label", "View teacher profile");
+      profileButton.dataset.userId = user.id;
+      profileButton.innerHTML =
+        '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" style="width:1.2rem; height:1.2rem;">' +
+        '<path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />' +
+        "</svg>";
+      actions.appendChild(profileButton);
+    }
+
     row.appendChild(main);
     row.appendChild(tags);
     row.appendChild(modified);
@@ -1223,5 +1236,88 @@ function upsertUser({ id, name, role, department, password }) {
       password: password || "",
       lastModified: timestamp,
     });
+  }
+}
+
+function openTeacherProfileModal(user) {
+  if (!teacherProfileModal || !user) {
+    return;
+  }
+
+  if (profileTeacherName) {
+    profileTeacherName.textContent = user.name || "";
+  }
+  if (profileTeacherDept) {
+    profileTeacherDept.textContent = user.department || "No department";
+  }
+
+  if (profileAssignmentsList) {
+    profileAssignmentsList.innerHTML = "";
+
+    const teacher = (teacherDirectory || []).find(
+      (item) => String(item.userId) === String(user.id)
+    );
+
+    if (teacher) {
+      const assignments = (teacherCourseDirectory || []).filter(
+        (m) => Number(m.teacherId) === Number(teacher.id)
+      );
+
+      if (assignments.length === 0) {
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+        cell.colSpan = 2;
+        cell.style.padding = "0.75rem 0";
+        cell.style.color = "rgba(255,255,255,0.5)";
+        cell.textContent = "No active course assignments.";
+        row.appendChild(cell);
+        profileAssignmentsList.appendChild(row);
+      } else {
+        assignments.forEach((assignment) => {
+          const course = (courseDirectory || []).find(
+            (c) => Number(c.id) === Number(assignment.courseId)
+          );
+          const classItem = (classDirectory || []).find(
+            (c) => Number(c.id) === Number(assignment.classId)
+          );
+
+          const row = document.createElement("tr");
+          row.style.borderBottom = "1px solid rgba(255,255,255,0.05)";
+
+          const courseCell = document.createElement("td");
+          courseCell.style.padding = "0.75rem 0";
+          courseCell.textContent = course
+            ? `${course.name} (${course.code})`
+            : `Course ${assignment.courseId}`;
+
+          const classCell = document.createElement("td");
+          classCell.style.padding = "0.75rem 0";
+          classCell.textContent = classItem
+            ? classItem.name
+            : `Class ${assignment.classId}`;
+
+          row.appendChild(courseCell);
+          row.appendChild(classCell);
+          profileAssignmentsList.appendChild(row);
+        });
+      }
+    } else {
+      const row = document.createElement("tr");
+      const cell = document.createElement("td");
+      cell.colSpan = 2;
+      cell.style.padding = "0.75rem 0";
+      cell.style.color = "rgba(255,255,255,0.5)";
+      cell.textContent = "No teacher profile found.";
+      row.appendChild(cell);
+      profileAssignmentsList.appendChild(row);
+    }
+  }
+
+  teacherProfileModal.removeAttribute("hidden");
+}
+
+function closeTeacherProfileModal() {
+  if (teacherProfileModal) {
+    teacherProfileModal.setAttribute("hidden", "");
   }
 }

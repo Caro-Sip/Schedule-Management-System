@@ -170,9 +170,10 @@
                         />
                     </div>
                 </div>
-                <button class="btn btn-primary" id="room-add" type="button">
-                    Add room
-                </button>
+                <div class="entity-actions">
+                    <button class="btn btn-ghost" id="room-check-status" type="button">Check status</button>
+                    <button class="btn btn-primary" id="room-add" type="button">Add room</button>
+                </div>
             </div>
         </div>
 
@@ -592,6 +593,36 @@
                     <button class="btn" id="room-cancel" type="button">Cancel</button>
                     <button class="btn btn-primary" type="submit">Save</button>
                 </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Room status modal -->
+<div class="modal" id="room-status-modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="room-status-title">
+        <div class="modal-header">
+            <h2 class="modal-title" id="room-status-title">Check room availability</h2>
+            <button class="modal-close" id="room-status-close" type="button" aria-label="Close">x</button>
+        </div>
+        <form class="modal-form" id="room-status-form">
+            <label>
+                Date
+                <input type="date" id="room-status-date" required />
+            </label>
+            <div class="time-pair">
+                <label>
+                    Start time
+                    <input type="time" id="room-status-start" required min="07:00" max="17:00" step="1800" />
+                </label>
+                <label>
+                    End time
+                    <input type="time" id="room-status-end" required min="07:00" max="17:00" step="1800" />
+                </label>
+            </div>
+            <div class="modal-actions">
+                <button class="btn" id="room-status-cancel" type="button">Cancel</button>
+                <button class="btn btn-primary" id="room-status-apply" type="submit">Check</button>
             </div>
         </form>
     </div>

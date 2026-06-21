@@ -1178,6 +1178,60 @@ a.tab {
   border-color: #cde7d8;
 }
 
+/* Room availability status tag (lighter background variants) */
+.tag.room-status {
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  color: var(--ink);
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f7f7f7;
+}
+
+/* small colored dot */
+.room-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* status colors use light backgrounds with colored text */
+.tag.room-status.green {
+  background: rgba(24, 128, 56, 0.12);
+  color: #188038;
+  border-color: #cde7d8;
+}
+.tag.room-status.green .room-status-dot {
+  background: #188038;
+}
+
+.tag.room-status.yellow {
+  background: rgba(251, 188, 4, 0.18);
+  color: #a06100;
+  border-color: #fde293;
+}
+.tag.room-status.yellow .room-status-dot {
+  background: #a06100;
+}
+
+.tag.room-status.red {
+  background: rgba(217, 48, 37, 0.12);
+  color: #d93025;
+  border-color: #f8d6d6;
+}
+.tag.room-status.red .room-status-dot {
+  background: #d93025;
+}
+
+.tag.room-status .room-status-label {
+  font-size: 12px;
+}
+
 .user-modified {
   display: grid;
   gap: 4px;

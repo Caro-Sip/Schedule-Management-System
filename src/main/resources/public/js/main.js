@@ -191,6 +191,14 @@ function bindEvents() {
         });
     }
 
+    if (smartClearBtn) {
+        smartClearBtn.addEventListener("click", () => {
+            if (typeof clearSmartOverlaySelection === "function") {
+                clearSmartOverlaySelection();
+            }
+        });
+    }
+
     if (smartCancelBtn) {
         smartCancelBtn.addEventListener("click", () => {
             if (typeof closeSmartOverlayModal === "function") {
@@ -948,8 +956,13 @@ function bindEvents() {
             const eventCard = event.target.closest(".event");
             if (eventCard) {
                 const eventId = eventCard.dataset.eventId;
-                const items = eventsByView[state.view] || [];
-                const eventItem = items.find((item) => item.id === eventId);
+                let eventItem = null;
+                if (eventCard.classList.contains("overlay")) {
+                    eventItem = (eventsByView.class || []).find((item) => item.id === eventId);
+                } else {
+                    const items = eventsByView[state.view] || [];
+                    eventItem = items.find((item) => item.id === eventId);
+                }
                 if (eventItem) {
                     openBookingModal(eventItem.day, null, eventItem);
                 }

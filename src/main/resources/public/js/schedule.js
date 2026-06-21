@@ -242,6 +242,24 @@ async function applySmartOverlaySelection() {
   closeSmartOverlayModal();
 }
 
+function clearSmartOverlaySelection() {
+  state.smartOverlayClassIds = [];
+  state.smartOverlayEnabled = false;
+
+  if (smartClassList) {
+    const checkboxes = smartClassList.querySelectorAll("input[type='checkbox']");
+    checkboxes.forEach((cb) => {
+      cb.checked = false;
+    });
+  }
+
+  updateSmartToggleState();
+  updateActiveScopeLabel();
+  eventsByView.class = [];
+  renderEvents();
+  closeSmartOverlayModal();
+}
+
 function openFilterPanel() {
   if (!filterPanel || !filterToggle) {
     return;
@@ -623,7 +641,12 @@ function openBookingModal(dayIndex, startMinutes, eventData = null, options = {}
 
     // Populate details view fields
     if (detailSubject) {
-      detailSubject.textContent = eventData.title || "Untitled Class";
+      const matchedCourse = (courseDirectory || []).find(
+        (c) => String(c.id) === String(eventData.courseId)
+      );
+      detailSubject.textContent = matchedCourse?.code
+        ? `${eventData.title || "Untitled Class"} - ${matchedCourse.code}`
+        : (eventData.title || "Untitled Class");
     }
     if (detailType) {
       detailType.textContent = formatEventType(eventData.type) || "Default";
@@ -803,17 +826,30 @@ function renderHeader(startDate, today) {
 
 function renderTimes() {
   timeColumn.innerHTML = "";
+  const gridHeight = (END_HOUR - START_HOUR) * HOUR_HEIGHT;
+  timeColumn.style.position = "relative";
+  timeColumn.style.height = `${gridHeight + 32}px`;
+
   for (let hour = START_HOUR; hour <= END_HOUR; hour += 1) {
     const label = document.createElement("div");
     label.className = "time-row";
     label.textContent = formatHour(hour);
+    label.style.position = "absolute";
+    label.style.top = `${(hour - START_HOUR) * HOUR_HEIGHT + 16}px`;
+    label.style.transform = "translateY(-50%)";
+    label.style.left = "0";
+    label.style.right = "0";
+    label.style.textAlign = "center";
+    label.style.height = "auto";
+    label.style.border = "none";
+    label.style.padding = "0";
     timeColumn.appendChild(label);
   }
 }
 
 function renderEvents() {
   const gridHeight = (END_HOUR - START_HOUR) * HOUR_HEIGHT;
-  eventsEl.style.setProperty("--grid-height", `${gridHeight}px`);
+  eventsEl.style.setProperty("--grid-height", `${gridHeight + 32}px`);
   eventsEl.style.setProperty("--hour-height", `${HOUR_HEIGHT}px`);
   eventsEl.innerHTML = "";
 
@@ -902,7 +938,7 @@ function renderEvents() {
     overlayItems = classItems.filter((item) => !baseIds.has(item.id));
   }
 
-  const renderEventItem = (eventItem, viewClass, extraClass = "") => {
+  const renderEventItem = (eventItem, viewClass, extraClass = "", colIndex = 0, colCount = 1) => {
     const eventDate = eventItem.date ? new Date(eventItem.date) : null;
     const dayOffset = eventDate && !Number.isNaN(eventDate.getTime())
       ? Math.floor((new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate()).getTime() - weekStart.getTime()) / (24 * 60 * 60 * 1000))
@@ -918,7 +954,7 @@ function renderEvents() {
       eventEl.dataset.eventId = eventItem.id;
     }
 
-    const top = minutesFromStart(eventItem.start) * (HOUR_HEIGHT / 60);
+    const top = minutesFromStart(eventItem.start) * (HOUR_HEIGHT / 60) + 16;
     const height =
       (minutesFromStart(eventItem.end) - minutesFromStart(eventItem.start)) *
       (HOUR_HEIGHT / 60);
@@ -926,14 +962,28 @@ function renderEvents() {
     eventEl.style.top = `${top}px`;
     eventEl.style.height = `${height}px`;
 
+    if (colCount > 1) {
+      const widthPercent = 100 / colCount;
+      eventEl.style.width = `calc(${widthPercent}% - 8px)`;
+      eventEl.style.left = `calc(${colIndex * widthPercent}% + 4px)`;
+      eventEl.style.right = "auto";
+    }
+
     const typeLabel = formatEventType(eventItem.type);
 
     const header = document.createElement("div");
     header.className = "event-header";
 
+    const matchedCourse = (courseDirectory || []).find(
+      (c) => String(c.id) === String(eventItem.courseId)
+    );
+    const displayName = (colCount > 1 && matchedCourse?.code)
+      ? matchedCourse.code
+      : eventItem.title || "Untitled";
+
     const title = document.createElement("strong");
     title.className = "event-title";
-    title.textContent = eventItem.title || "Untitled";
+    title.textContent = displayName;
 
     header.appendChild(title);
 
@@ -973,13 +1023,99 @@ function renderEvents() {
     column.appendChild(eventEl);
   };
 
-  filteredItems.forEach((eventItem) => {
-    renderEventItem(eventItem, state.view);
+  const dayEventsMap = Array.from({ length: 7 }, () => []);
+
+  filteredItems.forEach((item) => {
+    const eventDate = item.date ? new Date(item.date) : null;
+    const dayOffset = eventDate && !Number.isNaN(eventDate.getTime())
+      ? Math.floor((new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate()).getTime() - weekStart.getTime()) / (24 * 60 * 60 * 1000))
+      : item.day;
+    if (dayOffset >= 0 && dayOffset < 7) {
+      dayEventsMap[dayOffset].push({ item, viewClass: state.view, extraClass: "" });
+    }
   });
 
-  overlayItems.forEach((eventItem) => {
-    renderEventItem(eventItem, "teacher", "overlay");
+  overlayItems.forEach((item) => {
+    const eventDate = item.date ? new Date(item.date) : null;
+    const dayOffset = eventDate && !Number.isNaN(eventDate.getTime())
+      ? Math.floor((new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate()).getTime() - weekStart.getTime()) / (24 * 60 * 60 * 1000))
+      : item.day;
+    if (dayOffset >= 0 && dayOffset < 7) {
+      dayEventsMap[dayOffset].push({ item, viewClass: "teacher", extraClass: "overlay" });
+    }
   });
+
+  for (let d = 0; d < 7; d++) {
+    const dayItems = dayEventsMap[d];
+    const sorted = dayItems.slice().sort((a, b) => {
+      const startA = minutesFromStart(a.item.start);
+      const startB = minutesFromStart(b.item.start);
+      if (startA !== startB) {
+        return startA - startB;
+      }
+      const durationA = minutesFromStart(a.item.end) - startA;
+      const durationB = minutesFromStart(b.item.end) - startB;
+      return durationB - durationA;
+    });
+
+    const clusters = [];
+    let currentCluster = [];
+    let clusterMaxEnd = -1;
+
+    sorted.forEach((wrapped) => {
+      const start = minutesFromStart(wrapped.item.start);
+      const end = minutesFromStart(wrapped.item.end);
+
+      if (start >= clusterMaxEnd) {
+        if (currentCluster.length > 0) {
+          clusters.push(currentCluster);
+        }
+        currentCluster = [wrapped];
+        clusterMaxEnd = end;
+      } else {
+        currentCluster.push(wrapped);
+        if (end > clusterMaxEnd) {
+          clusterMaxEnd = end;
+        }
+      }
+    });
+    if (currentCluster.length > 0) {
+      clusters.push(currentCluster);
+    }
+
+    clusters.forEach((cluster) => {
+      const columns = [];
+      cluster.forEach((wrapped) => {
+        let placed = false;
+        const start = minutesFromStart(wrapped.item.start);
+        for (let c = 0; c < columns.length; c++) {
+          const col = columns[c];
+          const lastInCol = col[col.length - 1];
+          const lastEnd = minutesFromStart(lastInCol.item.end);
+          if (start >= lastEnd) {
+            col.push(wrapped);
+            placed = true;
+            break;
+          }
+        }
+        if (!placed) {
+          columns.push([wrapped]);
+        }
+      });
+
+      const totalCols = columns.length;
+      for (let c = 0; c < totalCols; c++) {
+        columns[c].forEach((wrapped) => {
+          wrapped.colIndex = c;
+          wrapped.colCount = totalCols;
+        });
+      }
+    });
+
+    sorted.forEach((wrapped) => {
+      renderEventItem(wrapped.item, wrapped.viewClass, wrapped.extraClass, wrapped.colIndex, wrapped.colCount);
+    });
+  }
 }
 
 function normalizeEventValue(value) {
@@ -1217,9 +1353,19 @@ function renderBookingClassOptions() {
     base.setDate(base.getDate() + state.weekOffset * 7 + pendingBooking.day);
     return `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, "0")}-${String(base.getDate()).padStart(2, "0")}`;
   })();
-  const classCatalog = hasValidTimes
+  let classCatalog = hasValidTimes
     ? getAvailableClassesForBooking(pendingBooking.day, bookingDate, startMinutes, endMinutes, pendingBooking.eventId)
     : getBookingClasses();
+
+  const selectedTeacherId = bookingProfessor?.dataset.teacherId || pendingBooking.teacherId || state.selectedTeacherId || state.currentTeacherId || "";
+  if (selectedTeacherId) {
+    const teacherClassIds = new Set(
+      (teacherCourseDirectory || [])
+        .filter((mapping) => String(mapping.teacherId) === String(selectedTeacherId))
+        .map((mapping) => Number(mapping.classId))
+    );
+    classCatalog = classCatalog.filter((classItem) => teacherClassIds.has(Number(classItem.id)));
+  }
   const filteredClasses = classCatalog.filter((classItem) => {
     if (!query) {
       return true;

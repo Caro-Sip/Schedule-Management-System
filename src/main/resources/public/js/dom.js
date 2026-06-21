@@ -1239,24 +1239,24 @@ function upsertUser({ id, name, role, department, password }) {
   }
 }
 
-function openTeacherProfileModal(user) {
-  if (!teacherProfileModal || !user) {
+function showTeacherProfileView(user) {
+  if (!teacherProfileView || !user) {
     return;
   }
+
+  const teacher = (teacherDirectory || []).find(
+    (item) => String(item.userId) === String(user.id)
+  );
 
   if (profileTeacherName) {
     profileTeacherName.textContent = user.name || "";
   }
   if (profileTeacherDept) {
-    profileTeacherDept.textContent = user.department || "No department";
+    profileTeacherDept.textContent = (teacher && teacher.department) || user.department || "No department";
   }
 
   if (profileAssignmentsList) {
     profileAssignmentsList.innerHTML = "";
-
-    const teacher = (teacherDirectory || []).find(
-      (item) => String(item.userId) === String(user.id)
-    );
 
     if (teacher) {
       const assignments = (teacherCourseDirectory || []).filter(
@@ -1268,7 +1268,7 @@ function openTeacherProfileModal(user) {
         const cell = document.createElement("td");
         cell.colSpan = 2;
         cell.style.padding = "0.75rem 0";
-        cell.style.color = "rgba(255,255,255,0.5)";
+        cell.style.color = "var(--ink-muted)";
         cell.textContent = "No active course assignments.";
         row.appendChild(cell);
         profileAssignmentsList.appendChild(row);
@@ -1282,16 +1282,18 @@ function openTeacherProfileModal(user) {
           );
 
           const row = document.createElement("tr");
-          row.style.borderBottom = "1px solid rgba(255,255,255,0.05)";
+          row.style.borderBottom = "1px solid var(--line)";
 
           const courseCell = document.createElement("td");
           courseCell.style.padding = "0.75rem 0";
+          courseCell.style.color = "var(--ink)";
           courseCell.textContent = course
             ? `${course.name} (${course.code})`
             : `Course ${assignment.courseId}`;
 
           const classCell = document.createElement("td");
           classCell.style.padding = "0.75rem 0";
+          classCell.style.color = "var(--ink)";
           classCell.textContent = classItem
             ? classItem.name
             : `Class ${assignment.classId}`;
@@ -1306,18 +1308,12 @@ function openTeacherProfileModal(user) {
       const cell = document.createElement("td");
       cell.colSpan = 2;
       cell.style.padding = "0.75rem 0";
-      cell.style.color = "rgba(255,255,255,0.5)";
+      cell.style.color = "var(--ink-muted)";
       cell.textContent = "No teacher profile found.";
       row.appendChild(cell);
       profileAssignmentsList.appendChild(row);
     }
   }
 
-  teacherProfileModal.removeAttribute("hidden");
-}
-
-function closeTeacherProfileModal() {
-  if (teacherProfileModal) {
-    teacherProfileModal.setAttribute("hidden", "");
-  }
+  setView("teacher-profile");
 }

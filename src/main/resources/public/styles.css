@@ -1982,3 +1982,32 @@ a.tab {
   font-weight: 600;
   text-align: right;
 }
+
+/* Teacher Profile Modal Styling */
+.icon-btn.user-profile {
+  color: var(--accent);
+  background: rgba(26, 115, 232, 0.08);
+  border: 1px solid rgba(26, 115, 232, 0.15);
+  margin-left: 6px;
+}
+
+.icon-btn.user-profile:hover {
+  background: rgba(26, 115, 232, 0.16);
+  border-color: rgba(26, 115, 232, 0.3);
+  color: #1558b0;
+}
+
+.profile-table th {
+  font-weight: 600;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+  padding: 0.5rem 0;
+}
+
+.profile-table td {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.profile-table tr:last-child td {
+  border-bottom: none;
+}

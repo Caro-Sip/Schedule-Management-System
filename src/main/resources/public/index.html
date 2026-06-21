@@ -733,6 +733,51 @@
     </div>
 </div>
 
+<div class="modal" id="teacher-profile-modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title">
+        <div class="modal-header">
+            <h2 class="modal-title" id="profile-modal-title">Teacher Profile</h2>
+            <button class="modal-close" id="profile-modal-close" type="button" aria-label="Close">
+                x
+            </button>
+        </div>
+        <div class="modal-body profile-modal-body" style="padding: 1.5rem 0;">
+            <div class="profile-header-card" style="display: flex; gap: 2rem; margin-bottom: 1.5rem; background: rgba(255, 255, 255, 0.05); padding: 1rem 1.5rem; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                <div class="profile-info-item" style="display: flex; flex-direction: column;">
+                    <span class="profile-info-label" style="font-size: 0.8rem; text-transform: uppercase; color: rgba(255, 255, 255, 0.5);">Name</span>
+                    <strong class="profile-info-value" id="profile-teacher-name" style="font-size: 1.2rem;"></strong>
+                </div>
+                <div class="profile-info-item" style="display: flex; flex-direction: column;">
+                    <span class="profile-info-label" style="font-size: 0.8rem; text-transform: uppercase; color: rgba(255, 255, 255, 0.5);">Department</span>
+                    <strong class="profile-info-value" id="profile-teacher-dept" style="font-size: 1.2rem;"></strong>
+                </div>
+            </div>
+            <div class="profile-section" style="padding: 0 1.5rem;">
+                <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;">Assigned Courses & Classes</h3>
+                <div class="profile-table-wrapper" style="max-height: 250px; overflow-y: auto;">
+                    <table class="profile-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid rgba(255,255,255,0.15);">
+                                <th style="padding: 0.5rem 0; color: rgba(255,255,255,0.7);">Course</th>
+                                <th style="padding: 0.5rem 0; color: rgba(255,255,255,0.7);">Class</th>
+                            </tr>
+                        </thead>
+                        <tbody id="profile-assignments-list">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="modal-actions split">
+            <div></div>
+            <div class="modal-actions-right">
+                <button class="btn btn-primary" id="profile-close-btn" type="button">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <button
         class="audit-toggle"
         id="audit-toggle"

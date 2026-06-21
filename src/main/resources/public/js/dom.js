@@ -1081,6 +1081,22 @@ function renderRoomList() {
 
     tags.appendChild(buildingTag);
     tags.appendChild(floorTag);
+    // show availability status if computed (room.availabilityStatus = 'green'|'yellow'|'red')
+    const statusClass = (roomItem.availabilityStatus || "").toLowerCase();
+    if (statusClass) {
+      const statusTag = document.createElement("span");
+      statusTag.className = `tag room-status ${statusClass}`;
+      const dot = document.createElement("span");
+      dot.className = "room-status-dot";
+      const label = document.createElement("span");
+      label.className = "room-status-label";
+      if (statusClass === "red") label.textContent = "Fully booked";
+      else if (statusClass === "yellow") label.textContent = "Almost full";
+      else label.textContent = "Many slots available";
+      statusTag.appendChild(dot);
+      statusTag.appendChild(label);
+      tags.appendChild(statusTag);
+    }
 
     const modified = document.createElement("div");
     modified.className = "user-modified";

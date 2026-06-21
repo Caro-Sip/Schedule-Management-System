@@ -160,6 +160,160 @@ const nextWeekBtn = document.getElementById("next-week");
 const todayBtn = document.getElementById("today-btn");
 const smartToggle = document.getElementById("smart-toggle");
 
+// Room status modal elements
+const roomCheckStatusBtn = document.getElementById("room-check-status");
+const roomStatusModal = document.getElementById("room-status-modal");
+const roomStatusCloseBtn = document.getElementById("room-status-close");
+const roomStatusForm = document.getElementById("room-status-form");
+const roomStatusCancelBtn = document.getElementById("room-status-cancel");
+const roomStatusDateInput = document.getElementById("room-status-date");
+const roomStatusStartInput = document.getElementById("room-status-start");
+const roomStatusEndInput = document.getElementById("room-status-end");
+
+function openRoomStatusModal() {
+	if (!roomStatusModal) return;
+	const today = new Date().toISOString().slice(0, 10);
+	if (roomStatusDateInput) roomStatusDateInput.value = today;
+	if (roomStatusStartInput) roomStatusStartInput.value = "07:00";
+	if (roomStatusEndInput) roomStatusEndInput.value = "17:00";
+	roomStatusModal.removeAttribute("hidden");
+	if (roomStatusDateInput) roomStatusDateInput.focus();
+}
+
+function closeRoomStatusModal() {
+	if (!roomStatusModal) return;
+	roomStatusModal.setAttribute("hidden", "");
+}
+
+function timeToMinutes(t) {
+	if (!t || typeof t !== "string") return null;
+	const [hh, mm] = t.split(":").map(Number);
+	if (!Number.isFinite(hh) || !Number.isFinite(mm)) return null;
+	return hh * 60 + mm;
+}
+
+function overlapsMinutes(rangeStart, rangeEnd, evStart, evEnd) {
+	const s1 = Math.max(rangeStart, evStart);
+	const e1 = Math.min(rangeEnd, evEnd);
+	return Math.max(0, e1 - s1);
+}
+
+// Class-hour windows used for availability checks (07:00-11:00, 13:00-17:00)
+const CLASS_WINDOWS = [
+	{ start: "07:00", end: "11:00" },
+	{ start: "13:00", end: "17:00" },
+];
+
+// total minutes across class windows (expected 480)
+const TOTAL_CLASS_MINUTES = CLASS_WINDOWS
+	.map((w) => timeToMinutes(w.end) - timeToMinutes(w.start))
+	.reduce((a, b) => a + b, 0);
+
+/**
+ * Compute occupied minutes for a room on a given date restricted to class windows.
+ * Returns { occupiedMinutes, totalMinutes, availableMinutes, occupancyRatio }.
+ */
+async function computeRoomAvailabilityForClassHours(roomId, date) {
+	let occupiedMinutes = 0;
+	const totalMinutes = TOTAL_CLASS_MINUTES;
+
+	const events = await loadSchedulesForRoom(roomId);
+	(events || []).forEach((ev) => {
+		if (String(ev.date) !== String(date)) return;
+		const evStart = timeToMinutes(ev.start);
+		const evEnd = timeToMinutes(ev.end);
+		if (evStart === null || evEnd === null || evEnd <= evStart) return;
+
+		for (const window of CLASS_WINDOWS) {
+			const wStart = timeToMinutes(window.start);
+			const wEnd = timeToMinutes(window.end);
+			if (wStart === null || wEnd === null) continue;
+			occupiedMinutes += overlapsMinutes(wStart, wEnd, evStart, evEnd);
+		}
+	});
+
+	if (occupiedMinutes < 0) occupiedMinutes = 0;
+	if (occupiedMinutes > totalMinutes) occupiedMinutes = totalMinutes;
+
+	const availableMinutes = totalMinutes - occupiedMinutes;
+	const occupancyRatio = totalMinutes > 0 ? occupiedMinutes / totalMinutes : 0;
+
+	return { occupiedMinutes, totalMinutes, availableMinutes, occupancyRatio };
+}
+
+/**
+ * Apply availability status to rooms using class-hour windows.
+ *
+ * Rules:
+ *  - availableMinutes === 0                 -> "red"   (Fully booked)
+ *  - availableMinutes > 0 and < 300 minutes -> "yellow" (Almost full)
+ *  - availableMinutes >= 300 minutes        -> "green" (Many slots available)
+ */
+async function applyStatusToRooms(date /* ISO yyyy-mm-dd string */) {
+	const rooms = typeof getBookingClassrooms === "function" ? getBookingClassrooms() : classroomDirectory;
+	const targetRooms = (typeof getFilteredRooms === "function") ? getFilteredRooms() : rooms.slice();
+
+	for (const room of targetRooms) {
+		try {
+			const result = await computeRoomAvailabilityForClassHours(room.id, date);
+			const available = result.availableMinutes;
+
+			if (available === 0) {
+				room.availabilityStatus = "red";
+			} else if (available < 300) {
+				room.availabilityStatus = "yellow";
+			} else {
+				room.availabilityStatus = "green";
+			}
+		} catch (err) {
+			console.warn(`Failed compute availability for ${room.id}`, err);
+			room.availabilityStatus = "";
+		}
+	}
+
+	if (typeof renderRoomList === "function") {
+		renderRoomList();
+	}
+}
+
+// Wire up modal events
+if (roomCheckStatusBtn) {
+	roomCheckStatusBtn.addEventListener("click", (e) => {
+		e.stopPropagation();
+		openRoomStatusModal();
+	});
+}
+if (roomStatusCloseBtn) {
+	roomStatusCloseBtn.addEventListener("click", closeRoomStatusModal);
+}
+if (roomStatusCancelBtn) {
+	roomStatusCancelBtn.addEventListener("click", (e) => {
+		e.preventDefault();
+		closeRoomStatusModal();
+	});
+}
+if (roomStatusForm) {
+	roomStatusForm.addEventListener("submit", async (e) => {
+		e.preventDefault();
+		const date = roomStatusDateInput.value;
+		const start = roomStatusStartInput.value;
+		const end = roomStatusEndInput.value;
+		if (!date || !start || !end) {
+			alert("Please enter date, start and end times.");
+			return;
+		}
+		closeRoomStatusModal();
+		try {
+			// Availability is computed based on standard class-hour windows (07:00-11:00, 13:00-17:00)
+			// so we only need the selected date here.
+			await applyStatusToRooms(date);
+		} catch (err) {
+			console.error("Failed to compute room statuses", err);
+			alert("Failed to check room status. See console for details.");
+		}
+	});
+}
+
 const API_BASE = "/api";
 const ADMIN_API_BASE = `${API_BASE}/admin`;
 

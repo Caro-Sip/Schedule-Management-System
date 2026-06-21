@@ -706,6 +706,18 @@ function bindEvents() {
                     }
                 }
 
+                if (savedCourse?.id && courseTeacher) {
+                    const teacherId = courseTeacher.dataset.teacherId;
+                    if (teacherId) {
+                        await assignCourseTeacherApi(courseModalClassId, savedCourse.id, Number(teacherId));
+                    } else {
+                        await removeCourseTeacherApi(courseModalClassId, savedCourse.id);
+                    }
+                    if (typeof loadTeacherCourses === "function") {
+                        await loadTeacherCourses();
+                    }
+                }
+
                 await loadCourses();
                 if (shouldReloadClasses) {
                     await loadClasses();
@@ -1330,11 +1342,20 @@ function bindEvents() {
     bookingSubject.addEventListener("focus", renderBookingSubjectOptions);
   }
 
+  if (courseTeacher) {
+    courseTeacher.addEventListener("input", () => {
+      courseTeacher.dataset.teacherId = "";
+      renderCourseTeacherOptions();
+    });
+    courseTeacher.addEventListener("focus", renderCourseTeacherOptions);
+  }
+
   const bookingPickers = [
     { group: bookingClassGroup, results: bookingClassResults },
     { group: bookingRoomGroup, results: bookingRoomResults },
     { group: bookingProfessorGroup, results: bookingProfessorResults },
     { group: bookingSubjectGroup, results: bookingSubjectResults },
+    { group: courseTeacherGroup, results: courseTeacherResults },
   ].filter(({ group, results }) => group && results);
 
   bookingPickers.forEach(({ group, results }) => {

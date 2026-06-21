@@ -1443,6 +1443,64 @@ function renderBookingProfessorOptions() {
   bookingProfessorResults.removeAttribute("hidden");
 }
 
+function renderCourseTeacherOptions() {
+  if (!courseTeacher || !courseTeacherResults) {
+    return;
+  }
+
+  const query = normalizeRoomText(courseTeacher.value);
+  const teachers = getBookingTeachers();
+  const filteredTeachers = teachers.filter((teacher) => {
+    if (!query) {
+      return true;
+    }
+    const searchText = normalizeRoomText(
+      [teacher.id, teacher.name, getTeacherDisplayLabel(teacher)]
+        .filter(Boolean)
+        .join(" ")
+    );
+    return searchText.includes(query);
+  });
+
+  courseTeacherResults.innerHTML = "";
+
+  if (filteredTeachers.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "room-picker-empty";
+    empty.textContent = query ? "No teachers match." : "No teachers available.";
+    courseTeacherResults.appendChild(empty);
+    courseTeacherResults.removeAttribute("hidden");
+    return;
+  }
+
+  filteredTeachers.forEach((teacher) => {
+    const option = document.createElement("button");
+    option.type = "button";
+    option.className = "room-picker-option";
+    option.dataset.teacherId = String(teacher.id);
+
+    const label = document.createElement("span");
+    label.className = "room-picker-label";
+    label.textContent = teacher.name || `Teacher ${teacher.id}`;
+
+    const subtext = document.createElement("span");
+    subtext.className = "room-picker-subtext";
+    subtext.textContent = `ID ${teacher.id}`;
+
+    option.appendChild(label);
+    option.appendChild(subtext);
+    option.addEventListener("click", () => {
+      courseTeacher.value = getTeacherDisplayLabel(teacher);
+      courseTeacher.dataset.teacherId = String(teacher.id);
+      courseTeacherResults.setAttribute("hidden", "");
+    });
+
+    courseTeacherResults.appendChild(option);
+  });
+
+  courseTeacherResults.removeAttribute("hidden");
+}
+
 function renderBookingSubjectOptions() {
   if (!bookingSubject || !bookingSubjectResults || !pendingBooking) {
     return;

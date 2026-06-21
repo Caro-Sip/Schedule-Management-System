@@ -124,7 +124,7 @@ async function setView(view) {
   }
 
   state.view = view;
-  tabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.view === view));
+  tabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.view === view || (view === "teacher-profile" && tab.dataset.view === "user")));
   updateFilterGroup();
   closeFilterPanel();
   closeUserFilterPanel();
@@ -162,6 +162,7 @@ function updateViewVisibility() {
   const isTeacher = isTeacherRole(state.role);
   const canRoomScope = canUseRoomScopedView(state.role);
   const isUserView = state.view === "user";
+  const isProfileView = state.view === "teacher-profile";
   const isClassView = state.view === "class";
   const isRoomView = state.view === "room";
   const isTeacherView = state.view === "teacher";
@@ -179,7 +180,7 @@ function updateViewVisibility() {
         (isTeacherView && state.selectedTeacherId && state.userScheduleOrigin === "user"))) ||
     (isTeacher && isClassView && state.selectedClassId) ||
     ((isTeacher || canRoomScope) && isRoomView && state.selectedRoomId);
-  let showSchedule = !isUserView && !isAuditView;
+  let showSchedule = !isUserView && !isAuditView && !isProfileView;
   if (isAdmin) {
     showSchedule =
       showSchedule &&
@@ -233,6 +234,10 @@ function updateViewVisibility() {
   if (userView) {
     userView.classList.toggle("hidden", !isUserView);
     userView.toggleAttribute("hidden", !isUserView);
+  }
+  if (teacherProfileView) {
+    teacherProfileView.classList.toggle("hidden", !isProfileView);
+    teacherProfileView.toggleAttribute("hidden", !isProfileView);
   }
   if (auditView) {
     auditView.classList.toggle("hidden", !isAuditView);

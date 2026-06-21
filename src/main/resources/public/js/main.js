@@ -347,7 +347,7 @@ function bindEvents() {
         if (classDirectory.length === 0) {
           await loadClasses();
         }
-        openTeacherProfileModal(user);
+        showTeacherProfileView(user);
         return;
       }
 
@@ -498,17 +498,9 @@ function bindEvents() {
         });
     }
 
-    if (profileCloseBtn) {
-        profileCloseBtn.addEventListener("click", closeTeacherProfileModal);
-    }
-    if (profileModalClose) {
-        profileModalClose.addEventListener("click", closeTeacherProfileModal);
-    }
-    if (teacherProfileModal) {
-        teacherProfileModal.addEventListener("click", (event) => {
-            if (event.target === teacherProfileModal) {
-                closeTeacherProfileModal();
-            }
+    if (profileBackBtn) {
+        profileBackBtn.addEventListener("click", () => {
+            setView("user");
         });
     }
 

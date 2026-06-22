@@ -1595,6 +1595,9 @@ async function initializeAuthenticatedApp() {
 async function initializeApp() {
     bindEvents();
     updateFilterGroup();
+    if (typeof adjustHourHeight === "function") {
+        adjustHourHeight();
+    }
     updateWeek();
     renderAuditLog();
 
@@ -1619,5 +1622,13 @@ async function initializeApp() {
         showLogin();
     }
 }
+
+window.addEventListener("resize", () => {
+    if (typeof adjustHourHeight === "function" && adjustHourHeight()) {
+        if (state.currentUser || state.role === "guest") {
+            updateWeek();
+        }
+    }
+});
 
 initializeApp();

@@ -1,3 +1,26 @@
+function adjustHourHeight() {
+  const height = window.innerHeight;
+  let nextHeight = 56;
+  if (height < 700) {
+    nextHeight = 36;
+  } else if (height < 800) {
+    nextHeight = 44;
+  } else if (height < 950) {
+    nextHeight = 50;
+  } else {
+    // Dynamically calculate height to make optimal use of vertical space
+    nextHeight = Math.floor((height - 380) / 10);
+    nextHeight = Math.max(56, Math.min(100, nextHeight));
+  }
+
+  if (HOUR_HEIGHT !== nextHeight) {
+    HOUR_HEIGHT = nextHeight;
+    document.documentElement.style.setProperty("--hour-height", `${HOUR_HEIGHT}px`);
+    return true;
+  }
+  return false;
+}
+
 function updateFilterGroup() {
   if (!filterGroupClass || !filterGroupRoom) {
     return;

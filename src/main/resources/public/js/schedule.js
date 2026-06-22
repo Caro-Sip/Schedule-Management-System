@@ -1227,7 +1227,7 @@ function getBookingConflict(view, day, bookingDate, startMinutes, endMinutes, ig
   // schedule.js
 }
 
-function getTeacherBookingConflict(day, startMinutes, endMinutes, ignoreId, teacherId) {
+function getTeacherBookingConflict(day, bookingDate, startMinutes, endMinutes, ignoreId, teacherId) {
   if (!teacherId) {
     return null;
   }
@@ -1238,6 +1238,9 @@ function getTeacherBookingConflict(day, startMinutes, endMinutes, ignoreId, teac
         return false;
       }
       if (eventItem.day !== day) {
+        return false;
+      }
+      if (bookingDate && normalizeBookingDateKey(eventItem.date) !== normalizeBookingDateKey(bookingDate)) {
         return false;
       }
       const eventTeacherId = eventItem.teacherId || eventItem.professor || null;

@@ -1211,6 +1211,7 @@ function bindEvents() {
             const teacherConflict = shouldCheckTeacherConflict
                 ? getTeacherBookingConflict(
                     bookingDay,
+                    bookingDate,
                     startMinutes,
                     endMinutes,
                     ignoreId,

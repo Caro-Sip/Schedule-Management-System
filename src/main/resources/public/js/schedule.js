@@ -449,8 +449,7 @@ function openBookingModal(dayIndex, startMinutes, eventData = null, options = {}
           ? state.currentTeacherId || null
           : null
       : null;
-  const defaultCourseId =
-    !isEdit && isTeacherRole(state.role) ? state.defaultCourseId || null : null;
+  const defaultCourseId = null;
 
   pendingBooking = {
     day: bookingDay,

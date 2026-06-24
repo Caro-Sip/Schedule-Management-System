@@ -124,9 +124,6 @@ async function setView(view) {
   }
 
   state.view = view;
-  if (window.location.hash !== `#/${view}`) {
-    window.location.hash = `#/${view}`;
-  }
   tabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.view === view || (view === "teacher-profile" && tab.dataset.view === "user")));
   updateFilterGroup();
   closeFilterPanel();
@@ -369,25 +366,18 @@ function showSchedule(role, label, persistSession = true) {
     saveSession({ token: state.authToken, user: state.currentUser });
   }
 
-  // Default view: check hash first, then teacher for professors, otherwise class
-  const hashView = window.location.hash.replace("#/", "");
-  const validViews = ["class", "teacher", "room", "user", "teacher-profile"];
-  let initialView = isTeacherRole(role) ? "teacher" : "class";
-  if (validViews.includes(hashView)) {
-    if (hashView !== "user" || isAdminRole(role)) {
-      initialView = hashView;
-    }
+  // Default view: teacher for professors, otherwise class
+  if (isTeacherRole(role)) {
+    setView("teacher");
+  } else {
+    setView("class");
   }
-  setView(initialView);
   updateWeek();
 }
 
 function showLogin() {
   clearSession();
   resetSessionState();
-  if (window.location.hash !== "#/login") {
-    window.location.hash = "#/login";
-  }
   scheduleView.classList.add("hidden");
   loginView.classList.remove("hidden");
   welcomeLine.textContent = "Welcome, Guest";

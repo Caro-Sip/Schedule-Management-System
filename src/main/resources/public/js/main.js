@@ -12,7 +12,7 @@ function handleTabClick(event) {
         return;
     }
 
-    window.location.hash = `#/${view}`;
+    setView(view);
 }
 
 function closePickerResults(resultsEl) {
@@ -149,9 +149,7 @@ function bindEvents() {
         }
     });
 
-    backToLogin.addEventListener("click", () => {
-        window.location.hash = "#/login";
-    });
+    backToLogin.addEventListener("click", showLogin);
 
 
     tabs.forEach((tab) => tab.addEventListener("click", handleTabClick));
@@ -1594,62 +1592,6 @@ async function initializeAuthenticatedApp() {
     renderCurrentView();
 }
 
-let isRouting = false;
-
-async function handleRouting() {
-    if (isRouting) return;
-    isRouting = true;
-
-    try {
-        const hash = window.location.hash || "#/login";
-        const restoredSession = restoreSession();
-        
-        const isAuthenticated = restoredSession !== null;
-        const isGuest = state.role === "guest" && scheduleView && !scheduleView.classList.contains("hidden");
-        const isLoggedIn = isAuthenticated || isGuest;
-
-        if (!isLoggedIn) {
-            if (hash !== "#/login") {
-                window.location.hash = "#/login";
-                return;
-            }
-            if (loginView && loginView.classList.contains("hidden")) {
-                showLogin();
-            }
-        } else {
-            if (hash === "#/login") {
-                const defaultView = isTeacherRole(state.role) ? "teacher" : "class";
-                window.location.hash = `#/${defaultView}`;
-                return;
-            }
-
-            const targetView = hash.replace("#/", "");
-            const validViews = ["class", "teacher", "room", "user", "teacher-profile"];
-
-            if (!validViews.includes(targetView)) {
-                const defaultView = isTeacherRole(state.role) ? "teacher" : "class";
-                window.location.hash = `#/${defaultView}`;
-                return;
-            }
-
-            if (scheduleView && scheduleView.classList.contains("hidden")) {
-                const role = state.role || (restoredSession && restoredSession.user.role);
-                const name = state.userName !== "Guest" ? state.userName : (restoredSession && restoredSession.user.name);
-                showSchedule(role, name, false);
-            }
-
-            if (state.view !== targetView) {
-                await setView(targetView);
-            }
-        }
-    } catch (error) {
-        console.error("Routing error:", error);
-        showLogin();
-    } finally {
-        isRouting = false;
-    }
-}
-
 async function initializeApp() {
     bindEvents();
     updateFilterGroup();
@@ -1659,15 +1601,9 @@ async function initializeApp() {
     updateWeek();
     renderAuditLog();
 
-    window.addEventListener("hashchange", handleRouting);
-
     const restoredSession = restoreSession();
     if (!restoredSession) {
-        if (window.location.hash === "#/login") {
-            handleRouting();
-        } else {
-            window.location.hash = "#/login";
-        }
+        showLogin();
         return;
     }
 
@@ -1680,15 +1616,10 @@ async function initializeApp() {
         const me = await getCurrentUserApi();
         const normalizedUser = normalizeUserPayload(me);
         applyAuthenticatedSession(restoredSession.token, normalizedUser, true);
+        showSchedule(normalizedUser.role, normalizedUser.name, false);
         await initializeAuthenticatedApp();
-        
-        handleRouting();
     } catch (error) {
-        if (window.location.hash === "#/login") {
-            handleRouting();
-        } else {
-            window.location.hash = "#/login";
-        }
+        showLogin();
     }
 }
 

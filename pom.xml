@@ -125,6 +125,11 @@
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.8.0</version>
+          <configuration>
+            <excludes>
+              <exclude>**/Cli.java</exclude>
+            </excludes>
+          </configuration>
         </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
@@ -179,19 +184,11 @@
 
   <profiles>
     <profile>
-      <id>cli</id>
+      <id>api</id>
       <activation>
-        <activeByDefault>false</activeByDefault>
+        <activeByDefault>true</activeByDefault>
       </activation>
       <properties>
-        <main.class>sms.Cli</main.class>
-      </properties>
-    </profile>
-
-    <profile>
-      <id>api</id>
-      <properties>
-        <activeByDefault>true</activeByDefault>
         <main.class>sms.ApiServer</main.class>
       </properties>
     </profile>

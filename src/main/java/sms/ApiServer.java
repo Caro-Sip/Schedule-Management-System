@@ -58,7 +58,14 @@ public class ApiServer {
     private static TeacherCourseDAO teacherCourseDAO;
 
     public static void main(String[] args) {
-        ensureDatabase();
+        boolean runAsEmptyShell = false;
+        for (String arg : args) {
+            if ("--empty".equals(arg)) {
+                runAsEmptyShell = true;
+                break;
+            }
+        }
+        ensureDatabase(runAsEmptyShell);
         teacherService = new TeacherService();
         classService = new ClassService();
         scheduleService = new ScheduleService();
@@ -261,10 +268,10 @@ public class ApiServer {
         ctx.json(toPublicUser(user));
     }
 
-    private static void ensureDatabase() {
+    private static void ensureDatabase(boolean runAsEmptyShell) {
         Path dbPath = Paths.get(DatabaseConfig.getDatabaseName());
         if (!Files.exists(dbPath)) {
-            DatabaseInit.initializeDatabase();
+            DatabaseInit.initializeDatabase(runAsEmptyShell);
         }
     }
 

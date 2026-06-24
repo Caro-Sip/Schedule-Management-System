@@ -147,9 +147,9 @@ INSERT INTO users (id, name, email, password_hash, role, last_modified) VALUES
     (19, 'Monitor SE Y2', 'monitor.se@school.local', '12345', 'MONITOR', '2026-05-31T09:00:00'),
     -- Monitor AI Y2
     (20, 'Monitor AI Y2', 'monitor.ai@school.local', '12345', 'MONITOR', '2026-06-25T01:00:00'),
-    -- Monitor Y1 A (2025)
+    -- Monitor Y1 A (2026)
     (21, 'Monitor Y1 A', 'monitor.y1a@school.local', '12345', 'MONITOR', '2026-06-25T01:00:00'),
-    -- Monitor Y1 B (2025)
+    -- Monitor Y1 B (2026)
     (22, 'Monitor Y1 B', 'monitor.y1b@school.local', '12345', 'MONITOR', '2026-06-25T01:00:00'),
     -- Monitor SE Y3 (2026)
     (23, 'Monitor SE Y3', 'monitor.y3se@school.local', '12345', 'MONITOR', '2026-06-25T01:00:00'),
@@ -282,7 +282,7 @@ INSERT INTO schedule_history (
     (4, 5, 'FLAG', 1, '2026-05-01 08:30:00', 'Room marked invisible for maintenance');
 
 -- =============================================================
--- RECURRING TEMPLATES & WEEKLY SCHEDULE GENERATORS (IP-SE-Y2-S2)
+-- RECURRING TEMPLATES SEED DATA (ALL CLASSES)
 -- =============================================================
 
 DROP TABLE IF EXISTS temp._seed_recurring;
@@ -294,151 +294,98 @@ CREATE TEMP TABLE _seed_recurring (
     start_time TIME,
     end_time TIME,
     effective_from TEXT,
-    effective_until TEXT
+    effective_until TEXT,
+    class_id INTEGER
 );
 
 INSERT INTO _seed_recurring
-    (teacher_id, classroom_id, course_id, day_of_week, start_time, end_time, effective_from, effective_until)
+    (teacher_id, classroom_id, course_id, day_of_week, start_time, end_time, effective_from, effective_until, class_id)
 VALUES
-    -- MONDAY (1)
-    (1, 5, 5,  1, '13:00', '15:00', '2026-03-02', '2026-06-27'),
-    (6, 2, 6,  1, '15:00', '17:00', '2026-03-02', '2026-06-27'),
-    -- TUESDAY (2)
-    (2, 8, 7,  2, '09:00', '11:00', '2026-03-03', '2026-06-27'),
-    (5, 6, 8,  2, '13:00', '15:00', '2026-03-03', '2026-06-27'),
-    -- WEDNESDAY (3)
-    (4, 1, 9,  3, '07:00', '09:00', '2026-03-04', '2026-06-27'),
-    (3, 3, 10, 3, '09:00', '10:00', '2026-03-04', '2026-06-27'),
-    -- THURSDAY (4)
-    (3, 1, 10, 4, '07:00', '09:00', '2026-03-05', '2026-06-27'),
-    (4, 4, 9,  4, '13:00', '15:00', '2026-03-05', '2026-06-27'),
-    (5, 2, 8,  4, '15:00', '17:00', '2026-03-05', '2026-06-27'),
-    -- FRIDAY (5)
-    (2, 3, 7,  5, '09:00', '11:00', '2026-03-06', '2026-06-27'),
-    (3, 2, 10, 5, '13:00', '15:00', '2026-03-06', '2026-06-27'),
-    (1, 4, 5,  5, '15:00', '17:00', '2026-03-06', '2026-06-27');
+    -- =========================================================
+    -- IP-SE-Y2-S2 (Class ID 6) Templates
+    -- =========================================================
+    (1, 5, 5,  1, '13:00', '15:00', '2026-03-02', '2026-06-27', 6), -- OOP Lecture
+    (6, 2, 6,  1, '15:00', '17:00', '2026-03-02', '2026-06-27', 6), -- SP4 Practical
+    (2, 8, 7,  2, '09:00', '11:00', '2026-03-03', '2026-06-27', 6), -- DSA Lecture (Shared)
+    (5, 6, 8,  2, '13:00', '15:00', '2026-03-03', '2026-06-27', 6), -- OS Lecture
+    (4, 1, 9,  3, '07:00', '09:00', '2026-03-04', '2026-06-27', 6), -- IDB Lecture (Shared)
+    (3, 3, 10, 3, '09:00', '10:00', '2026-03-04', '2026-06-27', 6), -- LAS Practical
+    (3, 1, 10, 4, '07:00', '09:00', '2026-03-05', '2026-06-27', 6), -- LAS Lecture (Shared)
+    (4, 4, 9,  4, '13:00', '15:00', '2026-03-05', '2026-06-27', 6), -- IDB Practical
+    (5, 2, 8,  4, '15:00', '17:00', '2026-03-05', '2026-06-27', 6), -- OS Practical
+    (2, 3, 7,  5, '09:00', '11:00', '2026-03-06', '2026-06-27', 6), -- DSA Practical
+    (3, 2, 10, 5, '13:00', '15:00', '2026-03-06', '2026-06-27', 6), -- LAS Tutorial
+    (1, 4, 5,  5, '15:00', '17:00', '2026-03-06', '2026-06-27', 6), -- OOP Practical
 
+    -- =========================================================
+    -- IP-AI-Y2-S2 (Class ID 7) Templates
+    -- =========================================================
+    (6, NULL, 12, 1, '07:00', '09:00', '2026-03-02', '2026-06-27', 7), -- SP6 Project
+    (8, 1,    11, 1, '09:00', '11:00', '2026-03-02', '2026-06-27', 7), -- CSC Lecture
+    (3, 1,    10, 1, '13:00', '15:00', '2026-03-02', '2026-06-27', 7), -- LAS Tutorial
+    (8, 5,    11, 1, '15:00', '17:00', '2026-03-02', '2026-06-27', 7), -- CSC Practical
+    (6, NULL, 12, 2, '07:00', '09:00', '2026-03-03', '2026-06-27', 7), -- SP6 Project
+    (2, 8,    7,  2, '09:00', '11:00', '2026-03-03', '2026-06-27', 7), -- DSA Lecture (Shared)
+    (6, 3,    12, 2, '13:00', '15:00', '2026-03-03', '2026-06-27', 7), -- SP6 Project
+    (2, 8,    13, 2, '15:00', '17:00', '2026-03-03', '2026-06-27', 7), -- UCP Lecture
+    (4, 1,    9,  3, '07:00', '09:00', '2026-03-04', '2026-06-27', 7), -- IDB Lecture (Shared)
+    (4, 5,    9,  3, '15:00', '17:00', '2026-03-04', '2026-06-27', 7), -- IDB Practical
+    (3, 1,    10, 4, '07:00', '09:00', '2026-03-05', '2026-06-27', 7), -- LAS Lecture (Shared)
+    (3, 3,    10, 4, '09:00', '11:00', '2026-03-05', '2026-06-27', 7), -- LAS Practical
+    (4, 5,    9,  4, '15:00', '17:00', '2026-03-05', '2026-06-27', 7), -- IDB Practical
+    (3, 1,    10, 5, '09:00', '11:00', '2026-03-06', '2026-06-27', 7), -- LAS Lecture
+    (2, 3,    7,  5, '13:00', '15:00', '2026-03-06', '2026-06-27', 7), -- DSA Practical
+    (2, 3,    13, 5, '15:00', '17:00', '2026-03-06', '2026-06-27', 7), -- UCP Practical
+
+    -- =========================================================
+    -- IP-A-Y1-S2 (Class ID 8) Templates (2026)
+    -- =========================================================
+    (1, 1, 4,  1, '09:00', '11:00', '2026-03-02', '2026-07-25', 8), -- Prog Fund Lecture
+    (3, 1, 10, 2, '13:00', '15:00', '2026-03-03', '2026-07-25', 8), -- LAS Lecture
+    (4, 1, 9,  3, '09:00', '11:00', '2026-03-04', '2026-07-25', 8), -- IDB Lecture
+    (1, 5, 4,  4, '13:00', '15:00', '2026-03-05', '2026-07-25', 8), -- Prog Fund Practical
+    (3, 3, 10, 5, '09:00', '11:00', '2026-03-06', '2026-07-25', 8), -- LAS Practical
+
+    -- =========================================================
+    -- IP-B-Y1-S2 (Class ID 9) Templates (2026)
+    -- =========================================================
+    (7, 2, 10, 1, '13:00', '15:00', '2026-03-02', '2026-07-25', 9), -- LAS Lecture
+    (2, 2, 4,  2, '09:00', '11:00', '2026-03-03', '2026-07-25', 9), -- Prog Fund Lecture
+    (4, 2, 9,  3, '13:00', '15:00', '2026-03-04', '2026-07-25', 9), -- IDB Lecture
+    (2, 6, 4,  4, '09:00', '11:00', '2026-03-05', '2026-07-25', 9), -- Prog Fund Practical
+    (7, 4, 10, 5, '13:00', '15:00', '2026-03-06', '2026-07-25', 9), -- LAS Practical
+
+    -- =========================================================
+    -- IP-SE-Y3-S2 (Class ID 10) Templates (2026)
+    -- =========================================================
+    (1, 3, 5, 1, '09:00', '11:00', '2026-03-02', '2026-06-27', 10), -- OOP in Java Lecture
+    (2, 3, 7, 2, '13:00', '15:00', '2026-03-03', '2026-06-27', 10), -- DSA Lecture
+    (5, 3, 8, 3, '09:00', '11:00', '2026-03-04', '2026-06-27', 10), -- OS Lecture
+    (6, 7, 6, 4, '13:00', '15:00', '2026-03-05', '2026-06-27', 10), -- SP4 Practical
+    (1, 5, 5, 5, '09:00', '11:00', '2026-03-06', '2026-06-27', 10), -- OOP in Java Practical
+
+    -- =========================================================
+    -- IP-AI-Y3-S2 (Class ID 11) Templates (2026)
+    -- =========================================================
+    (8, 4, 11, 1, '13:00', '15:00', '2026-03-02', '2026-06-27', 11), -- CSC Lecture
+    (2, 4, 13, 2, '09:00', '11:00', '2026-03-03', '2026-06-27', 11), -- UCP Lecture
+    (2, 4, 7,  3, '13:00', '15:00', '2026-03-04', '2026-06-27', 11), -- DSA Practical
+    (6, 9, 12, 4, '09:00', '11:00', '2026-03-05', '2026-06-27', 11), -- SP6 Practical
+    (2, 6, 13, 5, '13:00', '15:00', '2026-03-06', '2026-06-27', 11); -- UCP Practical
+
+-- Insert unique templates into the real recurring_schedule table
 INSERT INTO recurring_schedule
     (teacher_id, classroom_id, course_id, day_of_week, start_time, end_time, effective_from, effective_until)
-SELECT
+SELECT DISTINCT
     teacher_id, classroom_id, course_id, day_of_week, start_time, end_time, effective_from, effective_until
 FROM _seed_recurring;
 
-WITH RECURSIVE schedule_gen AS (
-    SELECT
-        NULL as recurring_id,
-        rs.classroom_id,
-        rs.teacher_id,
-        rs.course_id,
-        rs.day_of_week,
-        rs.effective_from as gen_date,
-        rs.start_time,
-        rs.end_time,
-        rs.effective_until,
-        CASE 
-            WHEN rs.course_id = 5 AND rs.start_time = '13:00' THEN 'LECTURE'
-            WHEN rs.course_id = 6 AND rs.start_time = '15:00' THEN 'PRACTICAL'
-            WHEN rs.course_id = 7 AND rs.day_of_week = 2 AND rs.start_time = '09:00' THEN 'LECTURE'
-            WHEN rs.course_id = 7 AND rs.day_of_week = 5 AND rs.start_time = '09:00' THEN 'PRACTICAL'
-            WHEN rs.course_id = 8 AND rs.start_time = '13:00' THEN 'LECTURE'
-            WHEN rs.course_id = 8 AND rs.start_time = '15:00' THEN 'PRACTICAL'
-            WHEN rs.course_id = 9 AND rs.start_time = '07:00' THEN 'LECTURE'
-            WHEN rs.course_id = 9 AND rs.start_time = '13:00' THEN 'PRACTICAL'
-            WHEN rs.course_id = 10 AND rs.start_time = '07:00' THEN 'LECTURE'
-            WHEN rs.course_id = 10 AND rs.start_time = '09:00' THEN 'PRACTICAL'
-            WHEN rs.course_id = 10 AND (rs.start_time = '13:00' OR rs.start_time = '15:00') THEN 'TUTORIAL'
-            ELSE 'LECTURE'
-        END as inferred_type
-    FROM _seed_recurring rs
-
-    UNION ALL
-
-    SELECT
-        recurring_id,
-        classroom_id,
-        teacher_id,
-        course_id,
-        day_of_week,
-        date(gen_date, '+7 days') as gen_date,
-        start_time,
-        end_time,
-        effective_until,
-        inferred_type
-    FROM schedule_gen
-    WHERE date(gen_date, '+7 days') <= effective_until
-)
-INSERT INTO schedule (
-    classroom_id, teacher_id, course_id, date, start_time, end_time,
-    status, visibility, type, priority, created_by, created_at
-)
-SELECT
-    classroom_id, teacher_id, course_id, gen_date as date, start_time, end_time,
-    'BOOKED' as status, 'VISIBLE' as visibility, inferred_type as type, 1 as priority, 1 as created_by,
-    '2026-02-20 09:00:00' as created_at
-FROM schedule_gen;
-
-INSERT INTO schedule_classes (schedule_id, class_id)
-SELECT s.id, 6
-FROM schedule s
-WHERE s.date BETWEEN '2026-03-02' AND '2026-06-27'
-  AND s.created_at = '2026-02-20 09:00:00';
-
-INSERT INTO schedule_history (schedule_id, action, changed_by, timestamp, note)
-SELECT s.id, 'CREATE', 1, '2026-02-20 09:00:00', 'Initial schedule created for IP-SE-Y2-S2'
-FROM schedule s
-WHERE s.date BETWEEN '2026-03-02' AND '2026-06-27'
-  AND s.created_at = '2026-02-20 09:00:00';
-
 -- =============================================================
--- RECURRING TEMPLATES & WEEKLY SCHEDULE GENERATORS (IP-AI-Y2-S2)
+-- UNIFIED RECURSIVE SCHEDULE OCCURRENCE GENERATOR
 -- =============================================================
-
-DROP TABLE IF EXISTS temp._seed_recurring;
-CREATE TEMP TABLE _seed_recurring (
-    teacher_id INTEGER,
-    classroom_id INTEGER,
-    course_id INTEGER,
-    day_of_week INTEGER,
-    start_time TIME,
-    end_time TIME,
-    effective_from TEXT,
-    effective_until TEXT
-);
-
-INSERT INTO _seed_recurring
-    (teacher_id, classroom_id, course_id, day_of_week, start_time, end_time, effective_from, effective_until)
-VALUES
-    -- MONDAY (1)
-    (6,    NULL, 12,  1, '07:00', '09:00', '2026-03-02', '2026-06-27'),
-    (8,    1,    11,  1, '09:00', '11:00', '2026-03-02', '2026-06-27'),
-    (3,    1,    10,  1, '13:00', '15:00', '2026-03-02', '2026-06-27'),
-    (8,    5,    11,  1, '15:00', '17:00', '2026-03-02', '2026-06-27'),
-    -- TUESDAY (2)
-    (6,    NULL, 12,  2, '07:00', '09:00', '2026-03-03', '2026-06-27'),
-    (2,    8,    7,   2, '09:00', '11:00', '2026-03-03', '2026-06-27'),
-    (6,    3,    12,  2, '13:00', '15:00', '2026-03-03', '2026-06-27'),
-    (2,    8,    13,  2, '15:00', '17:00', '2026-03-03', '2026-06-27'),
-    -- WEDNESDAY (3)
-    (4,    1,    9,   3, '07:00', '09:00', '2026-03-04', '2026-06-27'),
-    (4,    5,    9,   3, '15:00', '17:00', '2026-03-04', '2026-06-27'),
-    -- THURSDAY (4)
-    (3,    1,    10,  4, '07:00', '09:00', '2026-03-05', '2026-06-27'),
-    (3,    3,    10,  4, '09:00', '11:00', '2026-03-05', '2026-06-27'),
-    (4,    5,    9,   4, '15:00', '17:00', '2026-03-05', '2026-06-27'),
-    -- FRIDAY (5)
-    (3,    1,    10,  5, '09:00', '11:00', '2026-03-06', '2026-06-27'),
-    (2,    3,    7,   5, '13:00', '15:00', '2026-03-06', '2026-06-27'),
-    (2,    3,    13,  5, '15:00', '17:00', '2026-03-06', '2026-06-27');
-
-INSERT INTO recurring_schedule
-    (teacher_id, classroom_id, course_id, day_of_week, start_time, end_time, effective_from, effective_until)
-SELECT
-    teacher_id, classroom_id, course_id, day_of_week, start_time, end_time, effective_from, effective_until
-FROM _seed_recurring;
 
 WITH RECURSIVE schedule_gen AS (
     SELECT
-        NULL as recurring_id,
         rs.classroom_id,
         rs.teacher_id,
         rs.course_id,
@@ -459,14 +406,20 @@ WITH RECURSIVE schedule_gen AS (
             WHEN rs.course_id = 9 AND rs.start_time = '07:00' THEN 'LECTURE'
             WHEN rs.course_id = 9 AND rs.start_time = '15:00' THEN 'PRACTICAL'
             WHEN rs.course_id = 13 AND rs.start_time = '15:00' THEN 'PRACTICAL'
+            WHEN rs.course_id = 5 AND rs.start_time = '13:00' THEN 'LECTURE'
+            WHEN rs.course_id = 6 AND rs.start_time = '15:00' THEN 'PRACTICAL'
+            WHEN rs.course_id = 8 AND rs.start_time = '13:00' THEN 'LECTURE'
+            WHEN rs.course_id = 8 AND rs.start_time = '15:00' THEN 'PRACTICAL'
             ELSE 'LECTURE'
         END as inferred_type
-    FROM _seed_recurring rs
+    FROM (
+        SELECT DISTINCT teacher_id, classroom_id, course_id, day_of_week, start_time, end_time, effective_from, effective_until 
+        FROM _seed_recurring
+    ) rs
 
     UNION ALL
 
     SELECT
-        recurring_id,
         classroom_id,
         teacher_id,
         course_id,
@@ -484,220 +437,47 @@ INSERT INTO schedule (
     status, visibility, type, priority, created_by, created_at
 )
 SELECT
-    classroom_id, teacher_id, course_id, gen_date as date, start_time, end_time,
-    'BOOKED' as status, 'VISIBLE' as visibility, inferred_type as type, 1 as priority, 1 as created_by,
-    '2026-02-20 09:30:00' as created_at
+    classroom_id,
+    teacher_id,
+    course_id,
+    gen_date as date,
+    start_time,
+    end_time,
+    'BOOKED' as status,
+    'VISIBLE' as visibility,
+    inferred_type as type,
+    1 as priority,
+    1 as created_by,
+    '2026-02-25 00:00:00' as created_at
 FROM schedule_gen;
 
+-- =============================================================
+-- UNIFIED JOIN MAPPING (schedule_classes)
+-- Maps each generated unique schedule event to ALL classes attending it.
+-- This supports shared lectures cleanly in the join table.
+-- =============================================================
+
 INSERT INTO schedule_classes (schedule_id, class_id)
-SELECT s.id, 7
+SELECT DISTINCT s.id, r.class_id
 FROM schedule s
-WHERE s.date BETWEEN '2026-03-02' AND '2026-06-27'
-  AND s.created_at = '2026-02-20 09:30:00';
+JOIN _seed_recurring r ON 
+    ((s.classroom_id = r.classroom_id) OR (s.classroom_id IS NULL AND r.classroom_id IS NULL)) AND
+    s.teacher_id = r.teacher_id AND
+    s.course_id = r.course_id AND
+    s.start_time = r.start_time AND
+    s.end_time = r.end_time AND
+    strftime('%w', s.date) = CAST(r.day_of_week AS TEXT)
+WHERE s.created_at = '2026-02-25 00:00:00'
+  AND s.date BETWEEN r.effective_from AND r.effective_until;
+
+-- =============================================================
+-- AUDIT HISTORY LOG FOR THE GENERATED SCHEDULE
+-- =============================================================
 
 INSERT INTO schedule_history (schedule_id, action, changed_by, timestamp, note)
-SELECT s.id, 'CREATE', 1, '2026-02-20 09:30:00', 'Initial schedule created for IP-AI-Y2-S2'
+SELECT s.id, 'CREATE', 1, '2026-02-25 00:00:00', 'Initial schedule created'
 FROM schedule s
-WHERE s.date BETWEEN '2026-03-02' AND '2026-06-27'
-  AND s.created_at = '2026-02-20 09:30:00';
-
--- =============================================================
--- RECURRING TEMPLATES & WEEKLY SCHEDULE GENERATORS (IP-A-Y1-S2 & IP-B-Y1-S2 2026)
--- Range: 2026-03-02 to 2026-07-25 (First Mon: 2026-03-02)
--- =============================================================
-
-DROP TABLE IF EXISTS temp._seed_recurring;
-CREATE TEMP TABLE _seed_recurring (
-    teacher_id INTEGER,
-    classroom_id INTEGER,
-    course_id INTEGER,
-    day_of_week INTEGER,
-    start_time TIME,
-    end_time TIME,
-    effective_from TEXT,
-    effective_until TEXT,
-    class_id INTEGER
-);
-
--- Template inserts for Y1 A and B classes (3 courses per class, 5 days scheduled)
-INSERT INTO _seed_recurring
-    (teacher_id, classroom_id, course_id, day_of_week, start_time, end_time, effective_from, effective_until, class_id)
-VALUES
-    -- IP-A-Y1-S2 (Class ID 8)
-    (1, 1, 4,  1, '09:00', '11:00', '2026-03-02', '2026-07-25', 8), -- Prog Fund Lecture
-    (3, 1, 10, 2, '13:00', '15:00', '2026-03-03', '2026-07-25', 8), -- LAS Lecture
-    (4, 1, 9,  3, '09:00', '11:00', '2026-03-04', '2026-07-25', 8), -- IDB Lecture
-    (1, 5, 4,  4, '13:00', '15:00', '2026-03-05', '2026-07-25', 8), -- Prog Fund Practical
-    (3, 3, 10, 5, '09:00', '11:00', '2026-03-06', '2026-07-25', 8), -- LAS Practical
-
-    -- IP-B-Y1-S2 (Class ID 9)
-    (7, 2, 10, 1, '13:00', '15:00', '2026-03-02', '2026-07-25', 9), -- LAS Lecture
-    (2, 2, 4,  2, '09:00', '11:00', '2026-03-03', '2026-07-25', 9), -- Prog Fund Lecture
-    (4, 2, 9,  3, '13:00', '15:00', '2026-03-04', '2026-07-25', 9), -- IDB Lecture
-    (2, 6, 4,  4, '09:00', '11:00', '2026-03-05', '2026-07-25', 9), -- Prog Fund Practical
-    (7, 4, 10, 5, '13:00', '15:00', '2026-03-06', '2026-07-25', 9); -- LAS Practical
-
-INSERT INTO recurring_schedule
-    (teacher_id, classroom_id, course_id, day_of_week, start_time, end_time, effective_from, effective_until)
-SELECT
-    teacher_id, classroom_id, course_id, day_of_week, start_time, end_time, effective_from, effective_until
-FROM _seed_recurring;
-
-WITH RECURSIVE schedule_gen AS (
-    SELECT
-        rs.class_id,
-        rs.classroom_id,
-        rs.teacher_id,
-        rs.course_id,
-        rs.day_of_week,
-        rs.effective_from as gen_date,
-        rs.start_time,
-        rs.end_time,
-        rs.effective_until,
-        CASE WHEN rs.start_time = '09:00' THEN 'LECTURE' ELSE 'PRACTICAL' END as inferred_type
-    FROM _seed_recurring rs
-
-    UNION ALL
-
-    SELECT
-        class_id,
-        classroom_id,
-        teacher_id,
-        course_id,
-        day_of_week,
-        date(gen_date, '+7 days') as gen_date,
-        start_time,
-        end_time,
-        effective_until,
-        inferred_type
-    FROM schedule_gen
-    WHERE date(gen_date, '+7 days') <= effective_until
-)
-INSERT INTO schedule (
-    classroom_id, teacher_id, course_id, date, start_time, end_time,
-    status, visibility, type, priority, created_by, created_at
-)
-SELECT
-    classroom_id, teacher_id, course_id, gen_date as date, start_time, end_time,
-    'BOOKED' as status, 'VISIBLE' as visibility, inferred_type as type, 1 as priority, 1 as created_by,
-    '2026-02-15 09:00:00' as created_at
-FROM schedule_gen;
-
--- Link generated events to their respective Y1 classes (8 and 9)
-INSERT INTO schedule_classes (schedule_id, class_id)
-SELECT s.id, r.class_id
-FROM schedule s
-JOIN (
-    SELECT classroom_id, teacher_id, course_id, start_time, class_id
-    FROM _seed_recurring
-) r ON s.classroom_id = r.classroom_id AND s.teacher_id = r.teacher_id AND s.course_id = r.course_id AND s.start_time = r.start_time
-WHERE s.date BETWEEN '2026-03-02' AND '2026-07-25'
-  AND s.created_at = '2026-02-15 09:00:00';
-
-INSERT INTO schedule_history (schedule_id, action, changed_by, timestamp, note)
-SELECT s.id, 'CREATE', 1, '2026-02-15 09:00:00', 'Initial schedule created for Year 1'
-FROM schedule s
-WHERE s.date BETWEEN '2026-03-02' AND '2026-07-25'
-  AND s.created_at = '2026-02-15 09:00:00';
-
--- =============================================================
--- RECURRING TEMPLATES & WEEKLY SCHEDULE GENERATORS (IP-SE-Y3-S2 & IP-AI-Y3-S2 2026)
--- Range: 2026-03-02 to 2026-06-27 (First Mon: 2026-03-02)
--- =============================================================
-
-DROP TABLE IF EXISTS temp._seed_recurring;
-CREATE TEMP TABLE _seed_recurring (
-    teacher_id INTEGER,
-    classroom_id INTEGER,
-    course_id INTEGER,
-    day_of_week INTEGER,
-    start_time TIME,
-    end_time TIME,
-    effective_from TEXT,
-    effective_until TEXT,
-    class_id INTEGER
-);
-
--- Template inserts for Y3 SE and AI classes (4 courses per class, 5 days scheduled)
-INSERT INTO _seed_recurring
-    (teacher_id, classroom_id, course_id, day_of_week, start_time, end_time, effective_from, effective_until, class_id)
-VALUES
-    -- IP-SE-Y3-S2 (Class ID 10)
-    (1, 3, 5, 1, '09:00', '11:00', '2026-03-02', '2026-06-27', 10), -- OOP in Java Lecture
-    (2, 3, 7, 2, '13:00', '15:00', '2026-03-03', '2026-06-27', 10), -- DSA Lecture
-    (5, 3, 8, 3, '09:00', '11:00', '2026-03-04', '2026-06-27', 10), -- OS Lecture
-    (6, 7, 6, 4, '13:00', '15:00', '2026-03-05', '2026-06-27', 10), -- SP4 Practical
-    (1, 5, 5, 5, '09:00', '11:00', '2026-03-06', '2026-06-27', 10), -- OOP in Java Practical
-
-    -- IP-AI-Y3-S2 (Class ID 11)
-    (8, 4, 11, 1, '13:00', '15:00', '2026-03-02', '2026-06-27', 11), -- CSC Lecture
-    (2, 4, 13, 2, '09:00', '11:00', '2026-03-03', '2026-06-27', 11), -- UCP Lecture
-    (2, 4, 7,  3, '13:00', '15:00', '2026-03-04', '2026-06-27', 11), -- DSA Practical (AI context)
-    (6, 9, 12, 4, '09:00', '11:00', '2026-03-05', '2026-06-27', 11), -- SP6 Practical
-    (2, 6, 13, 5, '13:00', '15:00', '2026-03-06', '2026-06-27', 11); -- UCP Practical
-
-INSERT INTO recurring_schedule
-    (teacher_id, classroom_id, course_id, day_of_week, start_time, end_time, effective_from, effective_until)
-SELECT
-    teacher_id, classroom_id, course_id, day_of_week, start_time, end_time, effective_from, effective_until
-FROM _seed_recurring;
-
-WITH RECURSIVE schedule_gen AS (
-    SELECT
-        rs.class_id,
-        rs.classroom_id,
-        rs.teacher_id,
-        rs.course_id,
-        rs.day_of_week,
-        rs.effective_from as gen_date,
-        rs.start_time,
-        rs.end_time,
-        rs.effective_until,
-        CASE WHEN rs.start_time = '09:00' THEN 'LECTURE' ELSE 'PRACTICAL' END as inferred_type
-    FROM _seed_recurring rs
-
-    UNION ALL
-
-    SELECT
-        class_id,
-        classroom_id,
-        teacher_id,
-        course_id,
-        day_of_week,
-        date(gen_date, '+7 days') as gen_date,
-        start_time,
-        end_time,
-        effective_until,
-        inferred_type
-    FROM schedule_gen
-    WHERE date(gen_date, '+7 days') <= effective_until
-)
-INSERT INTO schedule (
-    classroom_id, teacher_id, course_id, date, start_time, end_time,
-    status, visibility, type, priority, created_by, created_at
-)
-SELECT
-    classroom_id, teacher_id, course_id, gen_date as date, start_time, end_time,
-    'BOOKED' as status, 'VISIBLE' as visibility, inferred_type as type, 1 as priority, 1 as created_by,
-    '2026-02-22 09:00:00' as created_at
-FROM schedule_gen;
-
--- Link generated events to their respective Y3 classes (10 and 11)
-INSERT INTO schedule_classes (schedule_id, class_id)
-SELECT s.id, r.class_id
-FROM schedule s
-JOIN (
-    SELECT classroom_id, teacher_id, course_id, start_time, class_id
-    FROM _seed_recurring
-) r ON s.classroom_id = r.classroom_id AND s.teacher_id = r.teacher_id AND s.course_id = r.course_id AND s.start_time = r.start_time
-WHERE s.date BETWEEN '2026-03-02' AND '2026-06-27'
-  AND s.created_at = '2026-02-22 09:00:00';
-
-INSERT INTO schedule_history (schedule_id, action, changed_by, timestamp, note)
-SELECT s.id, 'CREATE', 1, '2026-02-22 09:00:00', 'Initial schedule created for Year 3'
-FROM schedule s
-WHERE s.date BETWEEN '2026-03-02' AND '2026-06-27'
-  AND s.created_at = '2026-02-22 09:00:00';
+WHERE s.created_at = '2026-02-25 00:00:00';
 
 DROP TABLE IF EXISTS temp._seed_recurring;
 

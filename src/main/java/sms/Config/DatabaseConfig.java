@@ -7,40 +7,45 @@ import org.sqlite.SQLiteDataSource;
 
 public class DatabaseConfig {
     private static final String DATABASE_NAME = "schedule.db";
-    private static String databasePath = null;
+    private static volatile String databasePath = null;
+    private static volatile SQLiteDataSource dataSource = null;
 
     /**
      * Get the resolved absolute database path.
      * If running from a JAR, it puts schedule.db in the directory where the JAR is located.
      * If running in development (e.g. from target/classes or classes directory), it falls back to the project root.
      */
-    public static synchronized String getResolvedDatabasePath() {
+    public static String getResolvedDatabasePath() {
         if (databasePath != null) {
             return databasePath;
         }
 
-        try {
-            // Get location of the compiled class
-            java.net.URL classUrl = DatabaseConfig.class.getProtectionDomain().getCodeSource().getLocation();
-            if (classUrl != null) {
-                File codeLocation = new File(classUrl.toURI());
-                File targetFolder = codeLocation.getParentFile();
-                
-                // If we are running from target/classes, place it in the project root
-                if (codeLocation.isDirectory() || codeLocation.getName().endsWith(".class")) {
-                    databasePath = new File(System.getProperty("user.dir"), DATABASE_NAME).getAbsolutePath();
-                } else {
-                    // Running from JAR
-                    databasePath = new File(targetFolder, DATABASE_NAME).getAbsolutePath();
+        synchronized (DatabaseConfig.class) {
+            if (databasePath == null) {
+                try {
+                    // Get location of the compiled class
+                    java.net.URL classUrl = DatabaseConfig.class.getProtectionDomain().getCodeSource().getLocation();
+                    if (classUrl != null) {
+                        File codeLocation = new File(classUrl.toURI());
+                        File targetFolder = codeLocation.getParentFile();
+                        
+                        // If we are running from target/classes, place it in the project root
+                        if (codeLocation.isDirectory() || codeLocation.getName().endsWith(".class")) {
+                            databasePath = new File(System.getProperty("user.dir"), DATABASE_NAME).getAbsolutePath();
+                        } else {
+                            // Running from JAR
+                            databasePath = new File(targetFolder, DATABASE_NAME).getAbsolutePath();
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("Could not resolve dynamic DB folder: " + e.getMessage());
+                }
+
+                if (databasePath == null) {
+                    // Fallback to relative path in CWD
+                    databasePath = DATABASE_NAME;
                 }
             }
-        } catch (Exception e) {
-            System.err.println("Could not resolve dynamic DB folder: " + e.getMessage());
-        }
-
-        if (databasePath == null) {
-            // Fallback to relative path in CWD
-            databasePath = DATABASE_NAME;
         }
         return databasePath;
     }
@@ -51,8 +56,15 @@ public class DatabaseConfig {
      * @throws SQLException if connection fails
      */
     public static Connection getConnection() throws SQLException {
-        SQLiteDataSource dataSource = new SQLiteDataSource();
-        dataSource.setUrl(getDatabaseURL());
+        if (dataSource == null) {
+            synchronized (DatabaseConfig.class) {
+                if (dataSource == null) {
+                    SQLiteDataSource ds = new SQLiteDataSource();
+                    ds.setUrl(getDatabaseURL());
+                    dataSource = ds;
+                }
+            }
+        }
         return dataSource.getConnection();
     }
 

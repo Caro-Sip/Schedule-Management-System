@@ -612,7 +612,7 @@ function getFilteredUsers() {
 }
 
 function getFilteredClasses() {
-  const term = classSearch ? classSearch.value.trim().toLowerCase() : "";
+  const term = classSearch ? normalizeClassText(classSearch.value) : "";
 
   return getSortedClasses().filter((classItem) => {
     if (!term) {

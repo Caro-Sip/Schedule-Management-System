@@ -140,6 +140,20 @@ async function setView(view) {
 }
 
 async function ensureDataForView(view) {
+  // Load classes if going to class view and not yet loaded
+  if (view === "class" && typeof classDirectory !== "undefined" && classDirectory.length === 0) {
+    if (typeof loadClasses === "function") {
+      await loadClasses();
+    }
+  }
+
+  // Load rooms if going to room view and not yet loaded
+  if (view === "room" && typeof classroomDirectory !== "undefined" && classroomDirectory.length === 0) {
+    if (typeof loadClassrooms === "function") {
+      await loadClassrooms();
+    }
+  }
+
   // Load teachers directory if going to teacher view and not yet loaded
   if (view === "teacher" && teacherDirectory.length === 0) {
     await loadTeachers();
@@ -168,9 +182,10 @@ function updateViewVisibility() {
   const isTeacherView = state.view === "teacher";
   const isAuditView = state.view === "audit";
 
+  const hasAssignedClass = state.currentUser && state.currentUser.classId;
   const effectiveTeacherId = state.selectedTeacherId || state.currentTeacherId || null;
   const showClassList =
-    (isAdmin || isTeacher) &&
+    (isAdmin || isTeacher || !hasAssignedClass) &&
     (isClassView && !state.selectedClassId);
   const showRoomList = (isAdmin || isTeacher || canRoomScope) && isRoomView && !state.selectedRoomId;
   const showBackToList =
@@ -179,7 +194,8 @@ function updateViewVisibility() {
         (isRoomView && state.selectedRoomId) ||
         (isTeacherView && state.selectedTeacherId && state.userScheduleOrigin === "user"))) ||
     (isTeacher && isClassView && state.selectedClassId) ||
-    ((isTeacher || canRoomScope) && isRoomView && state.selectedRoomId);
+    ((isTeacher || canRoomScope) && isRoomView && state.selectedRoomId) ||
+    (!isAdmin && !isTeacher && !hasAssignedClass && isClassView && state.selectedClassId);
   let showSchedule = !isUserView && !isAuditView && !isProfileView;
   if (isAdmin) {
     showSchedule =
@@ -193,6 +209,8 @@ function updateViewVisibility() {
     showSchedule = showSchedule && Boolean(state.selectedClassId);
   } else if (isTeacher && isRoomView) {
     showSchedule = showSchedule && Boolean(state.selectedRoomId);
+  } else if (!isAdmin && !isTeacher) {
+    showSchedule = showSchedule && Boolean(state.selectedClassId);
   }
 
   if (scheduleControls) {

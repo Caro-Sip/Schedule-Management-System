@@ -1,0 +1,53 @@
+==================================================
+        SCHEDULE MANAGEMENT SYSTEM (SMS)
+                  USER GUIDE
+==================================================
+
+This application manages university class, room, and teacher schedules.
+It runs as a local web server with an embedded SQLite database.
+
+--------------------------------------------------
+SYSTEM REQUIREMENTS
+--------------------------------------------------
+- Java Runtime Environment (JRE) / JDK 25 or higher
+- A modern web browser (Chrome, Firefox, Edge, Safari)
+
+--------------------------------------------------
+HOW TO RUN THE APPLICATION
+--------------------------------------------------
+Open your command line/terminal in the folder containing this file and the JAR, then run:
+
+1. FULL SEED MODE (Recommended for evaluation & grading)
+   This automatically populates the database with test data (teachers, classes, schedules).
+   Command:
+     java -jar sms-1.0-SNAPSHOT.jar
+
+2. EMPTY SHELL MODE (Clean production setup)
+   Creates an empty database with a single admin account.
+   Command:
+     java -jar sms-1.0-SNAPSHOT.jar --empty
+
+Once started, the application will initialize/open a database file named 'schedule.db' in the directory it was launched from.
+
+--------------------------------------------------
+ACCESSING THE APPLICATION
+--------------------------------------------------
+Open your web browser and navigate to:
+  http://localhost:8080
+
+--------------------------------------------------
+TEST ACCOUNTS (Full Seed Mode)
+--------------------------------------------------
+Use the following credentials to log in:
+
+  Role                      | Email                       | Password
+  --------------------------|-----------------------------|----------
+  System Administrator      | admin@school.local          | 12345
+  Year 1 Monitor (Class A)  | monitor.y1a@school.local    | 12345
+  Year 1 Monitor (Class B)  | monitor.y1b@school.local    | 12345
+  Year 2 SE Monitor         | monitor.se@school.local     | 12345
+  Year 2 AI Monitor         | monitor.ai@school.local     | 12345
+  Year 3 SE Monitor         | monitor.y3se@school.local   | 12345
+  Year 3 AI Monitor         | monitor.y3ai@school.local   | 12345
+  Teacher (Hok Tin)         | hok.tin@school.local        | 12345
+  Teacher (Pich Reatrey)    | pich.reatrey@school.local   | 12345

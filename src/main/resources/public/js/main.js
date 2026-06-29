@@ -972,6 +972,9 @@ function bindEvents() {
 
     if (eventsEl) {
         eventsEl.addEventListener("click", (event) => {
+            if (!isAdminRole(state.role) && !isTeacherRole(state.role)) {
+                return;
+            }
             const eventCard = event.target.closest(".event");
             if (eventCard) {
                 const eventId = eventCard.dataset.eventId;
@@ -993,7 +996,6 @@ function bindEvents() {
             }
             if (
                 state.view === "class" &&
-                (isAdminRole(state.role) || isTeacherRole(state.role)) &&
                 !state.selectedClassId
             ) {
                 alert("Select a class first.");

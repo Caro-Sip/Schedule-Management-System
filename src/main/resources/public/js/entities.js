@@ -818,6 +818,8 @@ async function loadScopedSchedules() {
 		if (state.selectedClassId) {
 			const events = await loadSchedulesForClass(state.selectedClassId);
 			applyEventsToAllViews(events);
+		} else {
+			applyEventsToAllViews([]);
 		}
 		renderEvents();
 		return;
@@ -831,6 +833,8 @@ async function loadScopedSchedules() {
 		if (teacherId) {
 			const events = await loadSchedulesForTeacher(teacherId);
 			applyEventsToAllViews(events);
+		} else {
+			applyEventsToAllViews([]);
 		}
 		renderEvents();
 		return;
@@ -843,6 +847,7 @@ async function loadScopedSchedules() {
 	}
 
 	// Fallback
+	applyEventsToAllViews([]);
 	renderEvents();
 }
 

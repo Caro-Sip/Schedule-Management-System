@@ -25,6 +25,59 @@ function toggleUserFilterPanel() {
   }
 }
 
+function renderUserClassOptions() {
+  const userClassInput = document.getElementById("user-class");
+  const userClassResults = document.getElementById("user-class-results");
+  if (!userClassInput || !userClassResults) return;
+
+  const query = (userClassInput.value || "").toLowerCase().trim();
+  const filteredClasses = (classDirectory || []).filter(cls => {
+    if (!query) return true;
+    const searchText = [cls.id, cls.name, cls.year, cls.semester].join(" ").toLowerCase();
+    return searchText.includes(query);
+  });
+
+  userClassResults.innerHTML = "";
+
+  if (filteredClasses.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "room-picker-empty";
+    empty.textContent = "No classes found.";
+    userClassResults.appendChild(empty);
+  } else {
+    filteredClasses.forEach(cls => {
+      const option = document.createElement("button");
+      option.type = "button";
+      option.className = "room-picker-option";
+      
+      const isSelected = String(userClassInput.dataset.classId) === String(cls.id);
+      option.classList.toggle("is-selected", isSelected);
+      option.setAttribute("aria-pressed", isSelected ? "true" : "false");
+      
+      const label = document.createElement("span");
+      label.className = "room-picker-label";
+      label.textContent = `${cls.name} (${cls.year} - Sem ${cls.semester})`;
+
+      const subtext = document.createElement("span");
+      subtext.className = "room-picker-subtext";
+      subtext.textContent = String(cls.id);
+
+      option.appendChild(label);
+      option.appendChild(subtext);
+
+      option.addEventListener("click", () => {
+        userClassInput.value = `${cls.name} (${cls.year} - Sem ${cls.semester})`;
+        userClassInput.dataset.classId = cls.id;
+        userClassResults.setAttribute("hidden", "");
+      });
+
+      userClassResults.appendChild(option);
+    });
+  }
+  
+  userClassResults.removeAttribute("hidden");
+}
+
 function openUserModal(mode, user) {
   if (!userModal || !userForm) {
     return;
@@ -61,12 +114,12 @@ function openUserModal(mode, user) {
   }
 
   const departmentField = document.getElementById("department-field");
-  const isProfessor = userRoleInput && userRoleInput.value === "professor";
+  const needsDepartment = userRoleInput && (userRoleInput.value === "professor" || userRoleInput.value === "class-monitor");
   if (departmentField) {
-    departmentField.toggleAttribute("hidden", !isProfessor);
+    departmentField.toggleAttribute("hidden", !needsDepartment);
   }
   if (userDepartmentInput) {
-    if (isProfessor) {
+    if (needsDepartment) {
       userDepartmentInput.setAttribute("required", "");
       userDepartmentInput.value = resolveSelectValue(
         userDepartmentInput,
@@ -78,6 +131,36 @@ function openUserModal(mode, user) {
     } else {
       userDepartmentInput.removeAttribute("required");
       userDepartmentInput.value = "";
+    }
+  }
+
+  const classField = document.getElementById("user-class-field");
+  const userClassInput = document.getElementById("user-class");
+  const needsClass = userRoleInput && (userRoleInput.value === "class-monitor" || userRoleInput.value === "student" || userRoleInput.value === "guest");
+  
+  if (classField) {
+    classField.toggleAttribute("hidden", !needsClass);
+  }
+
+  if (userClassInput) {
+    if (needsClass) {
+      userClassInput.setAttribute("required", "");
+      if (user?.classId) {
+        userClassInput.dataset.classId = user.classId;
+        const cls = classDirectory.find(c => String(c.id) === String(user.classId));
+        if (cls) {
+          userClassInput.value = `${cls.name} (${cls.year} - Sem ${cls.semester})`;
+        } else {
+          userClassInput.value = user.classId;
+        }
+      } else {
+        userClassInput.dataset.classId = "";
+        userClassInput.value = "";
+      }
+    } else {
+      userClassInput.removeAttribute("required");
+      userClassInput.dataset.classId = "";
+      userClassInput.value = "";
     }
   }
 
@@ -882,35 +965,6 @@ function renderClassList() {
     content.appendChild(tags);
     content.appendChild(modified);
 
-    const actions = document.createElement("div");
-    actions.className = "entity-actions";
-
-    const courseButton = document.createElement("button");
-    courseButton.type = "button";
-    courseButton.className = "btn btn-ghost class-course";
-    courseButton.textContent = "Courses";
-    courseButton.dataset.classId = classItem.id;
-    courseButton.addEventListener("click", (event) => {
-      event.stopPropagation();
-      openCourseModal(classItem);
-    });
-
-    const editButton = document.createElement("button");
-    editButton.type = "button";
-    editButton.className = "icon-btn class-edit";
-    editButton.setAttribute("aria-label", "Edit class");
-    editButton.dataset.classId = classItem.id;
-    editButton.addEventListener("click", (event) => {
-      event.stopPropagation();
-      openClassModal("edit", classItem);
-    });
-    editButton.innerHTML =
-      '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
-      '<path fill="currentColor" d="M3 17.25V21h3.75l11.06-11.06-3.75-3.75L3 17.25zm2.92 2.33H5v-.92l9.06-9.06.92.92-9.06 9.06zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />' +
-      "</svg>";
-
-    actions.appendChild(courseButton);
-    actions.appendChild(editButton);
 
     row.appendChild(content);
     if (isAdmin) {
@@ -1125,7 +1179,9 @@ function renderRoomList() {
       '<path fill="currentColor" d="M3 17.25V21h3.75l11.06-11.06-3.75-3.75L3 17.25zm2.92 2.33H5v-.92l9.06-9.06.92.92-9.06 9.06zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />' +
       "</svg>";
 
-    actions.appendChild(editButton);
+    if (isAdminRole(state.role)) {
+      actions.appendChild(editButton);
+    }
 
     row.appendChild(main);
     row.appendChild(tags);

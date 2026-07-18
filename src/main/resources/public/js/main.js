@@ -109,7 +109,10 @@ function syncCurrentStudentClassContext() {
 
 
 function bindEvents() {
-    guestLoginBtn.addEventListener("click", () => showSchedule("guest", "Guest", false));
+    guestLoginBtn.addEventListener("click", async () => {
+        showSchedule("guest", "Guest", false);
+        await initializeAuthenticatedApp();
+    });
 
     loginForm.addEventListener("submit", async (event) => {
 
@@ -392,17 +395,48 @@ function bindEvents() {
     if (userRoleInput) {
         userRoleInput.addEventListener("change", () => {
             const departmentField = document.getElementById("department-field");
-            const isProfessor = userRoleInput.value === "professor";
+            const classField = document.getElementById("user-class-field");
+            const userClassInput = document.getElementById("user-class");
+            const needsDepartment = userRoleInput.value === "professor" || userRoleInput.value === "class-monitor";
+            const needsClass = userRoleInput.value === "class-monitor" || userRoleInput.value === "student" || userRoleInput.value === "guest";
+            
             if (departmentField) {
-                departmentField.toggleAttribute("hidden", !isProfessor);
+                departmentField.toggleAttribute("hidden", !needsDepartment);
             }
+            if (classField) {
+                classField.toggleAttribute("hidden", !needsClass);
+            }
+
             if (userDepartmentInput) {
-                if (isProfessor) {
+                if (needsDepartment) {
                     userDepartmentInput.setAttribute("required", "");
                 } else {
                     userDepartmentInput.removeAttribute("required");
                     userDepartmentInput.value = "";
                 }
+            }
+
+            if (userClassInput) {
+                if (needsClass) {
+                    userClassInput.setAttribute("required", "");
+                } else {
+                    userClassInput.removeAttribute("required");
+                    userClassInput.value = "";
+                }
+            }
+        });
+    }
+
+    const userClassInput = document.getElementById("user-class");
+    if (userClassInput) {
+        userClassInput.addEventListener("input", renderUserClassOptions);
+        userClassInput.addEventListener("focus", renderUserClassOptions);
+        
+        // Hide class dropdown on click outside
+        document.addEventListener("click", (e) => {
+            const results = document.getElementById("user-class-results");
+            if (results && !e.target.closest("#user-class-field")) {
+                results.setAttribute("hidden", "");
             }
         });
     }
@@ -445,9 +479,14 @@ function bindEvents() {
                 role,
             };
 
-            // Only include department for professors
-            if (role === "professor" && userDepartmentInput) {
+            // Only include department for professors and class monitors
+            if ((role === "professor" || role === "class-monitor") && userDepartmentInput) {
                 payload.department = userDepartmentInput.value;
+            }
+
+            const userClassInput = document.getElementById("user-class");
+            if ((role === "class-monitor" || role === "student" || role === "guest") && userClassInput) {
+                payload.classId = parseInt(userClassInput.dataset.classId, 10);
             }
 
             if (password) {
@@ -953,6 +992,9 @@ function bindEvents() {
 
     if (eventsEl) {
         eventsEl.addEventListener("click", (event) => {
+            if (state.role === "guest") {
+                return;
+            }
             const eventCard = event.target.closest(".event");
             if (eventCard) {
                 const eventId = eventCard.dataset.eventId;

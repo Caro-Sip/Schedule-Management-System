@@ -8,21 +8,26 @@ import sms.Objects.Teacher;
 import java.util.List;
 import java.time.LocalDateTime;
 
+import sms.DAO.ClassStudentDAO;
+import sms.Objects.ClassStudent;
+
 public class UserService {
 	private final UserDAO userDAO;
 	private final TeacherDAO teacherDAO;
+	private final ClassStudentDAO classStudentDAO;
 
 	public UserService() {
-		this(new UserDAO(), new TeacherDAO());
+		this(new UserDAO(), new TeacherDAO(), new ClassStudentDAO());
 	}
 
 	public UserService(UserDAO userDAO) {
-		this(userDAO, new TeacherDAO());
+		this(userDAO, new TeacherDAO(), new ClassStudentDAO());
 	}
 
-	public UserService(UserDAO userDAO, TeacherDAO teacherDAO) {
+	public UserService(UserDAO userDAO, TeacherDAO teacherDAO, ClassStudentDAO classStudentDAO) {
 		this.userDAO = userDAO;
 		this.teacherDAO = teacherDAO;
+		this.classStudentDAO = classStudentDAO;
 	}
 
 	public User login(String email, String password) {
@@ -60,6 +65,7 @@ public class UserService {
 			List<User> users = userDAO.getAllUsers();
 			for (User user : users) {
 				attachDepartment(user);
+				attachClassId(user);
 			}
 			return users;
 		} catch (Exception e) {
@@ -78,6 +84,7 @@ public class UserService {
 				throw new IllegalArgumentException("User not found with id " + id);
 			}
 			attachDepartment(user);
+			attachClassId(user);
 			return user;
 		} catch (IllegalArgumentException e) {
 			throw e;
@@ -86,7 +93,14 @@ public class UserService {
 		}
 	}
 
-	public User createUser(String name, String email, String password, String role, String department) {
+	private void attachClassId(User user) {
+		if ("class-monitor".equalsIgnoreCase(user.getRole())) {
+			Integer classId = classStudentDAO.getClassIdByUserId(user.getId());
+			user.setClassId(classId);
+		}
+	}
+
+	public User createUser(String name, String email, String password, String role, String department, Integer classId) {
 		String normalizedName = normalizeName(name);
 		String normalizedEmail = normalizeEmail(email);
 		String normalizedRole = normalizeRole(role);
@@ -114,11 +128,20 @@ public class UserService {
 			throw new RuntimeException("Created user could not be loaded");
 		}
 		syncTeacherDepartment(created.getId(), normalizedRole, normalizedDepartment);
+		syncClassAssignment(created.getId(), normalizedRole, classId);
 		attachDepartment(created);
+		attachClassId(created);
 		return created;
 	}
 
-	public User updateUser(int id, String name, String email, String password, String role, String department) {
+	private void syncClassAssignment(int userId, String role, Integer classId) {
+		classStudentDAO.deleteByUserId(userId);
+		if ("class-monitor".equalsIgnoreCase(role) && classId != null) {
+			classStudentDAO.createUser(new ClassStudent(classId, userId));
+		}
+	}
+
+	public User updateUser(int id, String name, String email, String password, String role, String department, Integer classId) {
 		if (id <= 0) {
 			throw new IllegalArgumentException("User id must be positive");
 		}
@@ -153,12 +176,14 @@ public class UserService {
 		}
 
 		syncTeacherDepartment(id, normalizedRole, normalizedDepartment);
+		syncClassAssignment(id, normalizedRole, classId);
 
 		User updated = userDAO.getUserById(id);
 		if (updated == null) {
 			throw new RuntimeException("Updated user could not be loaded");
 		}
 		attachDepartment(updated);
+		attachClassId(updated);
 		return updated;
 	}
 
@@ -218,7 +243,7 @@ public class UserService {
 			case "admin" -> "ADMIN";
 			case "professor", "teacher" -> "TEACHER";
 			case "class-monitor", "monitor" -> "MONITOR";
-			case "guest", "student" -> "STUDENT";
+			case "guest", "student" -> "GUEST";
 			default -> throw new IllegalArgumentException("Role is invalid");
 		};
 	}

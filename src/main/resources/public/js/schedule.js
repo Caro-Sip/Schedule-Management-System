@@ -554,7 +554,7 @@ function openBookingModal(dayIndex, startMinutes, eventData = null, options = {}
     }
   }
   if (bookingClassGroup && bookingClassInput) {
-    const showClassPicker = state.view === "room" || (state.view === "teacher" && !smartMode);
+    const showClassPicker = state.role !== "class-monitor" && (state.view === "room" || (state.view === "teacher" && !smartMode));
     bookingClassGroup.toggleAttribute("hidden", !showClassPicker);
     if (showClassPicker) {
       const classCatalog = getBookingClasses();
@@ -974,6 +974,9 @@ function renderEvents() {
     eventEl.className = `event ${viewClass}${extraClass ? ` ${extraClass}` : ""}`;
     if (eventItem.id) {
       eventEl.dataset.eventId = eventItem.id;
+    }
+    if (state.role === "guest") {
+      eventEl.style.cursor = "default";
     }
 
     const top = minutesFromStart(eventItem.start) * (HOUR_HEIGHT / 60) + 16;

@@ -45,7 +45,7 @@ function resolveSelectValue(selectEl, rawValue, fallbackValue) {
 }
 
 function isTeacherRole(role) {
-  return role === "professor";
+  return role === "professor" || role === "teacher";
 }
 
 function isAdminRole(role) {

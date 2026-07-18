@@ -918,13 +918,14 @@ public class ApiServer {
                 readOptionalString(payload, "email"),
                 readString(payload, "password"),
                 readString(payload, "role"),
-                readString(payload, "department")
+                readOptionalString(payload, "department"),
+                readOptionalInteger(payload, "classId")
             );
 
             String role = readString(payload, "role");
 
 
-            if (!role.equalsIgnoreCase("STUDENT") && !role.equalsIgnoreCase("GUEST")) {
+            if (!role.equalsIgnoreCase("GUEST")) {
 
                 requireAdmin(ctx);
             }
@@ -952,7 +953,8 @@ public class ApiServer {
                 readOptionalString(payload, "email"),
                 readOptionalString(payload, "password"),
                 readString(payload, "role"),
-                readString(payload, "department")
+                readOptionalString(payload, "department"),
+                readOptionalInteger(payload, "classId")
             );
             ctx.json(toPublicUser(updated));
         } catch (IllegalArgumentException e) {
@@ -1020,7 +1022,7 @@ public class ApiServer {
                 String rawRole = user.getRole();
                 if (rawRole != null) {
                     String up = rawRole.trim().toUpperCase();
-                    if ("MONITOR".equals(up) || "STUDENT".equals(up)) {
+                    if ("CLASS-MONITOR".equals(up) || "MONITOR".equals(up) || "STUDENT".equals(up) || "GUEST".equals(up)) {
                         Integer classId = new ClassStudentDAO().getClassIdByUserId(user.getId());
                         if (classId != null) {
                             payload.put("classId", classId);

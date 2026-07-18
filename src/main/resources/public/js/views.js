@@ -170,7 +170,7 @@ function updateViewVisibility() {
 
   const effectiveTeacherId = state.selectedTeacherId || state.currentTeacherId || null;
   const showClassList =
-    (isAdmin || isTeacher) &&
+    (isAdmin || isTeacher || state.role === "guest") &&
     (isClassView && !state.selectedClassId);
   const showRoomList = (isAdmin || isTeacher || canRoomScope) && isRoomView && !state.selectedRoomId;
   const showBackToList =
@@ -179,7 +179,8 @@ function updateViewVisibility() {
         (isRoomView && state.selectedRoomId) ||
         (isTeacherView && state.selectedTeacherId && state.userScheduleOrigin === "user"))) ||
     (isTeacher && isClassView && state.selectedClassId) ||
-    ((isTeacher || canRoomScope) && isRoomView && state.selectedRoomId);
+    ((isTeacher || canRoomScope) && isRoomView && state.selectedRoomId) ||
+    (state.role === "guest" && isClassView && state.selectedClassId);
   let showSchedule = !isUserView && !isAuditView && !isProfileView;
   if (isAdmin) {
     showSchedule =
@@ -193,6 +194,8 @@ function updateViewVisibility() {
     showSchedule = showSchedule && Boolean(state.selectedClassId);
   } else if (isTeacher && isRoomView) {
     showSchedule = showSchedule && Boolean(state.selectedRoomId);
+  } else if (state.role === "guest" && isClassView) {
+    showSchedule = showSchedule && Boolean(state.selectedClassId);
   }
 
   if (scheduleControls) {
@@ -222,6 +225,10 @@ function updateViewVisibility() {
   if (roomControls) {
     roomControls.classList.toggle("hidden", !showRoomList);
     roomControls.toggleAttribute("hidden", !showRoomList);
+  }
+  if (roomAddBtn) {
+    roomAddBtn.classList.toggle("hidden", !isAdmin);
+    roomAddBtn.toggleAttribute("hidden", !isAdmin);
   }
   if (roomView) {
     roomView.classList.toggle("hidden", !showRoomList);
@@ -262,7 +269,7 @@ function renderCurrentView() {
     return;
   }
 
-  if (state.view === "class" && (isAdminRole(state.role) || isTeacherRole(state.role))) {
+  if (state.view === "class" && (isAdminRole(state.role) || isTeacherRole(state.role) || state.role === "guest")) {
     renderClassList();
     if (state.selectedClassId) {
       renderEvents();
@@ -336,10 +343,10 @@ function showSchedule(role, label, persistSession = true) {
     guestNote.classList.add("hidden");
   }
 
-  // Hide the Audit Log tab for class monitors and professors (teachers).
+  // Hide the Audit Log tab for class monitors and professors (teachers) and guests.
   // Keep the audit sidebar toggle available for all roles.
   if (auditTab) {
-    if (role === "class-monitor" || isTeacherRole(role)) {
+    if (role === "class-monitor" || isTeacherRole(role) || role === "guest") {
       auditTab.classList.add("hidden");
     } else {
       auditTab.classList.remove("hidden");
@@ -349,6 +356,15 @@ function showSchedule(role, label, persistSession = true) {
   if (scheduleTabs && teacherTab) {
     const classTab = scheduleTabs.querySelector('[data-view="class"]');
     const roomTab = scheduleTabs.querySelector('[data-view="room"]');
+    
+    if (roomTab) {
+      if (role === "guest") {
+        roomTab.classList.add("hidden");
+      } else {
+        roomTab.classList.remove("hidden");
+      }
+    }
+    
     if (classTab) {
       if (isTeacherRole(role)) {
         scheduleTabs.insertBefore(teacherTab, classTab);

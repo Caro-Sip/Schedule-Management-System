@@ -918,8 +918,7 @@ public class ApiServer {
                 readOptionalString(payload, "email"),
                 readString(payload, "password"),
                 readString(payload, "role"),
-                readOptionalString(payload, "department"),
-                readOptionalInteger(payload, "classId")
+                readString(payload, "department")
             );
 
             String role = readString(payload, "role");
@@ -953,8 +952,7 @@ public class ApiServer {
                 readOptionalString(payload, "email"),
                 readOptionalString(payload, "password"),
                 readString(payload, "role"),
-                readOptionalString(payload, "department"),
-                readOptionalInteger(payload, "classId")
+                readString(payload, "department")
             );
             ctx.json(toPublicUser(updated));
         } catch (IllegalArgumentException e) {

@@ -420,12 +420,6 @@
                     <option value="Student Affairs">Student Affairs</option>
                 </select>
             </label>
-            <label id="class-field" hidden>
-                Class
-                <select id="user-classId">
-                    <option value="" disabled selected>Select a class</option>
-                </select>
-            </label>
 
             <div class="modal-actions split">
                 <button class="btn" id="user-delete" type="button">
@@ -714,21 +708,6 @@
                     <div class="room-picker-results" id="booking-room-results" hidden></div>
                 </div>
             </div>
-            <div class="room-picker" id="booking-subject-group">
-                <div class="room-picker-field">
-                    <label>
-                        Subject
-                        <input
-                                type="text"
-                                id="booking-subject"
-                                required
-                                placeholder="Data Structures"
-                                autocomplete="off"
-                        />
-                    </label>
-                    <div class="room-picker-results" id="booking-subject-results" hidden></div>
-                </div>
-            </div>
             <div class="room-picker" id="booking-professor-group">
                 <div class="room-picker-field">
                     <label>
@@ -742,6 +721,21 @@
                         />
                     </label>
                     <div class="room-picker-results" id="booking-professor-results" hidden></div>
+                </div>
+            </div>
+            <div class="room-picker" id="booking-subject-group">
+                <div class="room-picker-field">
+                    <label>
+                        Subject
+                        <input
+                                type="text"
+                                id="booking-subject"
+                                required
+                                placeholder="Data Structures"
+                                autocomplete="off"
+                        />
+                    </label>
+                    <div class="room-picker-results" id="booking-subject-results" hidden></div>
                 </div>
             </div>
             <label>

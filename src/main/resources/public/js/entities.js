@@ -33,7 +33,6 @@ const userEmailInput = document.getElementById("user-email");
 const userPasswordInput = document.getElementById("user-password");
 const userRoleInput = document.getElementById("user-role");
 const userDepartmentInput = document.getElementById("user-department");
-const userClassIdInput = document.getElementById("user-classId");
 const userDeleteBtn = document.getElementById("user-delete");
 const userCancelBtn = document.getElementById("user-cancel");
 const userCloseBtn = document.getElementById("user-close");
@@ -543,31 +542,6 @@ function updateDepartmentSelectOptions(selectEl, departments, includeAllOption =
 	selectEl.value = resolveSelectValue(selectEl, previousValue, fallbackValue);
 }
 
-function updateClassSelectOptions(selectEl) {
-	if (!selectEl) {
-		return;
-	}
-
-	const previousValue = selectEl.value;
-	selectEl.innerHTML = "";
-
-	const placeholder = document.createElement("option");
-	placeholder.value = "";
-	placeholder.textContent = "Select a class";
-	placeholder.disabled = true;
-	placeholder.selected = true;
-	selectEl.appendChild(placeholder);
-
-	classDirectory.forEach((classItem) => {
-		const option = document.createElement("option");
-		option.value = classItem.id;
-		option.textContent = `${classItem.name} (Year ${classItem.year}, Sem ${classItem.semester})`;
-		selectEl.appendChild(option);
-	});
-
-	selectEl.value = resolveSelectValue(selectEl, previousValue, "");
-}
-
 function applyDepartmentOptions() {
 	if (!teacherDepartmentDirectory || teacherDepartmentDirectory.length === 0) {
 		return;
@@ -818,8 +792,6 @@ async function loadScopedSchedules() {
 		if (state.selectedClassId) {
 			const events = await loadSchedulesForClass(state.selectedClassId);
 			applyEventsToAllViews(events);
-		} else {
-			applyEventsToAllViews([]);
 		}
 		renderEvents();
 		return;
@@ -833,8 +805,6 @@ async function loadScopedSchedules() {
 		if (teacherId) {
 			const events = await loadSchedulesForTeacher(teacherId);
 			applyEventsToAllViews(events);
-		} else {
-			applyEventsToAllViews([]);
 		}
 		renderEvents();
 		return;
@@ -847,7 +817,6 @@ async function loadScopedSchedules() {
 	}
 
 	// Fallback
-	applyEventsToAllViews([]);
 	renderEvents();
 }
 

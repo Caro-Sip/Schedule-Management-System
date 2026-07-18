@@ -404,20 +404,6 @@ function bindEvents() {
                     userDepartmentInput.value = "";
                 }
             }
-
-            const classField = document.getElementById("class-field");
-            const isMonitorOrStudent = userRoleInput.value === "class-monitor" || userRoleInput.value === "guest";
-            if (classField) {
-                classField.toggleAttribute("hidden", !isMonitorOrStudent);
-            }
-            if (userClassIdInput) {
-                if (isMonitorOrStudent) {
-                    userClassIdInput.setAttribute("required", "");
-                } else {
-                    userClassIdInput.removeAttribute("required");
-                    userClassIdInput.value = "";
-                }
-            }
         });
     }
 
@@ -462,11 +448,6 @@ function bindEvents() {
             // Only include department for professors
             if (role === "professor" && userDepartmentInput) {
                 payload.department = userDepartmentInput.value;
-            }
-
-            // Include classId for monitors and students
-            if ((role === "class-monitor" || role === "guest") && userClassIdInput && userClassIdInput.value) {
-                payload.classId = Number(userClassIdInput.value);
             }
 
             if (password) {
@@ -972,9 +953,6 @@ function bindEvents() {
 
     if (eventsEl) {
         eventsEl.addEventListener("click", (event) => {
-            if (!isAdminRole(state.role) && !isTeacherRole(state.role)) {
-                return;
-            }
             const eventCard = event.target.closest(".event");
             if (eventCard) {
                 const eventId = eventCard.dataset.eventId;
@@ -996,6 +974,7 @@ function bindEvents() {
             }
             if (
                 state.view === "class" &&
+                (isAdminRole(state.role) || isTeacherRole(state.role)) &&
                 !state.selectedClassId
             ) {
                 alert("Select a class first.");

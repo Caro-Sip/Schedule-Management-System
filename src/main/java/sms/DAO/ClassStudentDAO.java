@@ -111,22 +111,6 @@ public class ClassStudentDAO {
         }
     }
 
-    // DELETE - Delete by user_id
-    public boolean deleteByUserId(int userId) {
-        String sql = "DELETE FROM class_students WHERE user_id = ?";
-
-        try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setInt(1, userId);
-            int rowsAffected = pstmt.executeUpdate();
-            return rowsAffected > 0;
-        } catch (SQLException e) {
-            System.err.println("Error deleting class student mapping: " + e.getMessage());
-            return false;
-        }
-    }
-
     // DELETE - Delete all users
     public boolean deleteAllUsers() {
         String sql = "DELETE FROM class_students";

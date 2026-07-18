@@ -81,26 +81,6 @@ function openUserModal(mode, user) {
     }
   }
 
-  const classField = document.getElementById("class-field");
-  const isMonitorOrStudent = userRoleInput && (userRoleInput.value === "class-monitor" || userRoleInput.value === "guest");
-  if (classField) {
-    classField.toggleAttribute("hidden", !isMonitorOrStudent);
-  }
-  if (userClassIdInput) {
-    updateClassSelectOptions(userClassIdInput);
-    if (isMonitorOrStudent) {
-      userClassIdInput.setAttribute("required", "");
-      userClassIdInput.value = resolveSelectValue(
-        userClassIdInput,
-        user?.classId,
-        ""
-      );
-    } else {
-      userClassIdInput.removeAttribute("required");
-      userClassIdInput.value = "";
-    }
-  }
-
   if (userDeleteBtn) {
     userDeleteBtn.toggleAttribute("hidden", mode !== "edit");
   }
@@ -612,7 +592,7 @@ function getFilteredUsers() {
 }
 
 function getFilteredClasses() {
-  const term = classSearch ? normalizeClassText(classSearch.value) : "";
+  const term = classSearch ? classSearch.value.trim().toLowerCase() : "";
 
   return getSortedClasses().filter((classItem) => {
     if (!term) {

@@ -4,8 +4,6 @@ import sms.DAO.UserDAO;
 import sms.Objects.User;
 import sms.DAO.TeacherDAO;
 import sms.Objects.Teacher;
-import sms.DAO.ClassStudentDAO;
-import sms.Objects.ClassStudent;
 
 import java.util.List;
 import java.time.LocalDateTime;
@@ -88,7 +86,7 @@ public class UserService {
 		}
 	}
 
-	public User createUser(String name, String email, String password, String role, String department, Integer classId) {
+	public User createUser(String name, String email, String password, String role, String department) {
 		String normalizedName = normalizeName(name);
 		String normalizedEmail = normalizeEmail(email);
 		String normalizedRole = normalizeRole(role);
@@ -116,12 +114,11 @@ public class UserService {
 			throw new RuntimeException("Created user could not be loaded");
 		}
 		syncTeacherDepartment(created.getId(), normalizedRole, normalizedDepartment);
-		syncClassStudent(created.getId(), normalizedRole, classId);
 		attachDepartment(created);
 		return created;
 	}
 
-	public User updateUser(int id, String name, String email, String password, String role, String department, Integer classId) {
+	public User updateUser(int id, String name, String email, String password, String role, String department) {
 		if (id <= 0) {
 			throw new IllegalArgumentException("User id must be positive");
 		}
@@ -156,7 +153,6 @@ public class UserService {
 		}
 
 		syncTeacherDepartment(id, normalizedRole, normalizedDepartment);
-		syncClassStudent(id, normalizedRole, classId);
 
 		User updated = userDAO.getUserById(id);
 		if (updated == null) {
@@ -281,18 +277,6 @@ public class UserService {
 			teacherDAO.updateTeacher(existingTeacher);
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to sync teacher department", e);
-		}
-	}
-
-	private void syncClassStudent(int userId, String role, Integer classId) {
-		try {
-			ClassStudentDAO classStudentDAO = new ClassStudentDAO();
-			classStudentDAO.deleteByUserId(userId);
-			if (("MONITOR".equals(role) || "STUDENT".equals(role)) && classId != null && classId > 0) {
-				classStudentDAO.createUser(new ClassStudent(classId, userId));
-			}
-		} catch (Exception e) {
-			throw new RuntimeException("Failed to sync class student", e);
 		}
 	}
 

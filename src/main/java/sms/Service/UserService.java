@@ -57,6 +57,8 @@ public class UserService {
 			throw new IllegalArgumentException("Invalid email or password");
 		}
 
+		attachDepartment(user);
+		attachClassId(user);
 		return user;
 	}
 
@@ -94,7 +96,7 @@ public class UserService {
 	}
 
 	private void attachClassId(User user) {
-		if ("class-monitor".equalsIgnoreCase(user.getRole())) {
+		if ("MONITOR".equalsIgnoreCase(user.getRole()) || "GUEST".equalsIgnoreCase(user.getRole())) {
 			Integer classId = classStudentDAO.getClassIdByUserId(user.getId());
 			user.setClassId(classId);
 		}
@@ -136,7 +138,7 @@ public class UserService {
 
 	private void syncClassAssignment(int userId, String role, Integer classId) {
 		classStudentDAO.deleteByUserId(userId);
-		if ("class-monitor".equalsIgnoreCase(role) && classId != null) {
+		if (("MONITOR".equalsIgnoreCase(role) || "GUEST".equalsIgnoreCase(role)) && classId != null) {
 			classStudentDAO.createUser(new ClassStudent(classId, userId));
 		}
 	}
@@ -276,7 +278,7 @@ public class UserService {
 		try {
 			Teacher teacher = teacherDAO.getByUserId(user.getId());
 			if (teacher != null) {
-				teacher.getDepartment();
+				user.setDepartment(teacher.getDepartment());
 			}
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to load teacher department", e);

@@ -114,7 +114,7 @@ function openUserModal(mode, user) {
   }
 
   const departmentField = document.getElementById("department-field");
-  const needsDepartment = userRoleInput && (userRoleInput.value === "professor" || userRoleInput.value === "class-monitor");
+  const needsDepartment = userRoleInput && userRoleInput.value === "professor";
   if (departmentField) {
     departmentField.toggleAttribute("hidden", !needsDepartment);
   }

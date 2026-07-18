@@ -1001,37 +1001,15 @@ public class ApiServer {
 
     private static Map<String, Object> toPublicUser(User user) {
         Map<String, Object> payload = new LinkedHashMap<>();
-        String department = null;
-        if (user != null && "TEACHER".equalsIgnoreCase(user.getRole())) {
-            try {
-                Teacher teacher = teacherService.getTeacherByUserId(user.getId());
-                department = teacher != null ? teacher.getDepartment() : null;
-            } catch (Exception e) {
-                department = null;
-            }
-        }
         payload.put("id", user.getId());
         payload.put("name", user.getName());
         payload.put("email", user.getEmail());
         payload.put("role", normalizeRoleForClient(user.getRole()));
-        payload.put("department", department);
+        payload.put("department", user != null ? user.getDepartment() : null);
         payload.put("lastModified", user.getLastModified());
         // If this user is a student or class monitor, expose their classId for the client
-        try {
-            if (user != null) {
-                String rawRole = user.getRole();
-                if (rawRole != null) {
-                    String up = rawRole.trim().toUpperCase();
-                    if ("CLASS-MONITOR".equals(up) || "MONITOR".equals(up) || "STUDENT".equals(up) || "GUEST".equals(up)) {
-                        Integer classId = new ClassStudentDAO().getClassIdByUserId(user.getId());
-                        if (classId != null) {
-                            payload.put("classId", classId);
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            // ignore lookup failures
+        if (user != null && user.getClassId() != null) {
+            payload.put("classId", user.getClassId());
         }
         return payload;
     }

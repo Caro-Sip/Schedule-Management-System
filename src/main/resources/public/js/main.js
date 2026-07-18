@@ -397,7 +397,7 @@ function bindEvents() {
             const departmentField = document.getElementById("department-field");
             const classField = document.getElementById("user-class-field");
             const userClassInput = document.getElementById("user-class");
-            const needsDepartment = userRoleInput.value === "professor" || userRoleInput.value === "class-monitor";
+            const needsDepartment = userRoleInput.value === "professor";
             const needsClass = userRoleInput.value === "class-monitor" || userRoleInput.value === "student" || userRoleInput.value === "guest";
             
             if (departmentField) {
@@ -479,8 +479,8 @@ function bindEvents() {
                 role,
             };
 
-            // Only include department for professors and class monitors
-            if ((role === "professor" || role === "class-monitor") && userDepartmentInput) {
+            // Only include department for professors
+            if (role === "professor" && userDepartmentInput) {
                 payload.department = userDepartmentInput.value;
             }
 

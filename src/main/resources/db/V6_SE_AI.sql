@@ -20,7 +20,7 @@ CREATE TABLE users (
     name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
-    role TEXT NOT NULL CHECK(role IN ('ADMIN', 'TEACHER', 'MONITOR', 'STUDENT')),
+    role TEXT NOT NULL CHECK(role IN ('ADMIN', 'TEACHER', 'MONITOR', 'GUEST')),
     last_modified TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -133,12 +133,6 @@ INSERT INTO users (id, name, email, password_hash, role, last_modified) VALUES
     (7, 'Srang Sarot', 'srang.sarot@school.local', '12345', 'TEACHER', '2026-05-10T11:15:00'),
     (8, 'Has Sothea', 'has.sothea@school.local', '12345', 'TEACHER', '2026-05-09T17:45:00'),
     (9, 'Omar Idris', 'omar.idris@school.local', '12345', 'MONITOR', '2026-05-08T13:20:00'),
-    (10, 'Sara Khan', 'sara.khan@school.local', '12345', 'STUDENT', '2026-05-07T09:30:00'),
-    (11, 'Noah Williams', 'noah.williams@school.local', '12345', 'STUDENT', '2026-05-06T10:30:00'),
-    (12, 'Lina Gomez', 'lina.gomez@school.local', '12345', 'STUDENT', '2026-05-05T12:00:00'),
-    (13, 'Ethan Brown', 'ethan.brown@school.local', '12345', 'STUDENT', '2026-05-04T14:15:00'),
-    (14, 'Priya Patel', 'priya.patel@school.local', '12345', 'STUDENT', '2026-05-03T15:45:00'),
-    (15, 'Daniel Nguyen', 'daniel.nguyen@school.local', '12345', 'STUDENT', '2026-05-02T17:10:00'),
     (16, 'Mei Lin', 'mei.lin@school.local', '12345', 'MONITOR', '2026-05-01T09:10:00'),
     (17, 'Alex Jordan', 'alex.jordan@school.local', '12345', 'MONITOR', '2026-05-01T09:15:00'),
     -- Pich Reatrey (AI Teacher)
@@ -180,8 +174,8 @@ INSERT INTO classes (id, name, year, semester, start_date, end_date, created_by)
     (11, 'IP-AI-Y3-S2 (2026)', 3, 2, '2026-03-02', '2026-06-27', 1);
 
 INSERT INTO class_students (class_id, user_id) VALUES
-    (1, 5), (1, 6), (1, 7), (2, 8), (2, 9), (2, 10), (3, 5), (3, 8), (4, 16),
-    (5, 17), (2, 15), (2, 11), (2, 12), (2, 13), (2, 14),
+    (1, 5), (1, 6), (1, 7), (2, 8), (2, 9), (3, 5), (3, 8), (4, 16),
+    (5, 17),
     -- Monitors
     (6, 19),
     (7, 20),

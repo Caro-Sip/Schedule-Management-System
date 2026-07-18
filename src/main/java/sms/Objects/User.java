@@ -7,6 +7,7 @@ public class User {
     private String passwordHash;
     private String role;
     private String lastModified;
+    private Integer classId;
 
     public User() {}
 
@@ -52,6 +53,9 @@ public class User {
 
     public String getLastModified() { return lastModified; }
     public void setLastModified(String lastModified) { this.lastModified = lastModified; }
+
+    public Integer getClassId() { return classId; }
+    public void setClassId(Integer classId) { this.classId = classId; }
 
     @Override
     public String toString() {

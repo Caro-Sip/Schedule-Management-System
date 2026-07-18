@@ -405,7 +405,6 @@
                     <option value="admin">Admin</option>
                     <option value="professor">Professor</option>
                     <option value="class-monitor">Class monitor</option>
-                    <option value="guest">Student</option>
                 </select>
             </label>
             <label id="department-field" hidden>
@@ -420,6 +419,20 @@
                     <option value="Student Affairs">Student Affairs</option>
                 </select>
             </label>
+            <div class="room-picker" id="user-class-field" hidden>
+                <div class="room-picker-field">
+                    <label>
+                        Class
+                        <input
+                                type="text"
+                                id="user-class"
+                                placeholder="Type class name or ID"
+                                autocomplete="off"
+                        />
+                    </label>
+                    <div class="room-picker-results" id="user-class-results" hidden></div>
+                </div>
+            </div>
 
             <div class="modal-actions split">
                 <button class="btn" id="user-delete" type="button">
@@ -708,21 +721,6 @@
                     <div class="room-picker-results" id="booking-room-results" hidden></div>
                 </div>
             </div>
-            <div class="room-picker" id="booking-professor-group">
-                <div class="room-picker-field">
-                    <label>
-                        Professor name
-                        <input
-                                type="text"
-                                id="booking-professor"
-                                required
-                                placeholder="Dr. Smith"
-                                autocomplete="off"
-                        />
-                    </label>
-                    <div class="room-picker-results" id="booking-professor-results" hidden></div>
-                </div>
-            </div>
             <div class="room-picker" id="booking-subject-group">
                 <div class="room-picker-field">
                     <label>
@@ -736,6 +734,21 @@
                         />
                     </label>
                     <div class="room-picker-results" id="booking-subject-results" hidden></div>
+                </div>
+            </div>
+            <div class="room-picker" id="booking-professor-group">
+                <div class="room-picker-field">
+                    <label>
+                        Professor name
+                        <input
+                                type="text"
+                                id="booking-professor"
+                                required
+                                placeholder="Dr. Smith"
+                                autocomplete="off"
+                        />
+                    </label>
+                    <div class="room-picker-results" id="booking-professor-results" hidden></div>
                 </div>
             </div>
             <label>

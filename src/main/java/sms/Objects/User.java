@@ -8,6 +8,7 @@ public class User {
     private String role;
     private String lastModified;
     private Integer classId;
+    private String department;
 
     public User() {}
 
@@ -56,6 +57,9 @@ public class User {
 
     public Integer getClassId() { return classId; }
     public void setClassId(Integer classId) { this.classId = classId; }
+
+    public String getDepartment() { return department; }
+    public void setDepartment(String department) { this.department = department; }
 
     @Override
     public String toString() {

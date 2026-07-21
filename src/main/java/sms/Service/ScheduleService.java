@@ -48,28 +48,35 @@ public class ScheduleService {
     private final TeacherCourseDAO teacherCourseDAO;
 
     public ScheduleService() {
-        this(new ScheduleDAO(), new ScheduleClassDAO(), new ClassEntityDAO(), new ClassCourseDAO(), new ClassroomDAO(), new CourseDAO(), new TeacherDAO(), new RecurringScheduleDAO(), new TeacherCourseDAO());
+        this(new ScheduleDAO(), new ScheduleClassDAO(), new ClassEntityDAO(), new ClassCourseDAO(), new ClassroomDAO(),
+                new CourseDAO(), new TeacherDAO(), new RecurringScheduleDAO(), new TeacherCourseDAO());
     }
 
     public ScheduleService(ScheduleDAO scheduleDAO, ScheduleClassDAO scheduleClassDAO,
             ClassEntityDAO classEntityDAO) {
-        this(scheduleDAO, scheduleClassDAO, classEntityDAO, new ClassCourseDAO(), new ClassroomDAO(), new CourseDAO(), new TeacherDAO(), new RecurringScheduleDAO(), new TeacherCourseDAO());
+        this(scheduleDAO, scheduleClassDAO, classEntityDAO, new ClassCourseDAO(), new ClassroomDAO(), new CourseDAO(),
+                new TeacherDAO(), new RecurringScheduleDAO(), new TeacherCourseDAO());
     }
 
     public ScheduleService(ScheduleDAO scheduleDAO, ScheduleClassDAO scheduleClassDAO,
-            ClassEntityDAO classEntityDAO, ClassCourseDAO classCourseDAO, ClassroomDAO classroomDAO, CourseDAO courseDAO,
+            ClassEntityDAO classEntityDAO, ClassCourseDAO classCourseDAO, ClassroomDAO classroomDAO,
+            CourseDAO courseDAO,
             TeacherDAO teacherDAO) {
-        this(scheduleDAO, scheduleClassDAO, classEntityDAO, classCourseDAO, classroomDAO, courseDAO, teacherDAO, new RecurringScheduleDAO(), new TeacherCourseDAO());
+        this(scheduleDAO, scheduleClassDAO, classEntityDAO, classCourseDAO, classroomDAO, courseDAO, teacherDAO,
+                new RecurringScheduleDAO(), new TeacherCourseDAO());
     }
 
     public ScheduleService(ScheduleDAO scheduleDAO, ScheduleClassDAO scheduleClassDAO,
-            ClassEntityDAO classEntityDAO, ClassCourseDAO classCourseDAO, ClassroomDAO classroomDAO, CourseDAO courseDAO,
+            ClassEntityDAO classEntityDAO, ClassCourseDAO classCourseDAO, ClassroomDAO classroomDAO,
+            CourseDAO courseDAO,
             TeacherDAO teacherDAO, RecurringScheduleDAO recurringScheduleDAO) {
-        this(scheduleDAO, scheduleClassDAO, classEntityDAO, classCourseDAO, classroomDAO, courseDAO, teacherDAO, recurringScheduleDAO, new TeacherCourseDAO());
+        this(scheduleDAO, scheduleClassDAO, classEntityDAO, classCourseDAO, classroomDAO, courseDAO, teacherDAO,
+                recurringScheduleDAO, new TeacherCourseDAO());
     }
 
     public ScheduleService(ScheduleDAO scheduleDAO, ScheduleClassDAO scheduleClassDAO,
-            ClassEntityDAO classEntityDAO, ClassCourseDAO classCourseDAO, ClassroomDAO classroomDAO, CourseDAO courseDAO,
+            ClassEntityDAO classEntityDAO, ClassCourseDAO classCourseDAO, ClassroomDAO classroomDAO,
+            CourseDAO courseDAO,
             TeacherDAO teacherDAO, RecurringScheduleDAO recurringScheduleDAO, TeacherCourseDAO teacherCourseDAO) {
         this.scheduleDAO = scheduleDAO;
         this.scheduleClassDAO = scheduleClassDAO;
@@ -118,8 +125,7 @@ public class ScheduleService {
                     normalizedVisibility,
                     normalizedType,
                     priority,
-                    createdBy
-            );
+                    createdBy);
             schedule.setCreatedAt(LocalDateTime.now());
             schedule.setLinkedScheduleId(linkedScheduleId != null && linkedScheduleId > 0 ? linkedScheduleId : null);
 
@@ -181,7 +187,8 @@ public class ScheduleService {
             String resolvedType = normalizeScheduleType(type, existing.getType());
             int resolvedPriority = priority != null ? priority : existing.getPriority();
             int resolvedCreatedBy = createdBy != null ? createdBy : existing.getCreatedBy();
-            Integer resolvedLinkedScheduleId = linkedScheduleId != null ? linkedScheduleId : existing.getLinkedScheduleId();
+            Integer resolvedLinkedScheduleId = linkedScheduleId != null ? linkedScheduleId
+                    : existing.getLinkedScheduleId();
             List<Integer> resolvedClassIds = normalizeClassIds(classIds);
             if (resolvedClassIds.isEmpty()) {
                 resolvedClassIds = scheduleClassDAO.getClassIdsByScheduleId(scheduleId);
@@ -201,7 +208,8 @@ public class ScheduleService {
                 throw new IllegalArgumentException("At least one class id is required");
             }
 
-            validateScheduleReferences(resolvedClassroomId, resolvedTeacherId, resolvedCourseId, resolvedLinkedScheduleId,
+            validateScheduleReferences(resolvedClassroomId, resolvedTeacherId, resolvedCourseId,
+                    resolvedLinkedScheduleId,
                     resolvedClassIds);
             validateTeacherConflict(resolvedTeacherId, resolvedDate, resolvedStartTime, resolvedEndTime, scheduleId);
 
@@ -216,7 +224,8 @@ public class ScheduleService {
             existing.setType(resolvedType);
             existing.setPriority(resolvedPriority);
             existing.setCreatedBy(resolvedCreatedBy);
-            existing.setLinkedScheduleId(resolvedLinkedScheduleId != null && resolvedLinkedScheduleId > 0 ? resolvedLinkedScheduleId : null);
+            existing.setLinkedScheduleId(
+                    resolvedLinkedScheduleId != null && resolvedLinkedScheduleId > 0 ? resolvedLinkedScheduleId : null);
 
             if (!scheduleDAO.updateSchedule(existing)) {
                 throw new RuntimeException("Schedule was not updated");
@@ -268,11 +277,11 @@ public class ScheduleService {
     }
 
     public List<Schedule> getAllSchedules() {
-        try{
+        try {
             List<Schedule> schedulesViewList = scheduleDAO.getAllSchedules();
             return schedulesViewList;
-        } catch (SQLException e){
-            throw new RuntimeException("Failed to retrieve schedules",e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to retrieve schedules", e);
         }
     }
 
@@ -289,12 +298,12 @@ public class ScheduleService {
     }
 
     // public List<Schedule> getAllScheduleViews() {
-    //     try{
-    //         List<Schedule> scheduleViewList = scheduleDAO.getAllSchedules();
-    //         return scheduleViewList;
-    //     } catch (SQLException e){
-    //         throw new RuntimeException("Failed to retrieve schedules",e);
-    //     }
+    // try{
+    // List<Schedule> scheduleViewList = scheduleDAO.getAllSchedules();
+    // return scheduleViewList;
+    // } catch (SQLException e){
+    // throw new RuntimeException("Failed to retrieve schedules",e);
+    // }
     // }
 
     public Map<String, Object> getScheduleView(int id) {
@@ -392,44 +401,48 @@ public class ScheduleService {
 
     // TODO Schedule is not properly working yet
     // public void assignTeacherToClass(int classId, int teacherId, int userId)
-    //         throws ClassNotFoundException, TeacherNotFoundException, ScheduleConflictException {
-    //     validateClassId(classId);
-    //     validateTeacherId(teacherId);
+    // throws ClassNotFoundException, TeacherNotFoundException,
+    // ScheduleConflictException {
+    // validateClassId(classId);
+    // validateTeacherId(teacherId);
 
-    //     try {
-    //         if (!classEntityDAO.classExists(classId)) {
-    //             throw new ClassNotFoundException("Class not found with id:" + classId);
-    //         }
+    // try {
+    // if (!classEntityDAO.classExists(classId)) {
+    // throw new ClassNotFoundException("Class not found with id:" + classId);
+    // }
 
-    //         if (!teacherDAO.teacherExists(teacherId)) {
-    //             throw new TeacherNotFoundException("Teacher not found with id:" + teacherId);
-    //         }
+    // if (!teacherDAO.teacherExists(teacherId)) {
+    // throw new TeacherNotFoundException("Teacher not found with id:" + teacherId);
+    // }
 
-    //         List<Integer> scheduleIds = scheduleClassDAO.getScheduleIdsByClassId(classId);
-    //         for (int scheduleId : scheduleIds) {
-    //             Schedule schedule = scheduleDAO.getScheduleById(scheduleId);
-    //             if (schedule == null) {
-    //                 continue;
-    //             }
+    // List<Integer> scheduleIds =
+    // scheduleClassDAO.getScheduleIdsByClassId(classId);
+    // for (int scheduleId : scheduleIds) {
+    // Schedule schedule = scheduleDAO.getScheduleById(scheduleId);
+    // if (schedule == null) {
+    // continue;
+    // }
 
-    //             TimeSlot slot = new TimeSlot(schedule.getDate(), schedule.getStartTime(), schedule.getEndTime());
-    //             List<ScheduleConflict> conflicts = findConflicts(teacherId, slot, scheduleId);
-    //             if (!conflicts.isEmpty()) {
-    //                 throw new ScheduleConflictException("Teacher has a scheduling conflict");
-    //             }
+    // TimeSlot slot = new TimeSlot(schedule.getDate(), schedule.getStartTime(),
+    // schedule.getEndTime());
+    // List<ScheduleConflict> conflicts = findConflicts(teacherId, slot,
+    // scheduleId);
+    // if (!conflicts.isEmpty()) {
+    // throw new ScheduleConflictException("Teacher has a scheduling conflict");
+    // }
 
-    //             schedule.setTeacherId(teacherId);
-    //             schedule.setCreatedBy(userId);
-    //             boolean isUpdated = scheduleDAO.updateSchedule(schedule);
-    //             if (!isUpdated) {
-    //                 throw new ScheduleConflictException("Failed to assign teacher to class");
-    //             }
-    //         }
-    //     } catch (ScheduleConflictException e) {
-    //         throw e;
-    //     } catch (Exception e) {
-    //         throw new RuntimeException("Failed to assign teacher to class", e);
-    //     }
+    // schedule.setTeacherId(teacherId);
+    // schedule.setCreatedBy(userId);
+    // boolean isUpdated = scheduleDAO.updateSchedule(schedule);
+    // if (!isUpdated) {
+    // throw new ScheduleConflictException("Failed to assign teacher to class");
+    // }
+    // }
+    // } catch (ScheduleConflictException e) {
+    // throw e;
+    // } catch (Exception e) {
+    // throw new RuntimeException("Failed to assign teacher to class", e);
+    // }
     // }
 
     public void removeTeacherFromClass(int classId, int teacherId, int userId)
@@ -470,91 +483,97 @@ public class ScheduleService {
 
     // TODO cannot see the current point of this function
     // public List<ScheduleConflict> detectConflicts(int teacherId, TimeSlot slot)
-    //         throws TeacherNotFoundException {
-    //     validateTeacherId(teacherId);
-    //     validateTimeSlot(slot);
+    // throws TeacherNotFoundException {
+    // validateTeacherId(teacherId);
+    // validateTimeSlot(slot);
 
-    //     try {
-    //         if (!teacherDAO.teacherExists(teacherId)) {
-    //             throw new TeacherNotFoundException("Teacher not found with id:" + teacherId);
-    //         }
-    //     } catch (TeacherNotFoundException e) {
-    //         throw e;
-    //     } catch (Exception e) {
-    //         throw new RuntimeException("Failed to detect conflicts", e);
-    //     }
+    // try {
+    // if (!teacherDAO.teacherExists(teacherId)) {
+    // throw new TeacherNotFoundException("Teacher not found with id:" + teacherId);
+    // }
+    // } catch (TeacherNotFoundException e) {
+    // throw e;
+    // } catch (Exception e) {
+    // throw new RuntimeException("Failed to detect conflicts", e);
+    // }
 
-    //     return findConflicts(teacherId, slot, null);
+    // return findConflicts(teacherId, slot, null);
     // }
 
     // TODO need to recheck logic of this function
     // public boolean hasConflict(int teacherId, TimeSlot slot) {
-    //     try {
-    //         return !detectConflicts(teacherId, slot).isEmpty();
-    //     } catch (TeacherNotFoundException e) {
-    //         throw new RuntimeException("Failed to check conflicts", e);
-    //     }
+    // try {
+    // return !detectConflicts(teacherId, slot).isEmpty();
+    // } catch (TeacherNotFoundException e) {
+    // throw new RuntimeException("Failed to check conflicts", e);
+    // }
     // }
 
     // TODO normal schedule isn't working yet
-    // public void scheduleMakeupClass(int originalClassId, TimeSlot newSlot, String reason, int userId)
-    //         throws ClassNotFoundException, ScheduleConflictException {
-    //     validateClassId(originalClassId);
-    //     validateTimeSlot(newSlot);
+    // public void scheduleMakeupClass(int originalClassId, TimeSlot newSlot, String
+    // reason, int userId)
+    // throws ClassNotFoundException, ScheduleConflictException {
+    // validateClassId(originalClassId);
+    // validateTimeSlot(newSlot);
 
-    //     if (reason == null || reason.trim().isEmpty()) {
-    //         throw new IllegalArgumentException("Reason cannot be empty");
-    //     }
-
-    //     try {
-    //         if (!classEntityDAO.classExists(originalClassId)) {
-    //             throw new ClassNotFoundException("Class not found with id:" + originalClassId);
-    //         }
-
-    //         Schedule baseSchedule = getOldestAbsentSchedule(originalClassId);
-    //         Integer teacherId = baseSchedule.getTeacherId();
-    //         if (teacherId != null && hasConflict(teacherId, newSlot)) {
-    //             throw new ScheduleConflictException("Teacher has a scheduling conflict");
-    //         }
-
-    //         Duration missedDuration = Duration.between(baseSchedule.getStartTime(), baseSchedule.getEndTime());
-    //         Duration newDuration = Duration.between(newSlot.getStartTime(), newSlot.getEndTime());
-    //         if (!missedDuration.equals(newDuration)) {
-    //             throw new IllegalArgumentException("Makeup duration must match missed class duration");
-    //         }
-
-    //         Schedule makeup = new Schedule(
-    //                 baseSchedule.getClassroomId(),
-    //                     baseSchedule.getTeacherId(),
-    //                 baseSchedule.getCourseId(),
-    //                 newSlot.getDate(),
-    //                 newSlot.getStartTime(),
-    //                 newSlot.getEndTime(),
-    //                 "MAKEUP",
-    //                 "VISIBLE",
-    //                     baseSchedule.getType(),
-    //                 baseSchedule.getPriority(),
-    //                 userId
-    //         );
-    //         makeup.setCreatedAt(LocalDateTime.now());
-    //         makeup.setLinkedScheduleId(baseSchedule.getId());
-
-    //         boolean isCreated = scheduleDAO.createSchedule(makeup);
-    //         if (!isCreated) {
-    //             throw new ScheduleConflictException("Failed to create makeup class");
-    //         }
-
-    //         scheduleClassDAO.createScheduleClass(makeup.getId(), originalClassId);
-    //     } catch (ScheduleConflictException e) {
-    //         throw e;
-    //     } catch (Exception e) {
-    //         throw new RuntimeException("Failed to schedule makeup class", e);
-    //     }
+    // if (reason == null || reason.trim().isEmpty()) {
+    // throw new IllegalArgumentException("Reason cannot be empty");
     // }
 
-    // public void scheduleMarkupClass(int originalClassId, TimeSlot newSlot, String reason, int userId)
-    //         throws ClassNotFoundException, ScheduleConflictException {
-    //     scheduleMakeupClass(originalClassId, newSlot, reason, userId);
+    // try {
+    // if (!classEntityDAO.classExists(originalClassId)) {
+    // throw new ClassNotFoundException("Class not found with id:" +
+    // originalClassId);
+    // }
+
+    // Schedule baseSchedule = getOldestAbsentSchedule(originalClassId);
+    // Integer teacherId = baseSchedule.getTeacherId();
+    // if (teacherId != null && hasConflict(teacherId, newSlot)) {
+    // throw new ScheduleConflictException("Teacher has a scheduling conflict");
+    // }
+
+    // Duration missedDuration = Duration.between(baseSchedule.getStartTime(),
+    // baseSchedule.getEndTime());
+    // Duration newDuration = Duration.between(newSlot.getStartTime(),
+    // newSlot.getEndTime());
+    // if (!missedDuration.equals(newDuration)) {
+    // throw new IllegalArgumentException("Makeup duration must match missed class
+    // duration");
+    // }
+
+    // Schedule makeup = new Schedule(
+    // baseSchedule.getClassroomId(),
+    // baseSchedule.getTeacherId(),
+    // baseSchedule.getCourseId(),
+    // newSlot.getDate(),
+    // newSlot.getStartTime(),
+    // newSlot.getEndTime(),
+    // "MAKEUP",
+    // "VISIBLE",
+    // baseSchedule.getType(),
+    // baseSchedule.getPriority(),
+    // userId
+    // );
+    // makeup.setCreatedAt(LocalDateTime.now());
+    // makeup.setLinkedScheduleId(baseSchedule.getId());
+
+    // boolean isCreated = scheduleDAO.createSchedule(makeup);
+    // if (!isCreated) {
+    // throw new ScheduleConflictException("Failed to create makeup class");
+    // }
+
+    // scheduleClassDAO.createScheduleClass(makeup.getId(), originalClassId);
+    // } catch (ScheduleConflictException e) {
+    // throw e;
+    // } catch (Exception e) {
+    // throw new RuntimeException("Failed to schedule makeup class", e);
+    // }
+    // }
+
+    // public void scheduleMarkupClass(int originalClassId, TimeSlot newSlot, String
+    // reason, int userId)
+    // throws ClassNotFoundException, ScheduleConflictException {
+    // scheduleMakeupClass(originalClassId, newSlot, reason, userId);
     // }
 
     public List<ClassEntity> getMakeupClassesForOriginal(int originalClassId) {
@@ -662,48 +681,49 @@ public class ScheduleService {
 
     // TODO implement later
     // public List<Schedule> getSchedulesForTeacher(int teacherId) {
-    //     validateTeacherId(teacherId);
+    // validateTeacherId(teacherId);
 
-    //     List<Schedule> matches = new ArrayList<>();
-    //     for (Schedule schedule : scheduleDAO.getAllSchedules()) {
-    //         Integer assignedTeacherId = schedule.getTeacherId();
-    //         if (assignedTeacherId != null && assignedTeacherId == teacherId) {
-    //             matches.add(schedule);
-    //         }
-    //     }
-    //     return matches;
+    // List<Schedule> matches = new ArrayList<>();
+    // for (Schedule schedule : scheduleDAO.getAllSchedules()) {
+    // Integer assignedTeacherId = schedule.getTeacherId();
+    // if (assignedTeacherId != null && assignedTeacherId == teacherId) {
+    // matches.add(schedule);
+    // }
+    // }
+    // return matches;
     // }
 
     // TODO implement schedule later
     // public List<Schedule> getSchedulesForRoom(int roomId) {
-    //     if (roomId < 0) {
-    //         throw new IllegalArgumentException("Invalid room id");
-    //     }
+    // if (roomId < 0) {
+    // throw new IllegalArgumentException("Invalid room id");
+    // }
 
-    //     List<Schedule> matches = new ArrayList<>();
-    //     for (Schedule schedule : scheduleDAO.getAllSchedules()) {
-    //         if (schedule.getClassroomId() == roomId) {
-    //             matches.add(schedule);
-    //         }
-    //     }
-    //     return matches;
+    // List<Schedule> matches = new ArrayList<>();
+    // for (Schedule schedule : scheduleDAO.getAllSchedules()) {
+    // if (schedule.getClassroomId() == roomId) {
+    // matches.add(schedule);
+    // }
+    // }
+    // return matches;
     // }
 
     // TODO re-evaluate importance of this function
     // public List<Schedule> getSchedulesForTimeSlot(TimeSlot slot) {
-    //     validateTimeSlot(slot);
+    // validateTimeSlot(slot);
 
-    //     List<Schedule> matches = new ArrayList<>();
-    //     for (Schedule schedule : scheduleDAO.getAllSchedules()) {
-    //         if (schedule.getDate() == null || !schedule.getDate().equals(slot.getDate())) {
-    //             continue;
-    //         }
+    // List<Schedule> matches = new ArrayList<>();
+    // for (Schedule schedule : scheduleDAO.getAllSchedules()) {
+    // if (schedule.getDate() == null || !schedule.getDate().equals(slot.getDate()))
+    // {
+    // continue;
+    // }
 
-    //         if (isTimeOverlapping(slot, schedule)) {
-    //             matches.add(schedule);
-    //         }
-    //     }
-    //     return matches;
+    // if (isTimeOverlapping(slot, schedule)) {
+    // matches.add(schedule);
+    // }
+    // }
+    // return matches;
     // }
 
     public Schedule getScheduleForClass(int classId) throws ScheduleNotFoundException {
@@ -745,11 +765,11 @@ public class ScheduleService {
 
     // TODO why is there duplicate functions?
     // public List<Schedule> getScheduleForTeacher(int teacherId) {
-    //     return getSchedulesForTeacher(teacherId);
+    // return getSchedulesForTeacher(teacherId);
     // }
 
     // public List<Schedule> getScheduleForRoom(int classroomId) {
-    //     return getSchedulesForRoom(classroomId);
+    // return getSchedulesForRoom(classroomId);
     // }
 
     private void validateClassId(int classId) {
@@ -771,40 +791,43 @@ public class ScheduleService {
     }
 
     // TODO Reimplement find schedule conflicts
-    // private List<ScheduleConflict> findConflicts(int teacherId, TimeSlot slot, Integer excludeScheduleId) {
-    //     List<ScheduleConflict> conflicts = new ArrayList<>();
-    //     for (Schedule schedule : scheduleDAO.getAllSchedules()) {
-    //         if (excludeScheduleId != null && schedule.getId() == excludeScheduleId) {
-    //             continue;
-    //         }
-
-    //         Integer assignedTeacherId = schedule.getTeacherId();
-    //         if (assignedTeacherId == null || assignedTeacherId != teacherId) {
-    //             continue;
-    //         }
-
-    //         if (schedule.getDate() == null || !schedule.getDate().equals(slot.getDate())) {
-    //             continue;
-    //         }
-
-    //         if (isCancelled(schedule)) {
-    //             continue;
-    //         }
-
-    //         if (isTimeOverlapping(slot, schedule)) {
-    //             conflicts.add(new ScheduleConflict(
-    //                     schedule.getId(),
-    //                     assignedTeacherId,
-    //                     schedule.getClassroomId(),
-    //                     "Time overlap",
-    //                     slot
-    //             ));
-    //         }
-    //     }
-    //     return conflicts;
+    // private List<ScheduleConflict> findConflicts(int teacherId, TimeSlot slot,
+    // Integer excludeScheduleId) {
+    // List<ScheduleConflict> conflicts = new ArrayList<>();
+    // for (Schedule schedule : scheduleDAO.getAllSchedules()) {
+    // if (excludeScheduleId != null && schedule.getId() == excludeScheduleId) {
+    // continue;
     // }
 
-    private void validateTeacherConflict(Integer teacherId, LocalDate date, LocalTime startTime, LocalTime endTime, Integer excludeScheduleId) throws java.sql.SQLException {
+    // Integer assignedTeacherId = schedule.getTeacherId();
+    // if (assignedTeacherId == null || assignedTeacherId != teacherId) {
+    // continue;
+    // }
+
+    // if (schedule.getDate() == null || !schedule.getDate().equals(slot.getDate()))
+    // {
+    // continue;
+    // }
+
+    // if (isCancelled(schedule)) {
+    // continue;
+    // }
+
+    // if (isTimeOverlapping(slot, schedule)) {
+    // conflicts.add(new ScheduleConflict(
+    // schedule.getId(),
+    // assignedTeacherId,
+    // schedule.getClassroomId(),
+    // "Time overlap",
+    // slot
+    // ));
+    // }
+    // }
+    // return conflicts;
+    // }
+
+    private void validateTeacherConflict(Integer teacherId, LocalDate date, LocalTime startTime, LocalTime endTime,
+            Integer excludeScheduleId) throws java.sql.SQLException {
         if (teacherId == null) {
             return;
         }
@@ -942,7 +965,8 @@ public class ScheduleService {
             }
 
             if (teacherId != null && !teacherCourseDAO.teacherTeachesCourseToClass(teacherId, courseId, classId)) {
-                throw new IllegalArgumentException("Teacher with id " + teacherId + " does not teach course " + courseId + " to class " + classId);
+                throw new IllegalArgumentException(
+                        "Teacher with id " + teacherId + " does not teach course " + courseId + " to class " + classId);
             }
         }
     }
@@ -1068,7 +1092,8 @@ public class ScheduleService {
         }
     }
 
-    private void rollbackScheduleClassLinks(int scheduleId, List<Integer> appliedClassIds, List<Integer> previousClassIds) {
+    private void rollbackScheduleClassLinks(int scheduleId, List<Integer> appliedClassIds,
+            List<Integer> previousClassIds) {
         for (int classId : appliedClassIds) {
             try {
                 scheduleClassDAO.deleteScheduleClass(scheduleId, classId);

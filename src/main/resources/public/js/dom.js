@@ -126,7 +126,7 @@ function openUserModal(mode, user) {
         user?.department,
         teacherDepartmentDirectory && teacherDepartmentDirectory.length > 0
           ? teacherDepartmentDirectory[0]
-          : "Registrar"
+          : "GIC"
       );
     } else {
       userDepartmentInput.removeAttribute("required");
@@ -454,6 +454,8 @@ function openCourseModal(classItem) {
   if (!courseModal || !courseForm) {
     return;
   }
+
+  loadTeachersIfNeeded().catch((err) => console.error("Failed to load teachers for course modal", err));
 
   courseModalClassId = classItem?.id ?? state.selectedClassId ?? null;
   courseModalSearchTerm = "";

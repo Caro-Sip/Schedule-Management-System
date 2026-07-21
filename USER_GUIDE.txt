@@ -1,3 +1,8 @@
+sqlite3 schedule.db ".read 'src/main/resources/db/schema_only.sql'"
+sqlite3 schedule.db ".read 'src/main/resources/db/V6_SE_AI.sql'"
+sqlite3 schedule.db ".read 'src/main/resources/db/seed_data.sql'"
+
+
 ==================================================
         SCHEDULE MANAGEMENT SYSTEM (SMS)
                   USER GUIDE

@@ -435,13 +435,20 @@ function applySmartBookingMode(enabled) {
   }
 }
 
-function openBookingModal(dayIndex, startMinutes, eventData = null, options = {}) {
+async function openBookingModal(dayIndex, startMinutes, eventData = null, options = {}) {
   if (!bookingModal || !bookingForm) {
     return;
   }
 
   if (typeof ensureAllSchedulesLoaded === "function") {
-    ensureAllSchedulesLoaded().catch((err) => console.error("Failed to preload all schedules", err));
+    document.body.style.cursor = "wait";
+    try {
+      await ensureAllSchedulesLoaded();
+    } catch (err) {
+      console.error("Failed to preload all schedules", err);
+    } finally {
+      document.body.style.cursor = "";
+    }
   }
 
   const isEdit = Boolean(eventData);
@@ -1281,7 +1288,9 @@ function getTeacherBookingConflict(day, bookingDate, startMinutes, endMinutes, i
       if (eventItem.day !== day) {
         return false;
       }
-      if (bookingDate && normalizeBookingDateKey(eventItem.date) !== normalizeBookingDateKey(bookingDate)) {
+      // If BOTH the booking and the existing event are for specific dates, and they differ, no conflict.
+      // If EITHER is recurring (date is null), they conflict if the day and time match.
+      if (bookingDate && eventItem.date && normalizeBookingDateKey(eventItem.date) !== normalizeBookingDateKey(bookingDate)) {
         return false;
       }
       const eventTeacherId = eventItem.teacherId ?? eventItem.professor ?? null;
@@ -1314,7 +1323,9 @@ function getRoomBookingConflict(day, bookingDate, startMinutes, endMinutes, igno
       if (eventItem.day !== day) {
         return false;
       }
-      if (bookingDate && normalizeBookingDateKey(eventItem.date) !== normalizeBookingDateKey(bookingDate)) {
+      // If BOTH the booking and the existing event are for specific dates, and they differ, no conflict.
+      // If EITHER is recurring (date is null), they conflict if the day and time match.
+      if (bookingDate && eventItem.date && normalizeBookingDateKey(eventItem.date) !== normalizeBookingDateKey(bookingDate)) {
         return false;
       }
       const eventStart = parseTimeInput(eventItem.start);

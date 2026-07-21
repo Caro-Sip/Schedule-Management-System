@@ -478,6 +478,11 @@ function openBookingModal(dayIndex, startMinutes, eventData = null, options = {}
       : null;
   const defaultCourseId = null;
 
+  const bookingDateStr = (() => {
+    const base = startOfWeek(new Date(state.baseDate || new Date()));
+    base.setDate(base.getDate() + state.weekOffset * 7 + bookingDay);
+    return `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, "0")}-${String(base.getDate()).padStart(2, "0")}`;
+  })();
   pendingBooking = {
     day: bookingDay,
     view: state.view,
@@ -493,7 +498,7 @@ function openBookingModal(dayIndex, startMinutes, eventData = null, options = {}
     visibility: isEdit ? eventData.visibility || "VISIBLE" : "VISIBLE",
     priority: isEdit ? eventData.priority || 0 : 0,
     linkedScheduleId: isEdit ? eventData.linkedScheduleId || null : null,
-    date: isEdit ? eventData.date || null : null,
+    date: isEdit ? eventData.date || null : bookingDateStr,
     startMinutes: isEdit ? parseTimeInput(eventData.start) : startMinutes,
     endMinutes: isEdit
       ? parseTimeInput(eventData.end)
@@ -1598,16 +1603,55 @@ function autoselectTeacherForCourse(courseId) {
     return;
   }
 
-  const classId = getBookingActiveTargetClassId();
+  const pendingClassIds = Array.isArray(pendingBooking.classIds) && pendingBooking.classIds.length > 0
+    ? pendingBooking.classIds
+    : state.view === "class" && state.selectedClassId
+      ? [state.selectedClassId]
+      : [];
+
   let matchedMapping = null;
 
-  if (classId) {
+  if (pendingClassIds.length > 0) {
+    // Find the teacher that teaches this course for the first class
     matchedMapping = (teacherCourseDirectory || []).find(
-      (m) => Number(m.courseId) === Number(courseId) && Number(m.classId) === Number(classId)
+      (m) => Number(m.courseId) === Number(courseId) && Number(m.classId) === Number(pendingClassIds[0])
     );
+    
+    // Ensure that same teacher teaches this course for ALL selected classes
+    if (matchedMapping) {
+      const teachesAll = pendingClassIds.every((classId) =>
+        (teacherCourseDirectory || []).some(
+          (m) => Number(m.courseId) === Number(courseId) && Number(m.classId) === Number(classId) && Number(m.teacherId) === Number(matchedMapping.teacherId)
+        )
+      );
+      if (!teachesAll) {
+        matchedMapping = null;
+      }
+    }
   }
 
   if (matchedMapping) {
+    const startMinutes = parseTimeInput(bookingStart?.value || "");
+    const endMinutes = parseTimeInput(bookingEnd?.value || "");
+    const hasValidTimes = startMinutes !== null && endMinutes !== null && endMinutes > startMinutes;
+
+    if (hasValidTimes) {
+      const isBusy = getTeacherBookingConflict(
+        pendingBooking.day,
+        pendingBooking.date,
+        startMinutes,
+        endMinutes,
+        pendingBooking.eventId,
+        matchedMapping.teacherId
+      );
+      if (isBusy) {
+        bookingProfessor.value = "";
+        bookingProfessor.dataset.teacherId = "";
+        pendingBooking.teacherId = null;
+        return;
+      }
+    }
+
     const teacher = getBookingTeachers().find(
       (t) => Number(t.id) === Number(matchedMapping.teacherId)
     );
@@ -1631,25 +1675,56 @@ function renderBookingProfessorOptions() {
   }
 
   const query = normalizeRoomText(bookingProfessor.value);
-  const classId = getBookingActiveTargetClassId();
+  const pendingClassIds = Array.isArray(pendingBooking.classIds) && pendingBooking.classIds.length > 0
+    ? pendingBooking.classIds
+    : state.view === "class" && state.selectedClassId
+      ? [state.selectedClassId]
+      : [];
   const courseId = pendingBooking.courseId || (bookingSubject ? bookingSubject.dataset.courseId : null);
 
   let teachers = getBookingTeachers();
   let noAssignmentFound = false;
 
-  if (classId && courseId) {
-    const assignedMappings = (teacherCourseDirectory || []).filter(
-      (m) => Number(m.courseId) === Number(courseId) && Number(m.classId) === Number(classId)
-    );
-    if (assignedMappings.length > 0) {
-      const assignedTeacherIds = new Set(assignedMappings.map((m) => Number(m.teacherId)));
-      teachers = teachers.filter(
-        (t) => assignedTeacherIds.has(Number(t.id))
+  if (pendingClassIds.length > 0 && courseId) {
+    const validTeacherIds = new Set();
+    const allTeacherIds = new Set(teachers.map((t) => Number(t.id)));
+
+    allTeacherIds.forEach((teacherId) => {
+      const teachesAllClasses = pendingClassIds.every((classId) =>
+        (teacherCourseDirectory || []).some(
+          (m) => Number(m.courseId) === Number(courseId) && Number(m.classId) === Number(classId) && Number(m.teacherId) === teacherId
+        )
       );
+      if (teachesAllClasses) {
+        validTeacherIds.add(teacherId);
+      }
+    });
+
+    if (validTeacherIds.size > 0) {
+      teachers = teachers.filter((t) => validTeacherIds.has(Number(t.id)));
     } else {
       teachers = [];
       noAssignmentFound = true;
     }
+  }
+
+  const startMinutes = parseTimeInput(bookingStart?.value || "");
+  const endMinutes = parseTimeInput(bookingEnd?.value || "");
+  const hasValidTimes =
+    startMinutes !== null && endMinutes !== null && endMinutes > startMinutes;
+
+  if (hasValidTimes) {
+    teachers = teachers.filter((teacher) => {
+      const isBusy = getTeacherBookingConflict(
+        pendingBooking.day,
+        pendingBooking.date,
+        startMinutes,
+        endMinutes,
+        pendingBooking.eventId,
+        teacher.id
+      );
+      return !isBusy;
+    });
   }
 
   const filteredTeachers = teachers.filter((teacher) => {
@@ -1802,26 +1877,26 @@ function renderBookingSubjectOptions() {
 
   const coursesTaughtByTeacher = targetTeacherId
     ? (() => {
-        const teacherMappings = (teacherCourseDirectory || []).filter(
-          (m) => Number(m.teacherId) === Number(targetTeacherId)
+      const teacherMappings = (teacherCourseDirectory || []).filter(
+        (m) => Number(m.teacherId) === Number(targetTeacherId)
+      );
+      if (pendingClassIds.length === 0) {
+        return new Set(teacherMappings.map((m) => Number(m.courseId)));
+      }
+      const validCourseIds = new Set();
+      const courseIdsToTest = new Set(teacherMappings.map((m) => Number(m.courseId)));
+      courseIdsToTest.forEach((courseId) => {
+        const teachesAllClasses = pendingClassIds.every((classId) =>
+          teacherMappings.some(
+            (m) => Number(m.courseId) === Number(courseId) && Number(m.classId) === Number(classId)
+          )
         );
-        if (pendingClassIds.length === 0) {
-          return new Set(teacherMappings.map((m) => Number(m.courseId)));
+        if (teachesAllClasses) {
+          validCourseIds.add(courseId);
         }
-        const validCourseIds = new Set();
-        const courseIdsToTest = new Set(teacherMappings.map((m) => Number(m.courseId)));
-        courseIdsToTest.forEach((courseId) => {
-          const teachesAllClasses = pendingClassIds.every((classId) =>
-            teacherMappings.some(
-              (m) => Number(m.courseId) === Number(courseId) && Number(m.classId) === Number(classId)
-            )
-          );
-          if (teachesAllClasses) {
-            validCourseIds.add(courseId);
-          }
-        });
-        return validCourseIds;
-      })()
+      });
+      return validCourseIds;
+    })()
     : null;
 
   const startMinutes = parseTimeInput(bookingStart?.value || "");
@@ -1846,23 +1921,24 @@ function renderBookingSubjectOptions() {
       return false;
     }
 
-    // Filter out course if the teacher assigned to this course for the class is busy teaching at this time
+    // Filter out course if the teacher assigned to this course for any of the selected classes is busy teaching at this time
     if (hasValidTimes && pendingClassIds.length > 0) {
-      const classId = pendingClassIds[0];
-      const assignment = (teacherCourseDirectory || []).find(
-        (m) => Number(m.courseId) === Number(course.id) && Number(m.classId) === Number(classId)
-      );
-      if (assignment && assignment.teacherId) {
-        const isBusy = getTeacherBookingConflict(
-          pendingBooking.day,
-          pendingBooking.date,
-          startMinutes,
-          endMinutes,
-          pendingBooking.eventId,
-          assignment.teacherId
+      for (const classId of pendingClassIds) {
+        const assignment = (teacherCourseDirectory || []).find(
+          (m) => Number(m.courseId) === Number(course.id) && Number(m.classId) === Number(classId)
         );
-        if (isBusy) {
-          return false;
+        if (assignment && assignment.teacherId) {
+          const isBusy = getTeacherBookingConflict(
+            pendingBooking.day,
+            pendingBooking.date,
+            startMinutes,
+            endMinutes,
+            pendingBooking.eventId,
+            assignment.teacherId
+          );
+          if (isBusy) {
+            return false;
+          }
         }
       }
     }

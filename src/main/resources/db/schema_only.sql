@@ -121,6 +121,6 @@ CREATE TABLE schedule_history (
 
 -- Insert a single default admin account for setting up the clean project
 INSERT INTO users (id, name, email, password_hash, role, last_modified) VALUES
-    (1, 'System Admin', 'admin@school.local', 'admin123', 'ADMIN', '2026-06-25T01:00:00');
+    (1, 'System Admin', 'admin@school.local', '12345', 'ADMIN', '2026-06-25T01:00:00');
 
 COMMIT;

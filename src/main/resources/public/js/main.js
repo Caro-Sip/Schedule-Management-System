@@ -1456,6 +1456,8 @@ function bindEvents() {
             }
             renderBookingRoomOptions();
             renderBookingClassOptions();
+            renderBookingSubjectOptions();
+            renderBookingProfessorOptions();
         });
     }
 
@@ -1466,6 +1468,8 @@ function bindEvents() {
             }
             renderBookingRoomOptions();
             renderBookingClassOptions();
+            renderBookingSubjectOptions();
+            renderBookingProfessorOptions();
         });
     }
 

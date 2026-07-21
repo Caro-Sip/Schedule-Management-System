@@ -868,6 +868,13 @@ function buildScheduleEvent(schedule, overrides = {}) {
 	const classroomId = overrides.classroomId !== undefined ? overrides.classroomId : schedule.classroomId;
 	if (teacherId) metaParts.push(`T:${teacherId}`);
 	if (classroomId) metaParts.push(`R:${classroomId}`);
+	const classNames = classIds.map((id) => {
+		const cls = (typeof classDirectory !== "undefined" ? classDirectory : []).find(
+			(c) => String(c.id) === String(id)
+		);
+		return cls ? (cls.name || `Class ${id}`) : `Class ${id}`;
+	});
+	if (classNames.length > 0) metaParts.push(classNames.join(", "));
 	const meta = overrides.meta || metaParts.join(" | ");
 
 	return {

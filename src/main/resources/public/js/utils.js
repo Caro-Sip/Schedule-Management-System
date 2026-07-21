@@ -200,7 +200,7 @@ function resolveClassroomFromInput(value, availableClassrooms) {
       return (
         candidates.some(
           (candidate) =>
-            candidate === query || candidate.includes(query) || query.includes(candidate)
+            candidate === query || candidate.includes(query)
         ) ||
         (buildingMatches && roomMatches)
       );

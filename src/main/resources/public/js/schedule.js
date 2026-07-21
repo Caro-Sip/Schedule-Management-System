@@ -1852,6 +1852,7 @@ function renderBookingRoomOptions() {
   const availableRooms = hasValidTimes
     ? getAvailableRoomsForBooking(
       pendingBooking.day,
+      pendingBooking.date,
       startMinutes,
       endMinutes,
       pendingBooking.eventId

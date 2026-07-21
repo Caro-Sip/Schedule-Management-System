@@ -105,6 +105,7 @@ public class ScheduleService {
 
         try {
             validateScheduleReferences(classroomId, teacherId, courseId, linkedScheduleId, normalizedClassIds);
+            validateTeacherConflict(teacherId, date, startTime, endTime, null);
 
             Schedule schedule = new Schedule(
                     classroomId,
@@ -202,6 +203,7 @@ public class ScheduleService {
 
             validateScheduleReferences(resolvedClassroomId, resolvedTeacherId, resolvedCourseId, resolvedLinkedScheduleId,
                     resolvedClassIds);
+            validateTeacherConflict(resolvedTeacherId, resolvedDate, resolvedStartTime, resolvedEndTime, scheduleId);
 
             existing.setClassroomId(resolvedClassroomId);
             existing.setTeacherId(resolvedTeacherId);
@@ -801,6 +803,29 @@ public class ScheduleService {
     //     }
     //     return conflicts;
     // }
+
+    private void validateTeacherConflict(Integer teacherId, LocalDate date, LocalTime startTime, LocalTime endTime, Integer excludeScheduleId) throws java.sql.SQLException {
+        if (teacherId == null) {
+            return;
+        }
+        for (Schedule schedule : scheduleDAO.getAllSchedules()) {
+            if (excludeScheduleId != null && schedule.getId() == excludeScheduleId) {
+                continue;
+            }
+            if (schedule.getTeacherId() == null || !schedule.getTeacherId().equals(teacherId)) {
+                continue;
+            }
+            if (schedule.getDate() == null || !schedule.getDate().equals(date)) {
+                continue;
+            }
+            if (isCancelled(schedule)) {
+                continue;
+            }
+            if (isTimeOverlapping(new TimeSlot(date, startTime, endTime), schedule)) {
+                throw new IllegalArgumentException("Teacher is already booked for this time slot");
+            }
+        }
+    }
 
     private Schedule getOldestAbsentSchedule(int classId) throws ScheduleNotFoundException {
         Schedule oldest = null;

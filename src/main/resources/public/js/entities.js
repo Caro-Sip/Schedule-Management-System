@@ -542,22 +542,20 @@ function updateDepartmentSelectOptions(selectEl, departments, includeAllOption =
 	selectEl.value = resolveSelectValue(selectEl, previousValue, fallbackValue);
 }
 
+const DEFAULT_DEPARTMENTS = ["AMS", "GAR", "GCA", "GEE", "GIC", "GIM"];
+
 function applyDepartmentOptions() {
-	if (!teacherDepartmentDirectory || teacherDepartmentDirectory.length === 0) {
-		return;
+	const deptSet = new Set(DEFAULT_DEPARTMENTS);
+	if (Array.isArray(teacherDepartmentDirectory)) {
+		teacherDepartmentDirectory.forEach((department) => {
+			const trimmed = (department || "").toString().trim();
+			if (trimmed) {
+				deptSet.add(trimmed);
+			}
+		});
 	}
 
-	const uniqueDepartments = Array.from(
-		new Set(
-			teacherDepartmentDirectory
-				.map((department) => (department || "").toString().trim())
-				.filter(Boolean)
-		)
-	).sort((a, b) => a.localeCompare(b));
-
-	if (uniqueDepartments.length === 0) {
-		return;
-	}
+	const uniqueDepartments = Array.from(deptSet).sort((a, b) => a.localeCompare(b));
 
 	updateDepartmentSelectOptions(userDepartmentInput, uniqueDepartments);
 	updateDepartmentSelectOptions(userFilterDepartment, uniqueDepartments, true);
@@ -566,21 +564,23 @@ function applyDepartmentOptions() {
 async function loadTeacherDepartments() {
 	try {
 		const departments = await requestJson(`${API_BASE}/teachers/departments`);
-		if (!Array.isArray(departments)) {
-			return;
+		if (Array.isArray(departments)) {
+			teacherDepartmentDirectory.length = 0;
+			departments.forEach((department) => {
+				const trimmed = (department || "").toString().trim();
+				if (trimmed) {
+					teacherDepartmentDirectory.push(trimmed);
+				}
+			});
 		}
-		teacherDepartmentDirectory.length = 0;
-		departments.forEach((department) => {
-			const trimmed = (department || "").toString().trim();
-			if (trimmed) {
-				teacherDepartmentDirectory.push(trimmed);
-			}
-		});
-		applyDepartmentOptions();
 	} catch (error) {
 		console.error("Failed to load teacher departments", error);
+	} finally {
+		applyDepartmentOptions();
 	}
 }
+
+applyDepartmentOptions();
 
 async function createUserApi(payload) {
 	return requestJson(`${ADMIN_API_BASE}/users`, {
@@ -713,9 +713,35 @@ async function deleteCourseApi(id) {
 	});
 }
 
+let allScheduleEvents = [];
+
+async function ensureAllSchedulesLoaded() {
+	if (allScheduleEvents.length > 0) {
+		return allScheduleEvents;
+	}
+	try {
+		const schedules = await requestJson(`${API_BASE}/schedules`);
+		if (Array.isArray(schedules)) {
+			allScheduleEvents = schedules
+				.map((s) => buildScheduleEvent(s))
+				.filter(Boolean);
+		}
+	} catch (error) {
+		console.error("Failed to load all schedules for conflict checking", error);
+	}
+	return allScheduleEvents;
+}
+
+function invalidateAllSchedulesCache() {
+	allScheduleEvents.length = 0;
+}
+
 async function loadSchedules() {
 	try {
 		const schedules = await requestJson(`${API_BASE}/schedules`);
+		allScheduleEvents = (schedules || [])
+			.map((s) => buildScheduleEvent(s))
+			.filter(Boolean);
 		// reset events
 		eventsByView.class = [];
 		eventsByView.room = [];

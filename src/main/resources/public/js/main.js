@@ -16,24 +16,24 @@ function handleTabClick(event) {
 }
 
 function closePickerResults(resultsEl) {
-  if (!resultsEl) {
-    return;
-  }
-  resultsEl.setAttribute("hidden", "");
+    if (!resultsEl) {
+        return;
+    }
+    resultsEl.setAttribute("hidden", "");
 }
 
 function bindPickerAutoClose(groupEl, resultsEl) {
-  if (!groupEl || !resultsEl) {
-    return;
-  }
+    if (!groupEl || !resultsEl) {
+        return;
+    }
 
-  groupEl.addEventListener("focusout", () => {
-    window.setTimeout(() => {
-      if (!groupEl.contains(document.activeElement)) {
-        closePickerResults(resultsEl);
-      }
-    }, 0);
-  });
+    groupEl.addEventListener("focusout", () => {
+        window.setTimeout(() => {
+            if (!groupEl.contains(document.activeElement)) {
+                closePickerResults(resultsEl);
+            }
+        }, 0);
+    });
 }
 
 function syncCurrentTeacherContext() {
@@ -226,26 +226,26 @@ function bindEvents() {
         });
     }
 
-  if (backToListBtn) {
-    backToListBtn.addEventListener("click", () => {
-      if (state.userScheduleOrigin === "user") {
-        state.selectedClassId = null;
-        state.selectedRoomId = null;
-        state.selectedTeacherId = null;
-        state.userScheduleOrigin = null;
-        setView("user");
-        return;
-      }
-      if (state.view === "class") {
-        state.selectedClassId = null;
-      }
-      if (state.view === "room") {
-        state.selectedRoomId = null;
-      }
-      updateViewVisibility();
-      renderCurrentView();
-    });
-  }
+    if (backToListBtn) {
+        backToListBtn.addEventListener("click", () => {
+            if (state.userScheduleOrigin === "user") {
+                state.selectedClassId = null;
+                state.selectedRoomId = null;
+                state.selectedTeacherId = null;
+                state.userScheduleOrigin = null;
+                setView("user");
+                return;
+            }
+            if (state.view === "class") {
+                state.selectedClassId = null;
+            }
+            if (state.view === "room") {
+                state.selectedRoomId = null;
+            }
+            updateViewVisibility();
+            renderCurrentView();
+        });
+    }
 
     if (filterToggle && filterPanel) {
         filterToggle.addEventListener("click", (event) => {
@@ -337,59 +337,59 @@ function bindEvents() {
         });
     }
 
-  if (userList) {
-    userList.addEventListener("click", async (event) => {
-      const profileButton = event.target.closest(".user-profile");
-      if (profileButton) {
-        const userId = profileButton.dataset.userId;
-        const user = userDirectory.find((item) => String(item.id) === String(userId));
-        if (!user) {
-          return;
-        }
-        if (teacherDirectory.length === 0) {
-          await loadTeachers();
-        }
-        if (teacherCourseDirectory.length === 0) {
-          await loadTeacherCourses();
-        }
-        if (courseDirectory.length === 0) {
-          await loadCourses();
-        }
-        if (classDirectory.length === 0) {
-          await loadClasses();
-        }
-        showTeacherProfileView(user);
-        return;
-      }
+    if (userList) {
+        userList.addEventListener("click", async (event) => {
+            const profileButton = event.target.closest(".user-profile");
+            if (profileButton) {
+                const userId = profileButton.dataset.userId;
+                const user = userDirectory.find((item) => String(item.id) === String(userId));
+                if (!user) {
+                    return;
+                }
+                if (teacherDirectory.length === 0) {
+                    await loadTeachers();
+                }
+                if (teacherCourseDirectory.length === 0) {
+                    await loadTeacherCourses();
+                }
+                if (courseDirectory.length === 0) {
+                    await loadCourses();
+                }
+                if (classDirectory.length === 0) {
+                    await loadClasses();
+                }
+                showTeacherProfileView(user);
+                return;
+            }
 
-      const editButton = event.target.closest(".user-edit");
-      if (editButton) {
-        const userId = editButton.dataset.userId;
-        const user = userDirectory.find((item) => String(item.id) === String(userId));
-        if (!user) {
-          return;
-        }
-        openUserModal("edit", user);
-        return;
-      }
+            const editButton = event.target.closest(".user-edit");
+            if (editButton) {
+                const userId = editButton.dataset.userId;
+                const user = userDirectory.find((item) => String(item.id) === String(userId));
+                if (!user) {
+                    return;
+                }
+                openUserModal("edit", user);
+                return;
+            }
 
-      const row = event.target.closest(".user-row");
-      if (!row) {
-        return;
-      }
-      const userId = row.dataset.userId;
-      const user = userDirectory.find((item) => String(item.id) === String(userId));
-      if (!user) {
-        return;
-      }
-      if (!isAdminRole(state.role)) {
-        return;
-      }
-      if (typeof showUserSchedule === "function") {
-        await showUserSchedule(user);
-      }
-    });
-  }
+            const row = event.target.closest(".user-row");
+            if (!row) {
+                return;
+            }
+            const userId = row.dataset.userId;
+            const user = userDirectory.find((item) => String(item.id) === String(userId));
+            if (!user) {
+                return;
+            }
+            if (!isAdminRole(state.role)) {
+                return;
+            }
+            if (typeof showUserSchedule === "function") {
+                await showUserSchedule(user);
+            }
+        });
+    }
 
     // Toggle department field visibility when role changes
     if (userRoleInput) {
@@ -399,7 +399,7 @@ function bindEvents() {
             const userClassInput = document.getElementById("user-class");
             const needsDepartment = userRoleInput.value === "professor";
             const needsClass = userRoleInput.value === "class-monitor" || userRoleInput.value === "student" || userRoleInput.value === "guest";
-            
+
             if (departmentField) {
                 departmentField.toggleAttribute("hidden", !needsDepartment);
             }
@@ -431,7 +431,7 @@ function bindEvents() {
     if (userClassInput) {
         userClassInput.addEventListener("input", renderUserClassOptions);
         userClassInput.addEventListener("focus", renderUserClassOptions);
-        
+
         // Hide class dropdown on click outside
         document.addEventListener("click", (e) => {
             const results = document.getElementById("user-class-results");
@@ -500,6 +500,7 @@ function bindEvents() {
                     await createUserApi(payload);
                 }
                 await loadUsers();
+                await loadTeachers();
                 await loadTeacherDepartments();
                 closeUserModal();
             } catch (error) {
@@ -521,6 +522,7 @@ function bindEvents() {
             try {
                 await deleteUserApi(editingUserId);
                 await loadUsers();
+                await loadTeachers();
                 await loadTeacherDepartments();
                 closeUserModal();
             } catch (error) {
@@ -906,13 +908,13 @@ function bindEvents() {
             const previousId = editingRoomId;
 
             const savePromise = wasEditing
-                ? updateClassroomApi(previousId, {name, building})
-                : createClassroomApi({name, building});
+                ? updateClassroomApi(previousId, { name, building })
+                : createClassroomApi({ name, building });
 
             savePromise
                 .then(async (savedRoom) => {
                     const roomId = Number(savedRoom?.id || previousId);
-                    upsertRoom({id: String(roomId), name, building, floor});
+                    upsertRoom({ id: String(roomId), name, building, floor });
                     await loadClassrooms();
                     closeRoomModal();
                     renderRoomList();
@@ -1084,7 +1086,7 @@ function bindEvents() {
             const activeClassId = getSelectedClassId();
             const fallbackUserClassId =
                 state.currentUser &&
-                (state.currentUser.role === "class-monitor" || state.currentUser.role === "student")
+                    (state.currentUser.role === "class-monitor" || state.currentUser.role === "student")
                     ? state.currentUser.classId || null
                     : null;
             const roomSelectedClassId =
@@ -1201,160 +1203,126 @@ function bindEvents() {
             const subjectInput = bookingSubject ? bookingSubject.value.trim() : "";
 
             {
-            let resolvedTeacherId = null;
-            let professorLabel = "";
-            let selectedCourse = null;
-            let subjectLabel = "";
-            let typeValue = "";
-            let typeLabel = "";
+                let resolvedTeacherId = null;
+                let professorLabel = "";
+                let selectedCourse = null;
+                let subjectLabel = "";
+                let typeValue = "";
+                let typeLabel = "";
 
-            if (isSmartClassBooking) {
-                resolvedTeacherId = state.smartOverlayTeacherId || state.currentTeacherId || null;
-                const teacherItem = submitTeacherCatalog.find(
-                    (teacher) => String(teacher.id) === String(resolvedTeacherId)
-                );
-                professorLabel = teacherItem?.name || "";
-                const selectedCourseId = bookingSubject?.dataset.courseId || pendingBooking.courseId || "";
-                selectedCourse =
-                    courseCatalog.find((course) => String(course.id) === String(selectedCourseId)) ||
-                    resolveCourseFromInput(subjectInput, courseCatalog);
-                subjectLabel = selectedCourse?.name || selectedCourse?.code || subjectInput || "";
-                typeValue = bookingType ? bookingType.value : "";
-                typeLabel = bookingType
-                    ? bookingType.options[bookingType.selectedIndex]?.text || typeValue
-                    : "";
-            } else {
-                const professorInput = bookingProfessor ? bookingProfessor.value.trim() : "";
-                const selectedTeacherId = bookingProfessor?.dataset.teacherId || pendingBooking.teacherId || "";
-                const selectedTeacher =
-                    submitTeacherCatalog.find((teacher) => String(teacher.id) === String(selectedTeacherId)) ||
-                    resolveTeacherFromInput(professorInput, submitTeacherCatalog);
-                resolvedTeacherId = selectedTeacher ? selectedTeacher.id : null;
-                professorLabel = selectedTeacher ? selectedTeacher.name || professorInput : professorInput;
-                const selectedCourseId = bookingSubject?.dataset.courseId || pendingBooking.courseId || "";
-                selectedCourse =
-                    courseCatalog.find((course) => String(course.id) === String(selectedCourseId)) ||
-                    resolveCourseFromInput(subjectInput, courseCatalog);
-                subjectLabel =
-                    selectedCourse?.name || selectedCourse?.code || subjectInput || "Untitled class";
-                typeValue = bookingType ? bookingType.value : "";
-                typeLabel = bookingType
-                    ? bookingType.options[bookingType.selectedIndex]?.text || typeValue
-                    : "";
-            }
+                if (isSmartClassBooking) {
+                    resolvedTeacherId = state.smartOverlayTeacherId || state.currentTeacherId || null;
+                    const teacherItem = submitTeacherCatalog.find(
+                        (teacher) => String(teacher.id) === String(resolvedTeacherId)
+                    );
+                    professorLabel = teacherItem?.name || "";
+                    const selectedCourseId = bookingSubject?.dataset.courseId || pendingBooking.courseId || "";
+                    selectedCourse =
+                        courseCatalog.find((course) => String(course.id) === String(selectedCourseId)) ||
+                        resolveCourseFromInput(subjectInput, courseCatalog);
+                    subjectLabel = selectedCourse?.name || selectedCourse?.code || subjectInput || "";
+                    typeValue = bookingType ? bookingType.value : "";
+                    typeLabel = bookingType
+                        ? bookingType.options[bookingType.selectedIndex]?.text || typeValue
+                        : "";
+                } else {
+                    const professorInput = bookingProfessor ? bookingProfessor.value.trim() : "";
+                    const selectedTeacherId = bookingProfessor?.dataset.teacherId || pendingBooking.teacherId || "";
+                    const selectedTeacher =
+                        submitTeacherCatalog.find((teacher) => String(teacher.id) === String(selectedTeacherId)) ||
+                        resolveTeacherFromInput(professorInput, submitTeacherCatalog);
+                    resolvedTeacherId = selectedTeacher ? selectedTeacher.id : null;
+                    professorLabel = selectedTeacher ? selectedTeacher.name || professorInput : professorInput;
+                    const selectedCourseId = bookingSubject?.dataset.courseId || pendingBooking.courseId || "";
+                    selectedCourse =
+                        courseCatalog.find((course) => String(course.id) === String(selectedCourseId)) ||
+                        resolveCourseFromInput(subjectInput, courseCatalog);
+                    subjectLabel =
+                        selectedCourse?.name || selectedCourse?.code || subjectInput || "Untitled class";
+                    typeValue = bookingType ? bookingType.value : "";
+                    typeLabel = bookingType
+                        ? bookingType.options[bookingType.selectedIndex]?.text || typeValue
+                        : "";
+                }
 
-            const recurringEnabled =
-                Boolean(bookingRecurring && bookingRecurring.checked) &&
-                targetView === "class" &&
-                isAdminRole(state.role) &&
-                !pendingBooking.eventId;
+                const recurringEnabled =
+                    Boolean(bookingRecurring && bookingRecurring.checked) &&
+                    targetView === "class" &&
+                    isAdminRole(state.role) &&
+                    !pendingBooking.eventId;
 
-            const shouldCheckTeacherConflict = isTeacherRole(state.role) && resolvedTeacherId;
-            const teacherConflict = shouldCheckTeacherConflict
-                ? getTeacherBookingConflict(
-                    bookingDay,
-                    bookingDate,
-                    startMinutes,
-                    endMinutes,
-                    ignoreId,
-                    resolvedTeacherId
-                )
-                : null;
+                const shouldCheckTeacherConflict = isTeacherRole(state.role) && resolvedTeacherId;
+                const teacherConflict = shouldCheckTeacherConflict
+                    ? getTeacherBookingConflict(
+                        bookingDay,
+                        bookingDate,
+                        startMinutes,
+                        endMinutes,
+                        ignoreId,
+                        resolvedTeacherId
+                    )
+                    : null;
 
-            if (teacherConflict) {
-                alert("That time slot conflicts with your teacher schedule.");
-                return;
-            }
-
-            const metaParts = [];
-            if (professorLabel) {
-                metaParts.push(professorLabel);
-            }
-            if (typeLabel) {
-                metaParts.push(typeLabel);
-            }
-            if (targetView === "class" && roomLabel) {
-                metaParts.push(roomLabel);
-            }
-
-            if (!eventsByView[targetView]) {
-                eventsByView[targetView] = [];
-            }
-
-            const objectLabel = subjectLabel;
-            const bookingTime = formatBookingTimeRange(startValue, endValue);
-            const actor = state.userName || "User";
-            const auditScope =
-                targetView === "class"
-                    ? {scopeType: "class", scopeId: classId}
-                    : targetView === "room"
-                        ? {scopeType: "room", scopeId: classroomId}
-                        : {scopeType: "general", scopeId: null};
-
-            let courseId = null;
-            if (isSmartClassBooking) {
-                courseId = selectedCourse?.id || (subjectLabel ? await resolveCourseIdFromSubject(subjectLabel) : null);
-                if (!courseId) {
-                    alert("Select or enter a course name first.");
+                if (teacherConflict) {
+                    alert("That time slot conflicts with your teacher schedule.");
                     return;
                 }
-                if (!resolvedTeacherId) {
-                    alert("No teacher profile found for this account.");
-                    return;
+
+                const metaParts = [];
+                if (professorLabel) {
+                    metaParts.push(professorLabel);
                 }
-            } else {
-                courseId = selectedCourse?.id || (await resolveCourseIdFromSubject(subjectLabel));
-                if (!courseId) {
-                    alert("Select or enter a course name first.");
-                    return;
+                if (typeLabel) {
+                    metaParts.push(typeLabel);
                 }
-            }
+                if (targetView === "class" && roomLabel) {
+                    metaParts.push(roomLabel);
+                }
 
-            if (pendingBooking) {
-                pendingBooking.teacherId = resolvedTeacherId;
-                pendingBooking.courseId = courseId;
-            }
+                if (!eventsByView[targetView]) {
+                    eventsByView[targetView] = [];
+                }
 
-            if (pendingBooking.eventId) {
-                const payload = {
-                    classroomId,
-                    teacherId: resolvedTeacherId,
-                    courseId,
-                    date: pendingBooking.date,
-                    startTime: startValue,
-                    endTime: endValue,
-                    status: pendingBooking.status || "BOOKED",
-                    visibility: pendingBooking.visibility || "VISIBLE",
-                    type: typeValue || pendingBooking.type || "DEFAULT",
-                    priority: pendingBooking.priority ?? 0,
-                    createdBy: pendingBooking.createdBy || Number(state.currentUser?.id || 0),
-                    classIds: pendingBooking.classIds && pendingBooking.classIds.length > 0
-                        ? pendingBooking.classIds
-                        : classId
-                            ? [classId]
-                            : [],
-                    linkedScheduleId: pendingBooking.linkedScheduleId || null,
-                    recurring: recurringEnabled,
-                };
+                const objectLabel = subjectLabel;
+                const bookingTime = formatBookingTimeRange(startValue, endValue);
+                const actor = state.userName || "User";
+                const auditScope =
+                    targetView === "class"
+                        ? { scopeType: "class", scopeId: classId }
+                        : targetView === "room"
+                            ? { scopeType: "room", scopeId: classroomId }
+                            : { scopeType: "general", scopeId: null };
 
-                saveScheduleApi(pendingBooking.eventId, payload)
-                    .then(async () => {
-                        await refreshSchedules();
-                        addAuditEntry("Edited", actor, objectLabel, bookingTime, auditScope);
-                        closeBookingModal();
-                    })
-                    .catch((saveError) => {
-                        console.error("Failed to save schedule", saveError);
-                        alert(`Failed to save schedule: ${saveError.message}`);
-                    });
-                return;
-            } else {
-                try {
+                let courseId = null;
+                if (isSmartClassBooking) {
+                    courseId = selectedCourse?.id || (subjectLabel ? await resolveCourseIdFromSubject(subjectLabel) : null);
+                    if (!courseId) {
+                        alert("Select or enter a course name first.");
+                        return;
+                    }
+                    if (!resolvedTeacherId) {
+                        alert("No teacher profile found for this account.");
+                        return;
+                    }
+                } else {
+                    courseId = selectedCourse?.id || (await resolveCourseIdFromSubject(subjectLabel));
+                    if (!courseId) {
+                        alert("Select or enter a course name first.");
+                        return;
+                    }
+                }
+
+                if (pendingBooking) {
+                    pendingBooking.teacherId = resolvedTeacherId;
+                    pendingBooking.courseId = courseId;
+                }
+
+                if (pendingBooking.eventId) {
                     const payload = {
                         classroomId,
                         teacherId: resolvedTeacherId,
                         courseId,
-                        date: bookingDate,
+                        date: pendingBooking.date,
                         startTime: startValue,
                         endTime: endValue,
                         status: pendingBooking.status || "BOOKED",
@@ -1362,25 +1330,59 @@ function bindEvents() {
                         type: typeValue || pendingBooking.type || "DEFAULT",
                         priority: pendingBooking.priority ?? 0,
                         createdBy: pendingBooking.createdBy || Number(state.currentUser?.id || 0),
-                        classIds:
-                            pendingBooking.classIds && pendingBooking.classIds.length > 0
-                                ? pendingBooking.classIds
-                                : classId
-                                    ? [classId]
-                                    : [],
+                        classIds: pendingBooking.classIds && pendingBooking.classIds.length > 0
+                            ? pendingBooking.classIds
+                            : classId
+                                ? [classId]
+                                : [],
                         linkedScheduleId: pendingBooking.linkedScheduleId || null,
                         recurring: recurringEnabled,
                     };
 
-                    await saveScheduleApi(null, payload);
-                    await refreshSchedules();
-                    addAuditEntry("Booked", actor, objectLabel, bookingTime, auditScope);
-                    closeBookingModal();
-                } catch (saveError) {
-                    console.error("Failed to create schedule", saveError);
-                    alert(`Failed to create booking: ${saveError.message}`);
+                    saveScheduleApi(pendingBooking.eventId, payload)
+                        .then(async () => {
+                            await refreshSchedules();
+                            addAuditEntry("Edited", actor, objectLabel, bookingTime, auditScope);
+                            closeBookingModal();
+                        })
+                        .catch((saveError) => {
+                            console.error("Failed to save schedule", saveError);
+                            alert(`Failed to save schedule: ${saveError.message}`);
+                        });
+                    return;
+                } else {
+                    try {
+                        const payload = {
+                            classroomId,
+                            teacherId: resolvedTeacherId,
+                            courseId,
+                            date: bookingDate,
+                            startTime: startValue,
+                            endTime: endValue,
+                            status: pendingBooking.status || "BOOKED",
+                            visibility: pendingBooking.visibility || "VISIBLE",
+                            type: typeValue || pendingBooking.type || "DEFAULT",
+                            priority: pendingBooking.priority ?? 0,
+                            createdBy: pendingBooking.createdBy || Number(state.currentUser?.id || 0),
+                            classIds:
+                                pendingBooking.classIds && pendingBooking.classIds.length > 0
+                                    ? pendingBooking.classIds
+                                    : classId
+                                        ? [classId]
+                                        : [],
+                            linkedScheduleId: pendingBooking.linkedScheduleId || null,
+                            recurring: recurringEnabled,
+                        };
+
+                        await saveScheduleApi(null, payload);
+                        await refreshSchedules();
+                        addAuditEntry("Booked", actor, objectLabel, bookingTime, auditScope);
+                        closeBookingModal();
+                    } catch (saveError) {
+                        console.error("Failed to create schedule", saveError);
+                        alert(`Failed to create booking: ${saveError.message}`);
+                    }
                 }
-            }
             }
         });
     }
@@ -1416,36 +1418,36 @@ function bindEvents() {
         bookingProfessor.addEventListener("focus", renderBookingProfessorOptions);
     }
 
-  if (bookingSubject) {
-    bookingSubject.addEventListener("input", () => {
-      if (pendingBooking) {
-        pendingBooking.courseId = null;
-      }
-      bookingSubject.dataset.courseId = "";
-      renderBookingSubjectOptions();
+    if (bookingSubject) {
+        bookingSubject.addEventListener("input", () => {
+            if (pendingBooking) {
+                pendingBooking.courseId = null;
+            }
+            bookingSubject.dataset.courseId = "";
+            renderBookingSubjectOptions();
+        });
+        bookingSubject.addEventListener("focus", renderBookingSubjectOptions);
+    }
+
+    if (courseTeacher) {
+        courseTeacher.addEventListener("input", () => {
+            courseTeacher.dataset.teacherId = "";
+            renderCourseTeacherOptions();
+        });
+        courseTeacher.addEventListener("focus", renderCourseTeacherOptions);
+    }
+
+    const bookingPickers = [
+        { group: bookingClassGroup, results: bookingClassResults },
+        { group: bookingRoomGroup, results: bookingRoomResults },
+        { group: bookingProfessorGroup, results: bookingProfessorResults },
+        { group: bookingSubjectGroup, results: bookingSubjectResults },
+        { group: courseTeacherGroup, results: courseTeacherResults },
+    ].filter(({ group, results }) => group && results);
+
+    bookingPickers.forEach(({ group, results }) => {
+        bindPickerAutoClose(group, results);
     });
-    bookingSubject.addEventListener("focus", renderBookingSubjectOptions);
-  }
-
-  if (courseTeacher) {
-    courseTeacher.addEventListener("input", () => {
-      courseTeacher.dataset.teacherId = "";
-      renderCourseTeacherOptions();
-    });
-    courseTeacher.addEventListener("focus", renderCourseTeacherOptions);
-  }
-
-  const bookingPickers = [
-    { group: bookingClassGroup, results: bookingClassResults },
-    { group: bookingRoomGroup, results: bookingRoomResults },
-    { group: bookingProfessorGroup, results: bookingProfessorResults },
-    { group: bookingSubjectGroup, results: bookingSubjectResults },
-    { group: courseTeacherGroup, results: courseTeacherResults },
-  ].filter(({ group, results }) => group && results);
-
-  bookingPickers.forEach(({ group, results }) => {
-    bindPickerAutoClose(group, results);
-  });
 
     if (bookingStart) {
         bookingStart.addEventListener("input", () => {
@@ -1535,10 +1537,10 @@ function bindEvents() {
             const actor = state.userName || "User";
             const auditScope =
                 targetView === "class"
-                    ? {scopeType: "class", scopeId: removed.classId}
+                    ? { scopeType: "class", scopeId: removed.classId }
                     : targetView === "room"
-                        ? {scopeType: "room", scopeId: removed.roomId}
-                        : {scopeType: "general", scopeId: null};
+                        ? { scopeType: "room", scopeId: removed.roomId }
+                        : { scopeType: "general", scopeId: null };
             deleteScheduleApi(pendingBooking.eventId)
                 .then(async () => {
                     await refreshSchedules();
@@ -1571,21 +1573,21 @@ function bindEvents() {
             }
         }
 
-    if (userFilterPanel && userFilterToggle && !userFilterPanel.hasAttribute("hidden")) {
-      if (
-        !userFilterPanel.contains(event.target) &&
-        !userFilterToggle.contains(event.target)
-      ) {
-        closeUserFilterPanel();
-      }
-    }
+        if (userFilterPanel && userFilterToggle && !userFilterPanel.hasAttribute("hidden")) {
+            if (
+                !userFilterPanel.contains(event.target) &&
+                !userFilterToggle.contains(event.target)
+            ) {
+                closeUserFilterPanel();
+            }
+        }
 
-    bookingPickers.forEach(({ group, results }) => {
-      if (!group.contains(event.target)) {
-        closePickerResults(results);
-      }
+        bookingPickers.forEach(({ group, results }) => {
+            if (!group.contains(event.target)) {
+                closePickerResults(results);
+            }
+        });
     });
-  });
 
     document.addEventListener("keydown", (event) => {
         if (event.key !== "Escape") {

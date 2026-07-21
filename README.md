@@ -38,7 +38,7 @@ If you want to start with a completely empty database to define your own classes
 ```bash
 java -jar target/sms-1.0-SNAPSHOT.jar --empty
 ```
-*Note: This creates a single system administrator user (`admin@school.local` / `admin123`) so you can log in and begin setups.*
+*Note: This creates a single system administrator user (`admin@school.local` / `12345`) so you can log in and begin setups.*
 
 Access the web interface locally at `http://localhost:8080`.
 

@@ -112,6 +112,10 @@ async function setView(view) {
     state.smartOverlayEnabled = false;
   }
 
+  if (view !== "room") {
+    state.selectedRoomId = null;
+  }
+
   if (view !== "class") {
     if (!isClassScopedUser) {
       state.selectedClassId = null;

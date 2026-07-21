@@ -1625,13 +1625,15 @@ async function initializeAuthenticatedApp() {
         await loadTeacherDepartments();
     }
 
-    // ADMIN + TEACHER: need teacher directory & departments
+    // ADMIN + TEACHER: need teacher departments
     if (isAdminRole(role) || isTeacherRole(role)) {
         if (!isAdminRole(role)) {
             await loadTeacherDepartments();
         }
-        await loadTeachers();
     }
+    
+    // ALL ROLES: need teacher directory to show teacher names and booking availability
+    await loadTeachers();
 
     // Load schedules SCOPED to the user's context
     await loadScopedSchedules();
